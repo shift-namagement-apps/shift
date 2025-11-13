@@ -210,10 +210,10 @@ body {
 .shift-table th,
 .shift-table td {
     border: 1px solid var(--border-color);
-    padding: 0.5rem;
+    padding: 0.35rem 0.5rem; /* 高さを狭めるために上下パディングを少なめに */
     text-align: center;
     vertical-align: middle;
-    height: 60px; /* 高さを固定 */
+    height: 44px; /* 行の高さを狭くする（旧:60px） */
 }
 
 .shift-table thead th {
@@ -254,8 +254,10 @@ body {
 /* シフトセルの中身 */
 .shift-code {
     font-weight: bold;
-    font-size: 1.125rem;
-    line-height: 1.2;
+    font-size: 1rem; /* 少し小さくして横並び時に収める */
+    line-height: 1.1;
+    display: inline-block; /* 縦並びから横並びにする */
+    vertical-align: middle;
 }
 
 /* シフト種別ごとの色（画像から推測） */
@@ -274,6 +276,15 @@ body {
 .shift-home {
     font-size: 0.75rem; /* 12px */
     color: var(--text-secondary);
+    display: inline-block; /* 縦並びから横並びにする */
+    vertical-align: middle;
+    margin-left: 0.375rem; /* シフトコードとの間隔 */
+}
+
+/* 追加: セル内の要素を確実に横並びにしたい場合に備えて */
+.shift-table td > .shift-code + .shift-home {
+    /* 既に inline-block なので特別なスタイルは不要だが、余白調整はここで行う */
+    margin-left: 0.375rem;
 }
 
 /* ハイライトセル */
@@ -296,6 +307,13 @@ body {
     width: 100%;
     border-collapse: collapse;
     table-layout: fixed;
+}
+
+/* 日次集計表示領域を固定してスクロール可能にする
+   これにより画面上では1〜2行分だけが見え、残りはスクロールで表示される */
+.summary-table-container {
+    max-height: 140px; /* 1~2 行分を表示する目安。必要に応じて調整 */
+    overflow-y: auto;
 }
 
 .summary-table th,
@@ -539,7 +557,7 @@ body {
     .shift-table th,
     .shift-table td {
         padding: 0.25rem;
-        height: 50px;
+        height: 40px; /* レスポンシブ時はさらに低くする */
     }
 }
 
