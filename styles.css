@@ -213,10 +213,10 @@ body {
 .shift-table th,
 .shift-table td {
     border: 1px solid var(--border-color);
-    padding: 0.25rem 0.5rem; /* 高さをさらに狭めるためにパディング調整 */
+    padding: 0.35rem 0.5rem;
     text-align: center;
     vertical-align: middle;
-    height: 33px; /* 行の高さを0.75倍に（旧:44px） */
+    height: 44px; /* 10人表示時の高さ（元の値） */
 }
 
 .shift-table thead th {
@@ -293,6 +293,27 @@ body {
 /* ハイライトセル */
 .shift-table .cell-highlight {
     background-color: var(--bg-cell-highlight);
+}
+
+/* ホーム別の背景色（薄い透過色） */
+.shift-table .home-a {
+    background-color: rgba(255, 182, 193, 0.3); /* 薄いピンク */
+}
+
+.shift-table .home-b {
+    background-color: rgba(173, 216, 230, 0.3); /* 薄い青 */
+}
+
+.shift-table .home-c {
+    background-color: rgba(144, 238, 144, 0.3); /* 薄い緑 */
+}
+
+.shift-table .home-d {
+    background-color: rgba(255, 218, 185, 0.3); /* 薄いオレンジ */
+}
+
+.shift-table .home-e {
+    background-color: rgba(221, 160, 221, 0.3); /* 薄い紫 */
 }
 
 /* -------------------------
@@ -559,8 +580,8 @@ body {
 
     .shift-table th,
     .shift-table td {
-        padding: 0.2rem;
-        height: 30px; /* レスポンシブ時の高さを0.75倍に（旧:40px） */
+        padding: 0.25rem;
+        height: 40px; /* レスポンシブ時の高さ */
     }
 }
 
