@@ -84,12 +84,6 @@ function loadDummyData() {
         { id: 's8', name: '村上 茉優', home: 'A' },
         { id: 's9', name: '佐藤 健太', home: 'A' },
         { id: 's10', name: '伊藤 愛美', home: 'A' },
-        { id: 's11', name: '渡辺 翔太', home: 'A' },
-        { id: 's12', name: '中村 結衣', home: 'A' },
-        { id: 's13', name: '木村 拓也', home: 'A' },
-        { id: 's14', name: '林 菜々子', home: 'A' },
-        { id: 's15', name: '加藤 慎一', home: 'A' },
-        { id: 's16', name: '松本 優香', home: 'A' },
     ];
 
     // image.png に表示されている10日分のデータ
@@ -143,36 +137,6 @@ function loadDummyData() {
             '1': { code: 'C', home: 'A' }, '2': { code: 'A', home: 'A' }, '3': { code: 'L', home: 'A' }, '4': { code: 'C', home: 'A' },
             '5': { code: 'B', home: 'A' }, '6': { code: 'L', home: 'A' }, '7': { code: 'N', home: 'A' }, '8': { code: 'C', home: 'A' },
             '9': { code: 'A', home: 'A' }, '10': { code: 'B', home: 'A' },
-        },
-        's11': { // 渡辺 翔太
-            '1': { code: 'B', home: 'A' }, '2': { code: 'N', home: 'A' }, '3': { code: 'EL', home: 'A' }, '4': { code: 'A', home: 'A' },
-            '5': { code: 'C', home: 'A' }, '6': { code: 'B', home: 'A' }, '7': { code: 'EL', home: 'A' }, '8': { code: 'N', home: 'A' },
-            '9': { code: 'A', home: 'A' }, '10': { code: 'C', home: 'A' },
-        },
-        's12': { // 中村 結衣
-            '1': { code: 'EL', home: 'A' }, '2': { code: 'L', home: 'A' }, '3': { code: 'C', home: 'A' }, '4': { code: 'EL', home: 'A' },
-            '5': { code: 'A', home: 'A' }, '6': { code: 'N', home: 'A' }, '7': { code: 'L', home: 'A' }, '8': { code: 'B', home: 'A' },
-            '9': { code: 'EL', home: 'A' }, '10': { code: 'A', home: 'A' },
-        },
-        's13': { // 木村 拓也
-            '1': { code: 'N', home: 'A' }, '2': { code: 'A', home: 'A' }, '3': { code: 'B', home: 'A' }, '4': { code: 'L', home: 'A' },
-            '5': { code: 'EL', home: 'A' }, '6': { code: 'C', home: 'A' }, '7': { code: 'A', home: 'A' }, '8': { code: 'N', home: 'A' },
-            '9': { code: 'B', home: 'A' }, '10': { code: 'L', home: 'A' },
-        },
-        's14': { // 林 菜々子
-            '1': { code: 'L', home: 'A' }, '2': { code: 'C', home: 'A' }, '3': { code: 'A', home: 'A' }, '4': { code: 'N', home: 'A' },
-            '5': { code: 'L', home: 'A' }, '6': { code: 'B', home: 'A' }, '7': { code: 'C', home: 'A' }, '8': { code: 'EL', home: 'A' },
-            '9': { code: 'N', home: 'A' }, '10': { code: 'A', home: 'A' },
-        },
-        's15': { // 加藤 慎一
-            '1': { code: 'A', home: 'A' }, '2': { code: 'EL', home: 'A' }, '3': { code: 'N', home: 'A' }, '4': { code: 'B', home: 'A' },
-            '5': { code: 'C', home: 'A' }, '6': { code: 'A', home: 'A' }, '7': { code: 'N', home: 'A' }, '8': { code: 'L', home: 'A' },
-            '9': { code: 'C', home: 'A' }, '10': { code: 'B', home: 'A' },
-        },
-        's16': { // 松本 優香
-            '1': { code: 'B', home: 'A' }, '2': { code: 'NONE', home: '' }, '3': { code: 'L', home: 'A' }, '4': { code: 'A', home: 'A' },
-            '5': { code: 'N', home: 'A' }, '6': { code: 'EL', home: 'A' }, '7': { code: 'B', home: 'A' }, '8': { code: 'C', home: 'A' },
-            '9': { code: 'NONE', home: '' }, '10': { code: 'L', home: 'A' },
         },
     };
     
@@ -263,8 +227,7 @@ function renderShiftTable(staffList, daysCount) {
     const totalDaysImg = { 
         's1': '29日', 's2': '28日', 's3': '30日', 's4': '26日', 
         's5': '25日', 's6': '24日', 's7': '27日', 's8': '24日',
-        's9': '28日', 's10': '29日', 's11': '27日', 's12': '26日',
-        's13': '28日', 's14': '27日', 's15': '29日', 's16': '25日'
+        's9': '28日', 's10': '29日'
     };
 
     staffList.forEach(staff => {
@@ -279,19 +242,17 @@ function renderShiftTable(staffList, daysCount) {
             // 画像の5, 8, 10日のハイライトを再現
             const isHighlight = (day === 5 || day === 8 || day === 10);
             
+            // ホーム別の背景色クラスを追加
+            const homeClass = shift.home ? `home-${shift.home.toLowerCase()}` : '';
+            
             html += `<td 
-                        class="${isHighlight ? 'cell-highlight' : ''}"
+                        class="${isHighlight ? 'cell-highlight' : ''} ${homeClass}"
                         data-staff-id="${staff.id}"
                         data-staff-name="${staff.name}"
                         data-date="${day}">`;
                         
             if (shift.code !== 'NONE') {
                 html += `<div class="shift-code ${shiftInfo.class}">${shift.code}</div>`;
-                
-                // 画像ではAホーム表示時でも 'Aホーム' が表示されているため、その仕様を再現
-                if (shift.home) {
-                    html += `<div class="shift-home">${shift.home}ホーム</div>`;
-                }
             }
             html += '</td>';
         }
