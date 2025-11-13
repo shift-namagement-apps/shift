@@ -226,7 +226,7 @@ body {
 /* 最初の列 (スタッフ名) */
 .shift-table th:first-child,
 .shift-table td:first-child {
-    width: 120px; /* スタッフ名列の幅を固定 */
+    width: 240px; /* スタッフ名列の幅を2倍に（旧:120px） */
     text-align: left;
     padding-left: 1rem;
     font-weight: bold;
