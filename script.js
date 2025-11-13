@@ -84,59 +84,119 @@ function loadDummyData() {
         { id: 's8', name: '村上 茉優', home: 'A' },
         { id: 's9', name: '佐藤 健太', home: 'A' },
         { id: 's10', name: '伊藤 愛美', home: 'A' },
+        { id: 's11', name: '渡辺 翔太', home: 'A' },
+        { id: 's12', name: '中村 結衣', home: 'A' },
+        { id: 's13', name: '加藤 海斗', home: 'A' },
+        { id: 's14', name: '松本 優花', home: 'A' },
+        { id: 's15', name: '木村 蓮', home: 'A' },
+        { id: 's16', name: '林 七海', home: 'A' },
+        { id: 's17', name: '斉藤 陽向', home: 'A' },
+        { id: 's18', name: '清水 さくら', home: 'A' },
+        { id: 's19', name: '山本 駿', home: 'A' },
+        { id: 's20', name: '森 楓', home: 'A' },
     ];
 
-    // image.png に表示されている10日分のデータ
+    // image.png に表示されている10日分のデータ（色分け用に各ホームに分散）
     appState.shifts = {
-        's1': { // 平田 太郎
-            '1': { code: 'C', home: 'A' }, '2': { code: 'A', home: 'A' }, '3': { code: 'C', home: 'A' }, '4': { code: 'C', home: 'A' },
-            '5': { code: 'EL', home: 'A' }, '6': { code: 'C', home: 'A' }, '7': { code: 'A', home: 'A' }, '8': { code: 'EL', home: 'A' },
+        's1': { // 平田 太郎 - 主にAホーム
+            '1': { code: 'C', home: 'A' }, '2': { code: 'A', home: 'A' }, '3': { code: 'C', home: 'B' }, '4': { code: 'C', home: 'A' },
+            '5': { code: 'EL', home: 'A' }, '6': { code: 'C', home: 'A' }, '7': { code: 'A', home: 'B' }, '8': { code: 'EL', home: 'A' },
             '9': { code: 'N', home: 'A' }, '10': { code: 'EL', home: 'A' },
         },
-        's2': { // 山田 美咲
-            '1': { code: 'N', home: 'A' }, '2': { code: 'EL', home: 'A' }, '3': { code: 'B', home: 'A' }, '4': { code: 'NONE', home: '' },
-            '5': { code: 'NONE', home: '' }, '6': { code: 'C', home: 'A' }, '7': { code: 'A', home: 'A' }, '8': { code: 'NONE', home: '' },
-            '9': { code: 'C', home: 'A' }, '10': { code: 'A', home: 'A' },
+        's2': { // 山田 美咲 - 主にBホーム
+            '1': { code: 'N', home: 'B' }, '2': { code: 'EL', home: 'B' }, '3': { code: 'B', home: 'B' }, '4': { code: 'NONE', home: '' },
+            '5': { code: 'NONE', home: '' }, '6': { code: 'C', home: 'B' }, '7': { code: 'A', home: 'A' }, '8': { code: 'NONE', home: '' },
+            '9': { code: 'C', home: 'B' }, '10': { code: 'A', home: 'B' },
         },
-        's3': { // 高橋 大輔
-            '1': { code: 'N', home: 'A' }, '2': { code: 'C', home: 'A' }, '3': { code: 'N', home: 'A' }, '4': { code: 'C', home: 'A' },
-            '5': { code: 'L', home: 'A' }, '6': { code: 'B', home: 'A' }, '7': { code: 'C', home: 'A' }, '8': { code: 'L', home: 'A' },
-            '9': { code: 'C', home: 'A' }, '10': { code: 'L', home: 'A' },
+        's3': { // 高橋 大輔 - 主にCホーム
+            '1': { code: 'N', home: 'C' }, '2': { code: 'C', home: 'C' }, '3': { code: 'N', home: 'C' }, '4': { code: 'C', home: 'C' },
+            '5': { code: 'L', home: 'C' }, '6': { code: 'B', home: 'A' }, '7': { code: 'C', home: 'C' }, '8': { code: 'L', home: 'C' },
+            '9': { code: 'C', home: 'C' }, '10': { code: 'L', home: 'C' },
         },
-        's4': { // 小林 彩香
-            '1': { code: 'L', home: 'A' }, '2': { code: 'C', home: 'A' }, '3': { code: 'B', home: 'A' }, '4': { code: 'NONE', home: '' },
-            '5': { code: 'NONE', home: '' }, '6': { code: 'C', home: 'A' }, '7': { code: 'B', home: 'A' }, '8': { code: 'NONE', home: '' },
-            '9': { code: 'L', home: 'A' }, '10': { code: 'C', home: 'A' },
+        's4': { // 小林 彩香 - 主にDホーム
+            '1': { code: 'L', home: 'D' }, '2': { code: 'C', home: 'D' }, '3': { code: 'B', home: 'D' }, '4': { code: 'NONE', home: '' },
+            '5': { code: 'NONE', home: '' }, '6': { code: 'C', home: 'D' }, '7': { code: 'B', home: 'D' }, '8': { code: 'NONE', home: '' },
+            '9': { code: 'L', home: 'D' }, '10': { code: 'C', home: 'D' },
         },
-        's5': { // 井上 隼人
-            '1': { code: 'L', home: 'A' }, '2': { code: 'L', home: 'A' }, '3': { code: 'NONE', home: '' }, '4': { code: 'N', home: 'A' },
-            '5': { code: 'A', home: 'A' }, '6': { code: 'C', home: 'A' }, '7': { code: 'A', home: 'A' }, '8': { code: 'EL', home: 'A' },
-            '9': { code: 'L', home: 'A' }, '10': { code: 'EL', home: 'A' },
+        's5': { // 井上 隼人 - 主にEホーム
+            '1': { code: 'L', home: 'E' }, '2': { code: 'L', home: 'E' }, '3': { code: 'NONE', home: '' }, '4': { code: 'N', home: 'E' },
+            '5': { code: 'A', home: 'E' }, '6': { code: 'C', home: 'E' }, '7': { code: 'A', home: 'A' }, '8': { code: 'EL', home: 'E' },
+            '9': { code: 'L', home: 'E' }, '10': { code: 'EL', home: 'E' },
         },
-        's6': { // 山崎 麻衣
+        's6': { // 山崎 麻衣 - 主にAホーム
             '1': { code: 'EL', home: 'A' }, '2': { code: 'L', home: 'A' }, '3': { code: 'L', home: 'A' }, '4': { code: 'NONE', home: '' },
-            '5': { code: 'B', home: 'A' }, '6': { code: 'EL', home: 'A' }, '7': { code: 'L', home: 'A' }, '8': { code: 'NONE', home: '' },
+            '5': { code: 'B', home: 'B' }, '6': { code: 'EL', home: 'A' }, '7': { code: 'L', home: 'A' }, '8': { code: 'NONE', home: '' },
             '9': { code: 'L', home: 'A' }, '10': { code: 'N', home: 'A' },
         },
-        's7': { // 田中 悠斗
-            '1': { code: 'NONE', home: '' }, '2': { code: 'L', home: 'A' }, '3': { code: 'C', home: 'A' }, '4': { code: 'A', home: 'A' },
-            '5': { code: 'A', home: 'A' }, '6': { code: 'B', home: 'A' }, '7': { code: 'A', home: 'A' }, '8': { code: 'B', home: 'A' },
-            '9': { code: 'EL', home: 'A' }, '10': { code: 'NONE', home: '' },
+        's7': { // 田中 悠斗 - 主にBホーム
+            '1': { code: 'NONE', home: '' }, '2': { code: 'L', home: 'B' }, '3': { code: 'C', home: 'B' }, '4': { code: 'A', home: 'B' },
+            '5': { code: 'A', home: 'C' }, '6': { code: 'B', home: 'B' }, '7': { code: 'A', home: 'B' }, '8': { code: 'B', home: 'B' },
+            '9': { code: 'EL', home: 'B' }, '10': { code: 'NONE', home: '' },
         },
-        's8': { // 村上 茉優
-            '1': { code: 'NONE', home: '' }, '2': { code: 'B', home: 'A' }, '3': { code: 'N', home: 'A' }, '4': { code: 'NONE', home: '' },
-            '5': { code: 'C', home: 'A' }, '6': { code: 'N', home: 'A' }, '7': { code: 'B', home: 'A' }, '8': { code: 'NONE', home: '' },
-            '9': { code: 'N', home: 'A' }, '10': { code: 'A', home: 'A' },
+        's8': { // 村上 茉優 - 主にCホーム
+            '1': { code: 'NONE', home: '' }, '2': { code: 'B', home: 'C' }, '3': { code: 'N', home: 'C' }, '4': { code: 'NONE', home: '' },
+            '5': { code: 'C', home: 'D' }, '6': { code: 'N', home: 'C' }, '7': { code: 'B', home: 'C' }, '8': { code: 'NONE', home: '' },
+            '9': { code: 'N', home: 'C' }, '10': { code: 'A', home: 'C' },
         },
-        's9': { // 佐藤 健太
+        's9': { // 佐藤 健太 - 主にDホーム
+            '1': { code: 'A', home: 'D' }, '2': { code: 'C', home: 'D' }, '3': { code: 'A', home: 'D' }, '4': { code: 'B', home: 'E' },
+            '5': { code: 'N', home: 'D' }, '6': { code: 'A', home: 'D' }, '7': { code: 'C', home: 'D' }, '8': { code: 'A', home: 'D' },
+            '9': { code: 'B', home: 'D' }, '10': { code: 'N', home: 'D' },
+        },
+        's10': { // 伊藤 愛美 - 主にEホーム
+            '1': { code: 'C', home: 'E' }, '2': { code: 'A', home: 'E' }, '3': { code: 'L', home: 'E' }, '4': { code: 'C', home: 'E' },
+            '5': { code: 'B', home: 'E' }, '6': { code: 'L', home: 'E' }, '7': { code: 'N', home: 'E' }, '8': { code: 'C', home: 'E' },
+            '9': { code: 'A', home: 'E' }, '10': { code: 'B', home: 'E' },
+        },
+        's11': { // 渡辺 翔太 - 主にAホーム
             '1': { code: 'A', home: 'A' }, '2': { code: 'C', home: 'A' }, '3': { code: 'A', home: 'A' }, '4': { code: 'B', home: 'A' },
-            '5': { code: 'N', home: 'A' }, '6': { code: 'A', home: 'A' }, '7': { code: 'C', home: 'A' }, '8': { code: 'A', home: 'A' },
-            '9': { code: 'B', home: 'A' }, '10': { code: 'N', home: 'A' },
+            '5': { code: 'N', home: 'A' }, '6': { code: 'A', home: 'A' }, '7': { code: 'C', home: 'A' }, '8': { code: 'L', home: 'A' },
+            '9': { code: 'A', home: 'A' }, '10': { code: 'C', home: 'A' },
         },
-        's10': { // 伊藤 愛美
+        's12': { // 中村 結衣 - 主にBホーム
+            '1': { code: 'B', home: 'B' }, '2': { code: 'A', home: 'B' }, '3': { code: 'C', home: 'B' }, '4': { code: 'N', home: 'B' },
+            '5': { code: 'B', home: 'B' }, '6': { code: 'A', home: 'B' }, '7': { code: 'L', home: 'B' }, '8': { code: 'C', home: 'B' },
+            '9': { code: 'A', home: 'B' }, '10': { code: 'B', home: 'B' },
+        },
+        's13': { // 加藤 海斗 - 主にCホーム
+            '1': { code: 'C', home: 'C' }, '2': { code: 'N', home: 'C' }, '3': { code: 'A', home: 'C' }, '4': { code: 'C', home: 'C' },
+            '5': { code: 'B', home: 'C' }, '6': { code: 'C', home: 'C' }, '7': { code: 'A', home: 'C' }, '8': { code: 'N', home: 'C' },
+            '9': { code: 'C', home: 'C' }, '10': { code: 'L', home: 'C' },
+        },
+        's14': { // 松本 優花 - 主にDホーム
+            '1': { code: 'A', home: 'D' }, '2': { code: 'C', home: 'D' }, '3': { code: 'B', home: 'D' }, '4': { code: 'A', home: 'D' },
+            '5': { code: 'L', home: 'D' }, '6': { code: 'C', home: 'D' }, '7': { code: 'A', home: 'D' }, '8': { code: 'B', home: 'D' },
+            '9': { code: 'N', home: 'D' }, '10': { code: 'A', home: 'D' },
+        },
+        's15': { // 木村 蓮 - 主にEホーム
+            '1': { code: 'L', home: 'E' }, '2': { code: 'C', home: 'E' }, '3': { code: 'A', home: 'E' }, '4': { code: 'C', home: 'E' },
+            '5': { code: 'A', home: 'E' }, '6': { code: 'B', home: 'E' }, '7': { code: 'C', home: 'E' }, '8': { code: 'A', home: 'E' },
+            '9': { code: 'L', home: 'E' }, '10': { code: 'N', home: 'E' },
+        },
+        's16': { // 林 七海 - 主にAホーム
             '1': { code: 'C', home: 'A' }, '2': { code: 'A', home: 'A' }, '3': { code: 'L', home: 'A' }, '4': { code: 'C', home: 'A' },
-            '5': { code: 'B', home: 'A' }, '6': { code: 'L', home: 'A' }, '7': { code: 'N', home: 'A' }, '8': { code: 'C', home: 'A' },
-            '9': { code: 'A', home: 'A' }, '10': { code: 'B', home: 'A' },
+            '5': { code: 'A', home: 'A' }, '6': { code: 'N', home: 'A' }, '7': { code: 'B', home: 'A' }, '8': { code: 'A', home: 'A' },
+            '9': { code: 'C', home: 'A' }, '10': { code: 'A', home: 'A' },
+        },
+        's17': { // 斉藤 陽向 - 主にBホーム
+            '1': { code: 'A', home: 'B' }, '2': { code: 'B', home: 'B' }, '3': { code: 'C', home: 'B' }, '4': { code: 'A', home: 'B' },
+            '5': { code: 'N', home: 'B' }, '6': { code: 'C', home: 'B' }, '7': { code: 'A', home: 'B' }, '8': { code: 'B', home: 'B' },
+            '9': { code: 'L', home: 'B' }, '10': { code: 'A', home: 'B' },
+        },
+        's18': { // 清水 さくら - 主にCホーム
+            '1': { code: 'B', home: 'C' }, '2': { code: 'C', home: 'C' }, '3': { code: 'A', home: 'C' }, '4': { code: 'L', home: 'C' },
+            '5': { code: 'C', home: 'C' }, '6': { code: 'A', home: 'C' }, '7': { code: 'N', home: 'C' }, '8': { code: 'C', home: 'C' },
+            '9': { code: 'B', home: 'C' }, '10': { code: 'A', home: 'C' },
+        },
+        's19': { // 山本 駿 - 主にDホーム
+            '1': { code: 'C', home: 'D' }, '2': { code: 'A', home: 'D' }, '3': { code: 'N', home: 'D' }, '4': { code: 'C', home: 'D' },
+            '5': { code: 'A', home: 'D' }, '6': { code: 'B', home: 'D' }, '7': { code: 'C', home: 'D' }, '8': { code: 'A', home: 'D' },
+            '9': { code: 'L', home: 'D' }, '10': { code: 'C', home: 'D' },
+        },
+        's20': { // 森 楓 - 主にEホーム
+            '1': { code: 'A', home: 'E' }, '2': { code: 'L', home: 'E' }, '3': { code: 'C', home: 'E' }, '4': { code: 'A', home: 'E' },
+            '5': { code: 'C', home: 'E' }, '6': { code: 'A', home: 'E' }, '7': { code: 'B', home: 'E' }, '8': { code: 'N', home: 'E' },
+            '9': { code: 'C', home: 'E' }, '10': { code: 'A', home: 'E' },
         },
     };
     
@@ -304,17 +364,27 @@ function renderSummaries(daysCount) { // daysCount は 10
     }
     dom.monthlySummary.innerHTML = monthlyHtml;
 
-    // 2. ホーム別月間合計 (右パネル) - 固定データ
-    const homeSummaryData = {
-        'Aホーム': '341日', 'Bホーム': '310日', 'Cホーム': '310日',
-        'Dホーム': '310日', 'Eホーム': '279日'
-    };
+    // 2. ホーム別月間合計 (右パネル) - 動的計算
+    const homeCounts = { A: 0, B: 0, C: 0, D: 0, E: 0 };
+    
+    // 全スタッフの全シフトをカウント
+    appState.staff.forEach(staff => {
+        const staffShifts = appState.shifts[staff.id] || {};
+        Object.values(staffShifts).forEach(shift => {
+            if (shift.home && shift.code !== 'NONE') {
+                homeCounts[shift.home] = (homeCounts[shift.home] || 0) + 1;
+            }
+        });
+    });
+    
     let homeHtml = '';
-    for (const [label, value] of Object.entries(homeSummaryData)) {
+    const homeLabels = { A: 'Aホーム', B: 'Bホーム', C: 'Cホーム', D: 'Dホーム', E: 'Eホーム' };
+    for (const [homeKey, label] of Object.entries(homeLabels)) {
+        const count = homeCounts[homeKey] || 0;
         homeHtml += `
-            <li class="summary-list-item">
+            <li class="summary-list-item home-summary-${homeKey.toLowerCase()}">
                 <span class="label">${label}</span>
-                <span class="value">${value}</span>
+                <span class="value">${count}日</span>
             </li>`;
     }
     dom.homeSummary.innerHTML = homeHtml;
