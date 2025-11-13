@@ -213,10 +213,10 @@ body {
 .shift-table th,
 .shift-table td {
     border: 1px solid var(--border-color);
-    padding: 0.35rem 0.5rem;
+    padding: 0.15rem 0.25rem; /* パディングを狭く */
     text-align: center;
     vertical-align: middle;
-    height: 44px; /* 10人表示時の高さ（元の値） */
+    height: 22px; /* 縦幅を半分に（旧:44px） */
 }
 
 .shift-table thead th {
@@ -257,8 +257,8 @@ body {
 /* シフトセルの中身 */
 .shift-code {
     font-weight: bold;
-    font-size: 1rem; /* 少し小さくして横並び時に収める */
-    line-height: 1.1;
+    font-size: 0.75rem; /* セルが狭いのでフォントサイズを小さく（旧:1rem） */
+    line-height: 1;
     display: inline-block; /* 縦並びから横並びにする */
     vertical-align: middle;
 }
@@ -423,6 +423,9 @@ body {
 /* ホーム別合計のスタイル */
 .home-summary-list .summary-list-item {
     padding: 0.65rem 0;
+    border-radius: 0.25rem;
+    margin: 0.25rem 0;
+    padding: 0.5rem;
 }
 
 .home-summary-list .summary-list-item .label {
@@ -431,6 +434,27 @@ body {
 
 .home-summary-list .summary-list-item .value {
     font-size: 1.125rem;
+}
+
+/* ホーム別月間合計の背景色（薄い透過色） */
+.home-summary-list .summary-list-item.home-summary-a {
+    background-color: rgba(255, 182, 193, 0.25); /* 薄いピンク */
+}
+
+.home-summary-list .summary-list-item.home-summary-b {
+    background-color: rgba(173, 216, 230, 0.25); /* 薄い青 */
+}
+
+.home-summary-list .summary-list-item.home-summary-c {
+    background-color: rgba(144, 238, 144, 0.25); /* 薄い緑 */
+}
+
+.home-summary-list .summary-list-item.home-summary-d {
+    background-color: rgba(255, 218, 185, 0.25); /* 薄いオレンジ */
+}
+
+.home-summary-list .summary-list-item.home-summary-e {
+    background-color: rgba(221, 160, 221, 0.25); /* 薄い紫 */
 }
 
 /* -------------------------
@@ -580,8 +604,8 @@ body {
 
     .shift-table th,
     .shift-table td {
-        padding: 0.25rem;
-        height: 40px; /* レスポンシブ時の高さ */
+        padding: 0.1rem;
+        height: 20px; /* レスポンシブ時も縦幅を半分に（旧:40px） */
     }
 }
 
