@@ -151,6 +151,9 @@ body {
     padding: 1rem 1.5rem;
     border-radius: var(--border-radius);
     box-shadow: var(--shadow);
+    position: sticky;
+    top: 0;
+    z-index: 100; /* 他の要素の上に表示 */
 }
 
 .back-link {
@@ -210,10 +213,10 @@ body {
 .shift-table th,
 .shift-table td {
     border: 1px solid var(--border-color);
-    padding: 0.35rem 0.5rem; /* 高さを狭めるために上下パディングを少なめに */
+    padding: 0.25rem 0.5rem; /* 高さをさらに狭めるためにパディング調整 */
     text-align: center;
     vertical-align: middle;
-    height: 44px; /* 行の高さを狭くする（旧:60px） */
+    height: 33px; /* 行の高さを0.75倍に（旧:44px） */
 }
 
 .shift-table thead th {
@@ -556,8 +559,8 @@ body {
 
     .shift-table th,
     .shift-table td {
-        padding: 0.25rem;
-        height: 40px; /* レスポンシブ時はさらに低くする */
+        padding: 0.2rem;
+        height: 30px; /* レスポンシブ時の高さを0.75倍に（旧:40px） */
     }
 }
 
