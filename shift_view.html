@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>シフト表管理システム</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        /* 左サイドバーを非表示にするための追加スタイル */
+        .sidebar-left {
+            display: none;
+        }
+
+        /* メインコンテンツの幅を調整 */
+        .app-container {
+            display: flex;
+            gap: 1.5rem;
+            max-width: 1800px;
+            margin: 0 auto;
+        }
+
+        .main-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            min-width: 0;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="edit-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>シフト編集</h2>
+                <span class="modal-close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>スタッフ名</label>
+                    <div id="modal-staff-name" class="form-value"></div>
+                </div>
+                <div class="form-group">
+                    <label>日付</label>
+                    <div id="modal-date" class="form-value"></div>
+                </div>
+                <div class="form-group">
+                    <label>シフトコード</label>
+                    <select id="modal-shift-code" class="form-control">
+                        <option value="NONE">未定</option>
+                        <option value="A">A（日勤：10時～19時）</option>
+                        <option value="B">B（夜勤：22時～7時）</option>
+                        <option value="C">C（遅番：13時～22時）</option>
+                        <option value="EL">EL（早朝：7時～10時）</option>
+                        <option value="N">N（公休）</option>
+                        <option value="L">L（有休）</option>
+                        <option value="SP">SP（特休）</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>ホーム</label>
+                    <select id="modal-home" class="form-control">
+                        <option value="A">Aホーム</option>
+                        <option value="B">Bホーム</option>
+                        <option value="C">Cホーム</option>
+                        <option value="D">Dホーム</option>
+                        <option value="E">Eホーム</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-cancel" id="modal-cancel-btn">キャンセル</button>
+                <button class="btn btn-save" id="modal-save-btn">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="app-container">
+
+        <!-- 非表示だが必要な要素を保持 -->
+        <nav class="sidebar-left">
+            <div class="form-group">
+                <label for="home-select">表示ホーム</label>
+                <select id="home-select">
+                    <option value="all">全体表示</option>
+                    <option value="A">Aホーム</option>
+                    <option value="B">Bホーム</option>
+                    <option value="C">Cホーム</option>
+                    <option value="D">Dホーム</option>
+                    <option value="E">Eホーム</option>
+                </select>
+            </div>
+
+            <h3>シフト要望</h3>
+            <ul class="shift-request-list" id="shift-request-list">
+            </ul>
+
+            <button class="btn btn-reflect-all" id="reflect-all-btn">すべて一括反映</button>
+        </nav>
+
+        <div class="main-wrapper">
+            <header class="app-header">
+                <a href="#" class="back-link">← 戻る</a>
+                <div class="date-selector">
+                    <select id="year-select">
+                        <option value="2024">2024</option>
+                        <option value="2025">2025</option>
+                        <option value="2026">2026</option>
+                    </select>
+                    <span>年</span>
+                    <select id="month-select">
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                        <option value="6">6</option>
+                        <option value="7">7</option>
+                        <option value="8">8</option>
+                        <option value="9">9</option>
+                        <option value="10">10</option>
+                        <option value="11">11</option>
+                        <option value="12">12</option>
+                    </select>
+                    <span>月</span>
+                </div>
+                <div style="width: 60px;"></div>
+            </header>
+
+            <main class="main-content">
+                <div class="shift-table-container">
+                    <table class="shift-table" id="shift-table">
+                        <thead id="shift-table-header">
+                            </thead>
+                        <tbody id="shift-table-body">
+                            </tbody>
+                    </table>
+                </div>
+
+                <h3 class="daily-summary-title">ホーム別日次集計</h3>
+                <div class="summary-table-container">
+                    <table class="summary-table" id="daily-summary-table">
+                        <tbody id="daily-summary-body">
+                            </tbody>
+                    </table>
+                </div>
+            </main>
+        </div>
+
+        <aside class="sidebar-right">
+            <div class="summary-card">
+                <div class="summary-card-header">
+                    月間集計
+                </div>
+                <div class="summary-card-body">
+                    <ul class="summary-list-group" id="monthly-summary">
+                        </ul>
+                </div>
+            </div>
+
+            <div class="summary-card">
+                <div class="summary-card-header">
+                    ホーム別月間合計
+                </div>
+                <div class="summary-card-body">
+                    <ul class="summary-list-group home-summary-list" id="home-summary">
+                        </ul>
+                </div>
+            </div>
+        </aside>
+
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

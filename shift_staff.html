@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>スタッフダッシュボード</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif;
+            background-color: #f5f5f5;
+            min-height: 100vh;
+        }
+        
+        /* ヘッダー */
+        header {
+            background: #fff;
+            border-bottom: 1px solid #e0e0e0;
+            padding: 16px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+        
+        .header-left h1 {
+            color: #333;
+            font-size: 20px;
+            font-weight: 600;
+        }
+        
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        /* 出勤入力ボタン */
+        .attendance-btn {
+            background: #4a90e2;
+            color: white;
+            border: 1px solid #4a90e2;
+            padding: 8px 16px;
+            font-family: 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border-radius: 4px;
+        }
+        
+        .attendance-btn:hover {
+            background: #357abd;
+            border-color: #357abd;
+        }
+        
+        /* プロフィールアイコン */
+        .profile-menu {
+            position: relative;
+        }
+        
+        .profile-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #e0e0e0;
+            border: 1px solid #ddd;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            transition: all 0.2s ease;
+        }
+        
+        .profile-icon:hover {
+            background-color: #d0d0d0;
+            border-color: #999;
+        }
+        
+        /* ドロップダウンメニュー */
+        .dropdown-menu {
+            display: none;
+            position: absolute;
+            top: 50px;
+            right: 0;
+            background-color: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            min-width: 160px;
+            z-index: 1000;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .dropdown-menu.show {
+            display: block;
+        }
+        
+        .dropdown-item {
+            padding: 12px 16px;
+            cursor: pointer;
+            border-bottom: 1px solid #f5f5f5;
+            transition: background-color 0.2s ease;
+            font-size: 14px;
+            color: #333;
+        }
+        
+        .dropdown-item:last-child {
+            border-bottom: none;
+        }
+        
+        .dropdown-item:hover {
+            background-color: #f5f5f5;
+        }
+        
+        /* メインコンテンツ */
+        main {
+            padding: 20px 40px;
+        }
+        
+        /* カレンダーコンテナ */
+        .calendar-container {
+            background-color: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            padding: 24px;
+            margin-top: 20px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+        
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .calendar-header h2 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .month-nav {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+        
+        .month-nav button {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-family: 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif;
+            font-size: 14px;
+            color: #333;
+            transition: all 0.2s ease;
+        }
+        
+        .month-nav button:hover {
+            background: #f5f5f5;
+            border-color: #999;
+        }
+        
+        .month-nav span {
+            font-size: 16px;
+            font-weight: 600;
+            min-width: 120px;
+            text-align: center;
+            color: #333;
+        }
+        
+        /* カレンダーグリッド */
+        .calendar {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .calendar-day {
+            border-right: 1px solid #e0e0e0;
+            border-bottom: 1px solid #e0e0e0;
+            min-height: 110px;
+            padding: 12px;
+            background-color: white;
+        }
+        
+        .calendar-day:nth-child(7n) {
+            border-right: none;
+        }
+        
+        .calendar-day-header {
+            background-color: #f8f8f8;
+            border-right: 1px solid #e0e0e0;
+            border-bottom: 1px solid #e0e0e0;
+            padding: 12px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 14px;
+            color: #333;
+        }
+        
+        .calendar-day-header:nth-child(7n) {
+            border-right: none;
+        }
+        
+        .day-number {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+        }
+        
+        .shift-info {
+            font-size: 12px;
+            font-weight: 500;
+            margin-top: 6px;
+            padding: 6px 8px;
+            text-align: center;
+            line-height: 1.4;
+            border-radius: 4px;
+            border: 1px solid;
+        }
+        
+        .shift-morning {
+            background-color: #fff3e0;
+            color: #e65100;
+            border-color: #ffb74d;
+        }
+        
+        .shift-afternoon {
+            background-color: #e0f7fa;
+            color: #006064;
+            border-color: #4dd0e1;
+        }
+        
+        .shift-allday {
+            background-color: #ede7f6;
+            color: #4527a0;
+            border-color: #9575cd;
+        }
+        
+        .today {
+            background-color: #fffde7;
+        }
+        
+        .sunday {
+            color: #d32f2f;
+        }
+        
+        .saturday {
+            color: #1976d2;
+        }
+        
+        .sunday .day-number {
+            color: #d32f2f;
+        }
+        
+        .saturday .day-number {
+            color: #1976d2;
+        }
+        
+        /* 凡例スタイル */
+        .legend {
+            display: flex;
+            gap: 20px;
+            margin-top: 20px;
+            padding: 16px;
+            background-color: #fafafa;
+            border-radius: 4px;
+            border: 1px solid #e0e0e0;
+            flex-wrap: wrap;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+        
+        .legend-color {
+            width: 50px;
+            height: 28px;
+            border-radius: 4px;
+            border: 1px solid;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 500;
+        }
+        
+        .legend-color.morning {
+            background-color: #fff3e0;
+            color: #e65100;
+            border-color: #ffb74d;
+        }
+        
+        .legend-color.afternoon {
+            background-color: #e0f7fa;
+            color: #006064;
+            border-color: #4dd0e1;
+        }
+        
+        .legend-color.allday {
+            background-color: #ede7f6;
+            color: #4527a0;
+            border-color: #9575cd;
+        }
+        
+        .legend-label {
+            color: #333;
+            font-weight: 500;
+        }
+        
+        /* レスポンシブ対応 */
+        @media screen and (max-width: 1024px) {
+            header {
+                padding: 14px 30px;
+            }
+            
+            .header-left h1 {
+                font-size: 18px;
+            }
+            
+            main {
+                padding: 20px 30px;
+            }
+            
+            .calendar-day {
+                min-height: 100px;
+                padding: 10px;
+            }
+            
+            .calendar-container {
+                padding: 20px;
+            }
+        }
+        
+        @media screen and (max-width: 768px) {
+            header {
+                padding: 12px 20px;
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+            
+            .header-left h1 {
+                font-size: 18px;
+            }
+            
+            .header-right {
+                gap: 10px;
+            }
+            
+            .attendance-btn {
+                padding: 7px 14px;
+                font-size: 13px;
+            }
+            
+            .profile-icon {
+                width: 36px;
+                height: 36px;
+                font-size: 18px;
+            }
+            
+            main {
+                padding: 16px 20px;
+            }
+            
+            .calendar-container {
+                padding: 16px;
+            }
+            
+            .calendar-header {
+                flex-direction: column;
+                gap: 12px;
+                align-items: flex-start;
+            }
+            
+            .calendar-header h2 {
+                font-size: 16px;
+            }
+            
+            .month-nav {
+                width: 100%;
+                justify-content: space-between;
+            }
+            
+            .month-nav button {
+                padding: 6px 12px;
+                font-size: 13px;
+            }
+            
+            .month-nav span {
+                font-size: 15px;
+            }
+            
+            .calendar-day {
+                min-height: 90px;
+                padding: 8px;
+            }
+            
+            .day-number {
+                font-size: 15px;
+            }
+            
+            .shift-info {
+                font-size: 11px;
+                padding: 5px 6px;
+            }
+            
+            .calendar-day-header {
+                padding: 10px;
+                font-size: 13px;
+            }
+        }
+        
+        @media screen and (max-width: 480px) {
+            header {
+                padding: 10px 16px;
+            }
+            
+            .header-left h1 {
+                font-size: 16px;
+            }
+            
+            .header-right {
+                gap: 8px;
+            }
+            
+            .attendance-btn {
+                padding: 6px 12px;
+                font-size: 12px;
+            }
+            
+            .profile-icon {
+                width: 34px;
+                height: 34px;
+                font-size: 16px;
+            }
+            
+            .dropdown-menu {
+                min-width: 140px;
+            }
+            
+            .dropdown-item {
+                padding: 10px 14px;
+                font-size: 13px;
+            }
+            
+            main {
+                padding: 12px 16px;
+            }
+            
+            .calendar-container {
+                padding: 14px;
+            }
+            
+            .legend {
+                gap: 12px;
+                padding: 12px;
+            }
+            
+            .legend-item {
+                font-size: 12px;
+                gap: 6px;
+            }
+            
+            .legend-color {
+                width: 45px;
+                height: 26px;
+                font-size: 10px;
+            }
+            
+            .calendar-header h2 {
+                font-size: 15px;
+            }
+            
+            .month-nav span {
+                font-size: 14px;
+            }
+            
+            .month-nav button {
+                padding: 6px 10px;
+                font-size: 12px;
+            }
+            
+            .calendar-day {
+                min-height: 80px;
+                padding: 6px;
+            }
+            
+            .calendar-day-header {
+                padding: 8px;
+                font-size: 12px;
+            }
+            
+            .day-number {
+                font-size: 14px;
+            }
+            
+            .shift-info {
+                font-size: 10px;
+                padding: 4px 5px;
+                line-height: 1.3;
+            }
+        }
+        
+        /* 極小画面 */
+        @media screen and (max-width: 360px) {
+            .header-left h1 {
+                font-size: 15px;
+            }
+            
+            .attendance-btn {
+                padding: 5px 10px;
+                font-size: 11px;
+            }
+            
+            .calendar-day {
+                min-height: 70px;
+                padding: 5px;
+            }
+            
+            .day-number {
+                font-size: 13px;
+            }
+            
+            .shift-info {
+                font-size: 9px;
+                padding: 3px 4px;
+            }
+            
+            .calendar-day-header {
+                padding: 6px;
+                font-size: 11px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-left">
+            <h1>スタッフダッシュボード</h1>
+        </div>
+        <div class="header-right">
+            <button class="attendance-btn" onclick="goToAttendance()">出勤入力</button>
+            <div class="profile-menu">
+                <div class="profile-icon" onclick="toggleDropdown()">👤</div>
+                <div class="dropdown-menu" id="dropdownMenu">
+                    <div class="dropdown-item" onclick="viewProfile()">プロフィール確認</div>
+                    <div class="dropdown-item" onclick="logout()">ログアウト</div>
+                </div>
+            </div>
+        </div>
+    </header>
+    
+    <main>
+        <div class="calendar-container">
+            <div class="calendar-header">
+                <h2>マイシフト</h2>
+                <div class="month-nav">
+                    <button onclick="prevMonth()">◀ 前月</button>
+                    <span id="currentMonth">2025年10月</span>
+                    <button onclick="nextMonth()">次月 ▶</button>
+                </div>
+            </div>
+            
+            <div class="calendar">
+                <div class="calendar-day-header sunday">日</div>
+                <div class="calendar-day-header">月</div>
+                <div class="calendar-day-header">火</div>
+                <div class="calendar-day-header">水</div>
+                <div class="calendar-day-header">木</div>
+                <div class="calendar-day-header">金</div>
+                <div class="calendar-day-header saturday">土</div>
+                
+                <!-- 10月のカレンダー（1日は水曜日から） -->
+                <div class="calendar-day"></div>
+                <div class="calendar-day"></div>
+                <div class="calendar-day">
+                    <div class="day-number">1</div>
+                    <div class="shift-info shift-allday">終日勤務<br>9:00-18:00</div>
+                </div>
+                <div class="calendar-day">
+                    <div class="day-number">2</div>
+                    <div class="shift-info shift-morning">午前<br>9:00-13:00</div>
+                </div>
+                <div class="calendar-day">
+                    <div class="day-number">3</div>
+                    <div class="shift-info shift-afternoon">午後<br>14:00-18:00</div>
+                </div>
+                <div class="calendar-day">
+                    <div class="day-number">4</div>
+                    <div class="shift-info shift-allday">終日勤務<br>9:00-18:00</div>
+                </div>
+                <div class="calendar-day saturday">
+                    <div class="day-number">5</div>
+                </div>
+                
+                <div class="calendar-day sunday">
+                    <div class="day-number">6</div>
+                </div>
+                <div class="calendar-day">
+                    <div class="day-number">7</div>
+                    <div class="shift-info shift-allday">終日勤務<br>9:00-18:00</div>
+                </div>
+                <div class="calendar-day">
+                    <div class="day-number">8</div>
+                    <div class="shift-info shift-morning">午前<br>9:00-13:00</div>
+                </div>
+                <div class="calendar-day">
+                    <div class="day-number">9</div>
+                    <div class="shift-info shift-afternoon">午後<br>14:00-18:00</div>
+                </div>
+                <div class="calendar-day">
+                    <div class="day-number">10</div>
+                    <div class="shift-info shift-allday">終日勤務<br>9:00-18:00</div>
+                </div>
+                <div class="calendar-day">
+                    <div class="day-number">11</div>
+                    <div class="shift-info shift-morning">午前<br>9:00-13:00</div>
+                </div>
+                <div class="calendar-day saturday">
+                    <div class="day-number">12</div>
+                </div>
+                
+                <div class="calendar-day sunday">
+                    <div class="day-number">13</div>
+                </div>
+                <div class="calendar-day">
+                    <div class="day-number">14</div>
+                    <div class="shift-info shift-allday">終日勤務<br>9:00-18:00</div>
+                </div>
+                <div class="calendar-day">
+                    <div class="day-number">15</div>
+                    <div class="shift-info shift-afternoon">午後<br>14:00-18:00</div>
+                </div>
+                <div class="calendar-day">
+                    <div class="day-number">16</div>
+                    <div class="shift-info shift-allday">終日勤務<br>9:00-18:00</div>
+                </div>
+                <div class="calendar-day">
+                    <div class="day-number">17</div>
+                    <div class="shift-info shift-morning">午前<br>9:00-13:00</div>
+                </div>
+                <div class="calendar-day">
+                    <div class="day-number">18</div>
+                    <div class="shift-info shift-afternoon">午後<br>14:00-18:00</div>
+                </div>
+                <div class="calendar-day saturday">
+                    <div class="day-number">19</div>
+                </div>
+                
+                <div class="calendar-day sunday today">
+                    <div class="day-number">20</div>
+                </div>
+                <div class="calendar-day">
+                    <div class="day-number">21</div>
+                    <div class="shift-info shift-allday">終日勤務<br>9:00-18:00</div>
+                </div>
+                <div class="calendar-day">
+                    <div class="day-number">22</div>
+                    <div class="shift-info shift-morning">午前<br>9:00-13:00</div>
+                </div>
+                <div class="calendar-day">
+                    <div class="day-number">23</div>
+                    <div class="shift-info shift-afternoon">午後<br>14:00-18:00</div>
+                </div>
+                <div class="calendar-day">
+                    <div class="day-number">24</div>
+                    <div class="shift-info shift-allday">終日勤務<br>9:00-18:00</div>
+                </div>
+                <div class="calendar-day">
+                    <div class="day-number">25</div>
+                    <div class="shift-info shift-morning">午前<br>9:00-13:00</div>
+                </div>
+                <div class="calendar-day saturday">
+                    <div class="day-number">26</div>
+                </div>
+                
+                <div class="calendar-day sunday">
+                    <div class="day-number">27</div>
+                </div>
+                <div class="calendar-day">
+                    <div class="day-number">28</div>
+                    <div class="shift-info shift-allday">終日勤務<br>9:00-18:00</div>
+                </div>
+                <div class="calendar-day">
+                    <div class="day-number">29</div>
+                    <div class="shift-info shift-afternoon">午後<br>14:00-18:00</div>
+                </div>
+                <div class="calendar-day">
+                    <div class="day-number">30</div>
+                    <div class="shift-info shift-allday">終日勤務<br>9:00-18:00</div>
+                </div>
+                <div class="calendar-day">
+                    <div class="day-number">31</div>
+                    <div class="shift-info shift-morning">午前<br>9:00-13:00</div>
+                </div>
+            </div>
+            
+            <!-- 凡例 -->
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color morning">午前</div>
+                    <span class="legend-label">午前勤務</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color afternoon">午後</div>
+                    <span class="legend-label">午後勤務</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color allday">終日</div>
+                    <span class="legend-label">終日勤務</span>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <script>
+        // ドロップダウンメニューの表示切替
+        function toggleDropdown() {
+            const menu = document.getElementById('dropdownMenu');
+            menu.classList.toggle('show');
+        }
+        
+        // メニュー外をクリックしたら閉じる
+        window.onclick = function(event) {
+            if (!event.target.matches('.profile-icon')) {
+                const dropdowns = document.getElementsByClassName('dropdown-menu');
+                for (let i = 0; i < dropdowns.length; i++) {
+                    const openDropdown = dropdowns[i];
+                    if (openDropdown.classList.contains('show')) {
+                        openDropdown.classList.remove('show');
+                    }
+                }
+            }
+        }
+        
+        // プロフィール確認
+        function viewProfile() {
+            alert('プロフィール画面に移動します');
+            // 実際の実装では、プロフィールページへ遷移
+        }
+        
+        // ログアウト
+        function logout() {
+            if (confirm('ログアウトしますか?')) {
+                alert('ログアウトしました');
+                // 実際の実装では、ログアウト処理とログイン画面への遷移
+            }
+        }
+        
+        // 出勤入力画面へ
+        function goToAttendance() {
+            alert('出勤入力画面に移動します');
+            // 実際の実装では、出勤入力フォームへ遷移
+        }
+        
+        // 月の切り替え
+        function prevMonth() {
+            alert('前月のシフトを表示します');
+            // 実際の実装では、前月のデータを取得して表示
+        }
+        
+        function nextMonth() {
+            alert('次月のシフトを表示します');
+            // 実際の実装では、次月のデータを取得して表示
+        }
+    </script>
+</body>
+</html>
