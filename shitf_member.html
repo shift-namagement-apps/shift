@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>スタッフ管理</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif;
+            background: #f5f5f5;
+            min-height: 100vh;
+        }
+
+        /* ヘッダー */
+        .header {
+            background: #fff;
+            border-bottom: 1px solid #e0e0e0;
+            padding: 16px 40px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .back-button {
+            padding: 8px 16px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: white;
+            cursor: pointer;
+            font-size: 14px;
+            color: #333;
+            transition: all 0.2s ease;
+        }
+
+        .back-button:hover {
+            background: #f5f5f5;
+            border-color: #999;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        /* メインコンテンツ */
+        .container {
+            max-width: 1000px;
+            margin: 40px auto;
+            padding: 0 40px;
+        }
+
+        /* ページタイトル */
+        .page-title {
+            color: #333;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        /* アクションバー */
+        .action-bar {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 24px;
+        }
+
+        .add-button {
+            padding: 10px 20px;
+            background: #4a90e2;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .add-button:hover {
+            background: #357abd;
+        }
+
+        /* スタッフリスト */
+        .staff-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        /* スタッフカード */
+        .staff-card {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            padding: 20px 24px;
+            display: grid;
+            grid-template-columns: 2fr 2fr 1.5fr 200px;
+            align-items: center;
+            gap: 24px;
+            transition: all 0.2s ease;
+        }
+
+        .staff-card:hover {
+            border-color: #4a90e2;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        /* スタッフ情報の各フィールド */
+        .staff-name,
+        .staff-id,
+        .staff-status {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .field-label {
+            font-size: 12px;
+            color: #777;
+            font-weight: 500;
+        }
+
+        .field-value {
+            font-size: 16px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        /* ステータスバッジ */
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 600;
+            width: fit-content;
+        }
+
+        .status-badge.admin {
+            background-color: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .status-badge.employee {
+            background-color: #f3e5f5;
+            color: #7b1fa2;
+        }
+
+        /* アクションボタングループ */
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+        }
+
+        /* 編集ボタン */
+        .edit-button {
+            padding: 8px 16px;
+            background: white;
+            color: #4a90e2;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .edit-button:hover {
+            background: #4a90e2;
+            color: white;
+            border-color: #4a90e2;
+        }
+
+        /* 削除ボタン */
+        .delete-button {
+            padding: 8px 16px;
+            background: white;
+            color: #d32f2f;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .delete-button:hover {
+            background: #d32f2f;
+            color: white;
+            border-color: #d32f2f;
+        }
+
+        /* レスポンシブ対応 */
+        @media (max-width: 768px) {
+            .header {
+                padding: 16px 20px;
+            }
+
+            .header h1 {
+                font-size: 18px;
+            }
+
+            .container {
+                margin: 24px auto;
+                padding: 0 20px;
+            }
+
+            .staff-card {
+                grid-template-columns: 1fr;
+                gap: 16px;
+                padding: 16px 20px;
+            }
+
+            .action-buttons {
+                width: 100%;
+            }
+
+            .edit-button,
+            .delete-button {
+                flex: 1;
+            }
+
+            .add-button {
+                width: 100%;
+            }
+        }
+
+        /* 空の状態 */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+        }
+
+        .empty-state p {
+            font-size: 14px;
+            margin-top: 8px;
+        }
+    </style>
+</head>
+<body>
+    <!-- ヘッダー -->
+    <div class="header">
+        <button class="back-button">← 戻る</button>
+        <h1>スタッフ管理</h1>
+    </div>
+
+    <!-- メインコンテンツ -->
+    <div class="container">
+        <!-- ページタイトル -->
+        <div class="page-title"><center>登録スタッフ一覧</div>
+
+        <!-- アクションバー -->
+        <div class="action-bar">
+            <button class="add-button">+ スタッフを追加</button>
+        </div>
+
+        <!-- スタッフリスト -->
+        <div class="staff-list">
+            <!-- スタッフカード1 -->
+            <div class="staff-card">
+                <div class="staff-name">
+                    <span class="field-label">人名</span>
+                    <span class="field-value">ヤマダ タロウ</span>
+                </div>
+                <div class="staff-id">
+                    <span class="field-label">ID</span>
+                    <span class="field-value">ST-001</span>
+                </div>
+                <div class="staff-status">
+                    <span class="field-label">ステータス</span>
+                    <span class="status-badge admin">管理者</span>
+                </div>
+                <div class="action-buttons">
+                    <button class="edit-button">編集</button>
+                    <button class="delete-button">削除</button>
+                </div>
+            </div>
+
+            <!-- スタッフカード2 -->
+            <div class="staff-card">
+                <div class="staff-name">
+                    <span class="field-label">人名</span>
+                    <span class="field-value">サトウ ハナコ</span>
+                </div>
+                <div class="staff-id">
+                    <span class="field-label">ID</span>
+                    <span class="field-value">ST-002</span>
+                </div>
+                <div class="staff-status">
+                    <span class="field-label">ステータス</span>
+                    <span class="status-badge employee">従業員</span>
+                </div>
+                <div class="action-buttons">
+                    <button class="edit-button">編集</button>
+                    <button class="delete-button">削除</button>
+                </div>
+            </div>
+
+            <!-- スタッフカード3 -->
+            <div class="staff-card">
+                <div class="staff-name">
+                    <span class="field-label">人名</span>
+                    <span class="field-value">スズキ イチロウ</span>
+                </div>
+                <div class="staff-id">
+                    <span class="field-label">ID</span>
+                    <span class="field-value">ST-003</span>
+                </div>
+                <div class="staff-status">
+                    <span class="field-label">ステータス</span>
+                    <span class="status-badge employee">従業員</span>
+                </div>
+                <div class="action-buttons">
+                    <button class="edit-button">編集</button>
+                    <button class="delete-button">削除</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
