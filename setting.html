@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>出勤簿設定</title>
+
+    <style>
+
+.title{
+        text-align: center;
+        font-size: 35px; 
+        font-weight: bold;
+        margin-left: 40px;
+    }
+
+    .option{
+        font-size: 15px;
+        padding: 10px;
+        display: flex;
+        text-align: center;
+        flex-direction: column;
+        align-items: center;  
+        white-space: nowrap;   
+    }
+
+    th {
+        border-collapse: separate;
+        padding:10px 30px;
+        color: white;;
+        margin-right: 20px;
+        padding-right: 30px;
+    }
+
+    .bikou-div{
+        background-color: #413f3f;
+        border-radius: 6px; 
+        padding: 10px 20px 20px 20px;
+        margin-top: 40px;
+
+
+    }
+
+    .home{
+        color: white;
+        padding: 10px;
+        border-radius: 6px;      
+    }
+
+        .bikou{
+        color: white;
+        padding: 10px;
+        border-radius: 6px;      
+    }
+
+    .home-div {
+        background-color: #413f3f;
+        border-radius: 6px; 
+        padding: 10px 20px 20px 20px;
+    }
+
+
+input[type="button"], 
+input[type="submit"], 
+input[type="reset"] {
+    background-color: transparent;       
+    color: white;
+    font-weight: bold ;   
+    border-radius: 6px; 
+    margin: 5px;
+    padding: 7px 20px;
+    background-color: #333;
+    font-size: 15px;   
+    -webkit-appearance: none;
+    appearance: none;
+    background-image: none;
+    box-shadow: none;
+    border: none;
+}
+
+
+    input[type="button"]:hover, 
+    input[type="submit"]:hover, 
+    input[type="reset"]:hover {
+    background-color: transparent;      
+    color: white;
+    font-weight: bold ;   
+    border-radius: 6px; 
+    margin: 5px;
+    padding: 7px 20px;
+    background-color: #575757;  
+    font-size: 15px;   
+    }
+
+    .home-table {
+        background-color: #757575;
+        padding-right: 30px;
+        border-radius: 10px; 
+        padding: 10px;
+        padding-left: 0px;
+    } 
+    
+    .bikou-table {
+        background-color: #757575;
+        padding-right: 30px;
+        border-radius: 10px; 
+        padding: 10px;
+        padding-left: 0px;
+        margin-top: 20px;
+    }  
+    
+      header {
+    display: flex;
+    align-items: center;           
+    padding: 25px 20px;
+    margin-bottom:50px;
+    border-bottom: 1px solid #7e7d7d;  
+      }
+
+        .back {
+    font-size: 12px;
+    padding: 5px 10px;
+    cursor: pointer;
+    background: none;
+    border: 1px solid #000;
+    border-radius: 4px;
+    font-style: normal;
+    text-decoration: none;
+    color: black;
+    font-weight: bold;
+  }
+
+
+  @media screen and (min-width: 768px) {
+
+      .title{
+        text-align: center;
+        font-size: 40px; 
+        font-weight: bold;
+        margin-left: 20px;
+    }
+
+    .option{
+        font-size: 20px;
+        padding: 10px;
+        display: flex;
+        text-align: center;
+        flex-direction: column;
+        align-items: center;    
+    }
+
+    th {
+        border-collapse: separate;
+        padding:10px 30px;
+        color: white;;
+        margin-right: 20px;
+        padding-right: 80px;
+        font-size: 30px;
+    }
+
+
+    .bikou{
+        color: white;
+        padding: 10px;
+        border-radius: 6px; 
+    }
+
+    .bikou-div{
+        background-color: #413f3f;
+        border-radius: 6px; 
+        padding: 10px 20px 20px 20px;
+        margin-top: 0px;
+
+    }
+
+    .home{
+
+        color: white;
+        padding: 10px;
+        border-radius: 6px;      
+    }
+
+    .home-div {
+        background-color: #413f3f;
+        border-radius: 6px; 
+        padding: 10px 20px 20px 20px;
+    }
+
+
+
+  .back {
+    font-size: 20px;
+    padding: 5px 10px;
+    cursor: pointer;
+    background: none;
+    border: 1px solid #000;
+    border-radius: 4px;
+    font-style: normal;
+    text-decoration: none;
+    color: black;
+    font-weight: bold;
+  }
+
+    .back:hover {
+    font-size: 20px;
+    padding: 5px 10px;
+    cursor: pointer;
+    background: none;
+    border: 1px solid #000;
+    border-radius: 4px;
+    font-style: normal;
+    text-decoration: none;
+    color: #807e7e;
+    font-weight: bold;
+  }
+
+
+input[type="button"], 
+input[type="submit"], 
+input[type="reset"] {
+    background-color: transparent;       
+    color: white;
+    font-weight: bold ;   
+    border-radius: 6px; 
+    margin: 10px;
+    padding: 7px 20px;
+    background-color: #333;
+    font-size: 20px;   
+    -webkit-appearance: none;
+    appearance: none;
+    background-image: none;
+    box-shadow: none;
+    border: none;
+}
+
+
+    input[type="button"]:hover, 
+    input[type="submit"]:hover, 
+    input[type="reset"]:hover {
+    background-color: transparent;      
+    color: white;
+    font-weight: bold ;   
+    border-radius: 6px; 
+    margin: 10px;
+    padding: 7px 20px;
+    background-color: #575757;  
+    font-size: 20px;   
+    }
+
+    .home-table {
+        background-color: #757575;
+        padding-right: 30px;
+        border-radius: 10px; 
+        padding: 20px;
+        padding-left: 60px;
+    }
+
+    .bikou-table {
+        background-color: #757575;
+        padding-right: 30px;
+        border-radius: 10px; 
+        padding: 20px;
+        padding-left: 60px;
+        margin-top: 0px;
+    }
+
+    .all-div {
+    border-collapse: collapse;
+    display: flex;        
+    gap: 40px;            
+    justify-content: center; 
+    }
+
+  header {
+    display: flex;
+    align-items: center;           
+    padding: 25px 20px;
+    margin-bottom:50px;
+    border-bottom: 1px solid #7e7d7d;  
+  }
+  }
+
+
+    </style>
+</head>
+<body>
+ <header>
+    <a href="" class="back">←戻る</a>
+    <div class="title">設定画面</div>
+ </header>
+    <form action="" class="option">
+         <div class="all-div">
+            <div class="home-div">
+            <h2 class="home">ホーム管理</h2>
+            <table class="home-table">
+                <th class="th1">ホームの追加</th>
+                <td class="td">
+                    <input class="tuika" type="submit" value="追加">
+                </td>
+            </tr>
+            <tr>
+                <th>Aホーム</th>
+                <td class="td">
+                    <input class="A-eturan" type="submit" value="閲覧">
+                    <input class="A-syoukyo" type="submit" value="消去">
+                </td>
+            </tr>
+            <tr>
+                <th>Bホーム</th>
+                <td class="td">
+                    <input class="B-eturan" type="submit" value="閲覧">
+                    <input class="B-syoukyo" type="submit" value="消去">
+                </td>
+            </tr>
+            <tr>
+                <th>Cホーム</th>
+                <td class="td">
+                    <input class="C-eturan" type="submit" value="閲覧">
+                    <input class="C-syoukyo" type="submit" value="消去">
+                </td>
+            </tr>
+            <tr>
+                <th>Dホーム</th>
+                <td class="td">
+                    <input class="D-eturan" type="submit" value="閲覧">
+                    <input class="D-syoukyo" type="submit" value="消去">
+                </td>
+            </tr>
+            <tr>
+                <th>Eホーム</th>
+                <td class="td">
+                    <input class="E-eturan" type="submit" value="閲覧">
+                    <input class="E-syoukyo" type="submit" value="消去">
+                </td>
+            </tr>
+            </table>
+        </div>
+            <div class="bikou-div">
+                    <h2 class="bikou">備考欄テンプレート管理</h2> 
+            <table class="bikou-table">
+                <th>備考欄に文章を追加</th>
+                <td class="td">
+                    <input class="bikou-tuika" type="submit" value="文章を追加">
+                </td>
+            </tr>
+            <tr>
+                <th>備考1</th>
+                <td class="td">
+                    <input class="bikou1-syoukyo" type="submit" value="消去">
+                </td>
+            </tr>
+            <tr>
+                <th>備考2</th>
+                <td class="td">
+                    <input class="bikou2-syoukyo" type="submit" value="消去">
+                </td>
+            </tr>
+            <tr>
+                <th>備考3</th>
+                <td class="td">
+                    <input class="bikou3-syoukyo" type="submit" value="消去">
+                </td>
+            </tr>
+            <tr>
+                <th>備考4</th>
+                <td class="td">
+                    <input class="bikou4-syoukyo" type="submit" value="消去">
+                </td>
+            </tr>
+            <tr>
+                <th>備考5</th>
+                <td class="td">
+                    <input class="bikou5-syoukyo" type="submit" value="消去">
+                </td>
+            </tr>
+        </table>
+        </div>
+        </div>
+    </form>    
+</body>
+</html>
