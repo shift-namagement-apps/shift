@@ -6,13 +6,14 @@
 const API_CONFIG = {
   // 開発環境（ローカル）
   development: {
-    apiBaseUrl: 'http://localhost:8080'
+    apiBaseUrl: 'http://localhost:8080',
+    basePath: '/'
   },
   
-  // 本番環境（Cloud Run）
+  // 本番環境（Cloud Run + GitHub Pages）
   production: {
-    // ⚠️ デプロイ後に、ここをCloud RunのURLに変更してください
-    apiBaseUrl: 'https://shift-namagement-apps-27faqfacya-an.a.run.app'
+    apiBaseUrl: 'https://shift-namagement-apps-27faqfacya-an.a.run.app',
+    basePath: '/shift/'  // GitHub Pagesのリポジトリ名
   }
 };
 
@@ -24,9 +25,11 @@ const currentEnv = (window.location.hostname === 'localhost' ||
 
 // APIベースURL
 const API_BASE_URL = API_CONFIG[currentEnv].apiBaseUrl;
+const BASE_PATH = API_CONFIG[currentEnv].basePath;
 
 console.log(`🌐 環境: ${currentEnv}`);
 console.log(`🔗 API URL: ${API_BASE_URL}`);
+console.log(`📂 Base Path: ${BASE_PATH}`);
 
 /**
  * APIリクエストのヘルパー関数
@@ -136,5 +139,5 @@ const API = {
 
 // グローバルスコープに公開
 window.API_BASE_URL = API_BASE_URL;
+window.BASE_PATH = BASE_PATH;
 window.API = API;
-
