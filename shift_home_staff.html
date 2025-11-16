@@ -225,15 +225,20 @@
         <p>© 2025 シフト管理システム</p>
     </div>
 
+    <!-- API設定を先に読み込む -->
+    <script src="config.js"></script>
+    <!-- 認証スクリプト -->
+    <script src="auth.js"></script>
+    
     <script>
+        // ページ読み込み時にユーザー情報を表示
+        document.addEventListener('DOMContentLoaded', () => {
+            displayUserInfo();
+        });
+        
+        // ログアウト処理（auth.jsのhandleLogoutを使用）
         function logout() {
-            if (confirm('ログアウトしますか？')) {
-                // ログアウト処理
-                localStorage.removeItem('authToken');
-                localStorage.removeItem('userId');
-                // ログイン画面にリダイレクト
-                window.location.href = 'shift_login.html';
-            }
+            handleLogout();
         }
     </script>
 </body>
