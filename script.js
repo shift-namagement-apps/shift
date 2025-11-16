@@ -23,11 +23,191 @@ const SHIFT_CODES = {
 
 console.log('シフト表アプリケーション初期化中 (高再現度モード)...');
 
+// --- ページルーティング設定 ---------------------------------
+const PAGE_CONFIG = {
+    // 認証不要のページ（index.htmlがログイン画面）
+    public: ['index.html'],
+    
+    // 管理者専用ページ
+    adminOnly: [
+        'shift_home_admin.html',
+        'shift_staff.html',
+        'shitf_member.html',
+        'setting.html',
+        'shift_create.html'  // シフト作成は管理者専用
+    ],
+    
+    // スタッフ用ページ
+    staffPages: [
+        'shift_home_staff.html',
+        'shift_submission.html',
+        'shift_view.html'
+    ],
+
+    // ページ遷移マップ（画面名と説明）
+    pageMap: {
+        'index.html': { name: 'ログイン', requiresAuth: false },
+        'shift_home_admin.html': { name: '管理者ホーム', requiresAuth: true, adminOnly: true },
+        'shift_home_staff.html': { name: 'スタッフホーム', requiresAuth: true },
+        'shift_staff.html': { name: 'シフト管理', requiresAuth: true, adminOnly: true },
+        'shift_create.html': { name: 'シフト作成', requiresAuth: true, adminOnly: true },
+        'shift_view.html': { name: 'シフト閲覧', requiresAuth: true },
+        'shift_submission.html': { name: 'シフト提出', requiresAuth: true },
+        'shitf_member.html': { name: 'メンバー管理', requiresAuth: true, adminOnly: true },
+        'setting.html': { name: '設定', requiresAuth: true, adminOnly: true }
+    },
+
+    // 条件付きページ遷移の例
+    canNavigate(fromPage, toPage, userRole) {
+        const targetPage = this.pageMap[toPage];
+        
+        if (!targetPage) {
+            console.error('❌ 不明なページ:', toPage);
+            return false;
+        }
+
+        // 認証が必要なページ
+        if (targetPage.requiresAuth && !userRole) {
+            console.warn('⚠️ 認証が必要です');
+            return false;
+        }
+
+        // 管理者専用ページ
+        if (targetPage.adminOnly && userRole !== 'admin') {
+            console.warn('⚠️ 管理者権限が必要です');
+            return false;
+        }
+
+        return true;
+    }
+};
+
+// --- ページ遷移ヘルパー --------------------------------------
+const PageRouter = {
+    /**
+     * 現在のページ名を取得
+     */
+    getCurrentPage() {
+        const path = window.location.pathname;
+        const filename = path.substring(path.lastIndexOf('/') + 1);
+        return filename || 'index.html';
+    },
+
+    /**
+     * ページ遷移を実行
+     */
+    navigate(pageName) {
+        console.log(`📄 ページ遷移: ${pageName}`);
+        window.location.href = pageName;
+    },
+
+    /**
+     * 条件付きページ遷移（権限チェック付き）
+     */
+    navigateWithCheck(pageName) {
+        const currentPage = this.getCurrentPage();
+        let userRole = null;
+
+        // ユーザーロールを取得
+        if (typeof AUTH !== 'undefined') {
+            userRole = AUTH.isAdmin() ? 'admin' : 'staff';
+        }
+
+        // 遷移可能かチェック
+        if (PAGE_CONFIG.canNavigate(currentPage, pageName, userRole)) {
+            this.navigate(pageName);
+        } else {
+            alert('このページにアクセスする権限がありません');
+        }
+    },
+
+    /**
+     * 認証状態に基づいてページアクセスを制御
+     */
+    async checkPageAccess() {
+        const currentPage = this.getCurrentPage();
+        
+        // 公開ページは認証不要
+        if (PAGE_CONFIG.public.includes(currentPage)) {
+            console.log('✅ 公開ページ:', currentPage);
+            return true;
+        }
+
+        // AUTH オブジェクトが利用可能かチェック
+        if (typeof AUTH === 'undefined') {
+            console.warn('⚠️ AUTH未定義: ログインページへリダイレクト');
+            this.navigate('index.html');
+            return false;
+        }
+
+        // 認証チェック
+        const isAuthenticated = await AUTH.verifyToken();
+        if (!isAuthenticated) {
+            console.warn('⚠️ 未認証: ログインページへリダイレクト');
+            this.navigate('index.html');
+            return false;
+        }
+
+        // ロール別アクセス制御
+        const isAdmin = AUTH.isAdmin();
+        
+        // 管理者専用ページのチェック
+        if (PAGE_CONFIG.adminOnly.includes(currentPage) && !isAdmin) {
+            console.error('❌ 管理者権限が必要です');
+            alert('このページにアクセスする権限がありません');
+            this.navigate(isAdmin ? 'shift_home_admin.html' : 'shift_home_staff.html');
+            return false;
+        }
+
+        // スタッフページのチェック（管理者もアクセス可能）
+        if (PAGE_CONFIG.staffPages.includes(currentPage)) {
+            console.log('✅ スタッフページアクセス:', currentPage);
+            return true;
+        }
+
+        console.log('✅ アクセス許可:', currentPage);
+        return true;
+    },
+
+    /**
+     * ログアウト処理
+     */
+    async logout() {
+        if (typeof AUTH !== 'undefined' && typeof AUTH.logout === 'function') {
+            await AUTH.logout();
+        } else {
+            // AUTH未定義の場合、ローカルストレージをクリア
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+        }
+        console.log('🚪 ログアウト完了');
+        this.navigate('index.html');
+    },
+
+    /**
+     * ホームページへ遷移（ロールに応じて）
+     */
+    goHome() {
+        if (typeof AUTH !== 'undefined' && AUTH.isAdmin()) {
+            this.navigate('shift_home_admin.html');
+        } else {
+            this.navigate('shift_home_staff.html');
+        }
+    }
+};
+
 // --- DOM要素 -------------------------------------------------
 let dom = {}; // DOM要素をキャッシュするオブジェクト
 
 // --- 初期化 -------------------------------------------------
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    // ページアクセス権限チェック
+    const hasAccess = await PageRouter.checkPageAccess();
+    if (!hasAccess) {
+        console.log('⛔ ページアクセス拒否');
+        return; // 初期化を中断
+    }
+
     // DOM要素のキャッシュ
     dom = {
         yearSelect: document.getElementById('year-select'),
@@ -49,10 +229,15 @@ document.addEventListener('DOMContentLoaded', () => {
         modalDate: document.getElementById('modal-date'),
         modalShiftCode: document.getElementById('modal-shift-code'),
         modalHome: document.getElementById('modal-home'),
+
+        // ナビゲーションボタン
+        logoutBtn: document.getElementById('logout-btn'),
+        homeBtn: document.getElementById('home-btn'),
+        backBtn: document.getElementById('back-btn')
     };
 
-    // ダミーデータのロード
-    loadDummyData();
+    // Firebaseからデータをロード（失敗時はダミーデータ）
+    await loadDataFromFirebase();
 
     // イベントリスナーの設定
     setupEventListeners();
@@ -61,12 +246,81 @@ document.addEventListener('DOMContentLoaded', () => {
     render();
     
     // 画像に合わせて初期値を設定
-    dom.yearSelect.value = appState.currentYear;
-    dom.monthSelect.value = appState.currentMonth;
-    dom.homeSelect.value = appState.selectedHome;
+    if (dom.yearSelect) dom.yearSelect.value = appState.currentYear;
+    if (dom.monthSelect) dom.monthSelect.value = appState.currentMonth;
+    if (dom.homeSelect) dom.homeSelect.value = appState.selectedHome;
 
     console.log('アプリケーションの準備が完了しました。');
 });
+
+/**
+ * Firebaseからデータをロード（失敗時はダミーデータ）
+ */
+async function loadDataFromFirebase() {
+    try {
+        // APIが利用可能かチェック
+        if (typeof API === 'undefined' || typeof API_BASE_URL === 'undefined') {
+            console.warn('⚠️ API未設定: ダミーデータを使用します');
+            loadDummyData();
+            return;
+        }
+
+        console.log('📥 Firebaseからデータを読み込み中...');
+
+        // スタッフデータを取得
+        const staffResponse = await API.get('/api/staff');
+        if (staffResponse && staffResponse.success && staffResponse.staff.length > 0) {
+            appState.staff = staffResponse.staff;
+            console.log(`✅ ${staffResponse.count}名のスタッフを読み込みました`);
+        } else {
+            console.warn('⚠️ スタッフデータがありません。ダミーデータを使用します。');
+            loadDummyData();
+            return;
+        }
+
+        // シフトデータを取得
+        const shiftsResponse = await API.get('/api/shifts', {
+            year: appState.currentYear,
+            month: appState.currentMonth
+        });
+
+        if (shiftsResponse && shiftsResponse.success) {
+            // Firestoreのデータ構造を変換
+            appState.shifts = {};
+            shiftsResponse.shifts.forEach(shift => {
+                if (!appState.shifts[shift.staff_id]) {
+                    appState.shifts[shift.staff_id] = {};
+                }
+                appState.shifts[shift.staff_id][shift.day.toString()] = {
+                    code: shift.shift_code,
+                    home: shift.home
+                };
+            });
+            console.log(`✅ ${shiftsResponse.count}件のシフトを読み込みました`);
+        }
+
+        // シフト要望を取得
+        const requestsResponse = await API.get('/api/shift-requests', {
+            year: appState.currentYear,
+            month: appState.currentMonth
+        });
+
+        if (requestsResponse && requestsResponse.success) {
+            appState.shiftRequests = requestsResponse.requests.map(req => ({
+                id: req.id,
+                staffName: req.staff_name,
+                request: `${req.day}日 ${req.request}`,
+                status: req.status
+            }));
+            console.log(`✅ ${requestsResponse.count}件の要望を読み込みました`);
+        }
+
+    } catch (error) {
+        console.error('❌ Firebase読み込みエラー:', error);
+        console.warn('⚠️ ダミーデータを使用します');
+        loadDummyData();
+    }
+}
 
 /**
  * ダミーデータをappStateにロードする
@@ -215,29 +469,59 @@ function loadDummyData() {
  */
 function setupEventListeners() {
     // 日付・ホーム変更
-    dom.yearSelect.addEventListener('change', handleDateChange);
-    dom.monthSelect.addEventListener('change', handleDateChange);
-    dom.homeSelect.addEventListener('change', handleHomeFilterChange);
+    if (dom.yearSelect) dom.yearSelect.addEventListener('change', handleDateChange);
+    if (dom.monthSelect) dom.monthSelect.addEventListener('change', handleDateChange);
+    if (dom.homeSelect) dom.homeSelect.addEventListener('change', handleHomeFilterChange);
 
     // シフト表のセルクリック（イベント委任）
-    dom.shiftTableBody.addEventListener('click', handleCellClick);
+    if (dom.shiftTableBody) dom.shiftTableBody.addEventListener('click', handleCellClick);
     
     // モーダル関連
-    dom.modalCloseBtn.addEventListener('click', closeModal);
-    dom.modalCancelBtn.addEventListener('click', closeModal);
-    dom.modalSaveBtn.addEventListener('click', handleModalSave);
+    if (dom.modalCloseBtn) dom.modalCloseBtn.addEventListener('click', closeModal);
+    if (dom.modalCancelBtn) dom.modalCancelBtn.addEventListener('click', closeModal);
+    if (dom.modalSaveBtn) dom.modalSaveBtn.addEventListener('click', handleModalSave);
+
+    // ナビゲーションボタン
+    if (dom.logoutBtn) {
+        dom.logoutBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (confirm('ログアウトしますか?')) {
+                PageRouter.logout();
+            }
+        });
+    }
+    
+    if (dom.homeBtn) {
+        dom.homeBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            PageRouter.goHome();
+        });
+    }
+    
+    if (dom.backBtn) {
+        dom.backBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            window.history.back();
+        });
+    }
 
     // 要望関連
-    dom.shiftRequestList.addEventListener('click', (e) => {
-        if (e.target.classList.contains('btn-reflect')) {
-            console.log('個別反映ボタンがクリックされました。', e.target.closest('.shift-request-item'));
-            alert('個別反映機能は未実装です。');
-        }
-    });
-    document.getElementById('reflect-all-btn').addEventListener('click', () => {
-        console.log('すべて一括反映ボタンがクリックされました。');
-        alert('一括反映機能は未実装です。');
-    });
+    if (dom.shiftRequestList) {
+        dom.shiftRequestList.addEventListener('click', (e) => {
+            if (e.target.classList.contains('btn-reflect')) {
+                console.log('個別反映ボタンがクリックされました。', e.target.closest('.shift-request-item'));
+                alert('個別反映機能は未実装です。');
+            }
+        });
+    }
+    
+    const reflectAllBtn = document.getElementById('reflect-all-btn');
+    if (reflectAllBtn) {
+        reflectAllBtn.addEventListener('click', () => {
+            console.log('すべて一括反映ボタンがクリックされました。');
+            alert('一括反映機能は未実装です。');
+        });
+    }
 }
 
 // --- レンダリング関数 ---------------------------------------
@@ -475,9 +759,9 @@ function closeModal() {
 }
 
 /**
- * モーダルの保存処理
+ * モーダルの保存処理（Firebase連携）
  */
-function handleModalSave() {
+async function handleModalSave() {
     if (!appState.editingCell) return;
     
     const { staffId, date } = appState.editingCell;
@@ -486,16 +770,40 @@ function handleModalSave() {
     const newCode = dom.modalShiftCode.value;
     const newHome = dom.modalHome.value;
 
-    // 2. appStateを更新
+    const shiftData = { code: newCode, home: newHome };
+
+    // 2. Firebaseに保存を試行
+    if (typeof API !== 'undefined' && typeof API.post === 'function') {
+        try {
+            const response = await API.post('/api/shifts', {
+                staff_id: staffId,
+                year: appState.currentYear,
+                month: appState.currentMonth,
+                day: parseInt(date),
+                shift_code: newCode,
+                home: newHome
+            });
+
+            if (response && response.success) {
+                console.log('✅ シフトを保存しました');
+            } else {
+                console.warn('⚠️ シフト保存に失敗（ローカルのみ更新）');
+            }
+        } catch (error) {
+            console.error('❌ シフト保存エラー:', error);
+        }
+    }
+
+    // 3. appStateを更新（ローカル）
     if (!appState.shifts[staffId]) {
         appState.shifts[staffId] = {};
     }
-    appState.shifts[staffId][date] = { code: newCode, home: newHome };
+    appState.shifts[staffId][date] = shiftData;
     
-    // 3. モーダルを閉じる
+    // 4. モーダルを閉じる
     closeModal();
     
-    // 4. 表示を再描画
+    // 5. 表示を再描画
     render();
 }
 
@@ -540,3 +848,122 @@ function getFilteredStaff() {
     // 'A' ホームが選択されている場合 (画像の状態)
     return appState.staff.filter(staff => staff.home === appState.selectedHome);
 }
+
+// --- グローバルナビゲーション関数 (HTMLから直接呼び出し可能) ---
+
+/**
+ * 指定ページへ遷移
+ */
+function navigateTo(pageName) {
+    PageRouter.navigate(pageName);
+}
+
+/**
+ * 権限チェック付きページ遷移
+ */
+function safeNavigateTo(pageName) {
+    PageRouter.navigateWithCheck(pageName);
+}
+
+/**
+ * ログアウト
+ */
+function doLogout() {
+    if (confirm('ログアウトしますか?')) {
+        PageRouter.logout();
+    }
+}
+
+/**
+ * ホームへ戻る
+ */
+function goToHome() {
+    PageRouter.goHome();
+}
+
+/**
+ * ページ遷移のショートカット
+ */
+const NAV = {
+    // 共通ページ
+    login: () => navigateTo('index.html'),  // index.htmlがログイン画面
+    index: () => navigateTo('index.html'),
+    
+    // 管理者ページ
+    adminHome: () => safeNavigateTo('shift_home_admin.html'),
+    staffManage: () => safeNavigateTo('shift_staff.html'),
+    createShift: () => safeNavigateTo('shift_create.html'),  // シフト作成画面
+    memberManage: () => safeNavigateTo('shitf_member.html'),
+    settings: () => safeNavigateTo('setting.html'),
+    
+    // スタッフページ
+    staffHome: () => safeNavigateTo('shift_home_staff.html'),
+    viewShift: () => safeNavigateTo('shift_view.html'),
+    submitShift: () => safeNavigateTo('shift_submission.html'),
+    
+    // その他
+    logout: () => doLogout(),
+    home: () => goToHome(),
+    back: () => window.history.back()
+};
+
+/**
+ * 管理者かどうかをチェック
+ */
+function checkIsAdmin() {
+    if (typeof AUTH !== 'undefined') {
+        return AUTH.isAdmin();
+    }
+    return false;
+}
+
+/**
+ * 現在のユーザー情報を取得
+ */
+function getCurrentUser() {
+    if (typeof AUTH !== 'undefined') {
+        const userStr = localStorage.getItem('user');
+        if (userStr) {
+            try {
+                return JSON.parse(userStr);
+            } catch (e) {
+                console.error('ユーザー情報のパースエラー:', e);
+            }
+        }
+    }
+    return null;
+}
+
+/**
+ * ユーザー名を表示
+ */
+function displayUserName() {
+    const user = getCurrentUser();
+    const userNameElement = document.getElementById('user-name-display');
+    
+    if (user && userNameElement) {
+        userNameElement.textContent = user.name || user.username || 'ユーザー';
+    }
+}
+
+/**
+ * 管理者メニューの表示/非表示
+ */
+function toggleAdminMenu() {
+    const isAdmin = checkIsAdmin();
+    const adminMenuItems = document.querySelectorAll('.admin-only');
+    
+    adminMenuItems.forEach(item => {
+        if (isAdmin) {
+            item.style.display = '';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+}
+
+// ページロード時にユーザー情報とメニューを更新
+window.addEventListener('load', () => {
+    displayUserName();
+    toggleAdminMenu();
+});
