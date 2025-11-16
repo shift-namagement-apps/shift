@@ -12,7 +12,7 @@ const API_CONFIG = {
   // 本番環境（Cloud Run）
   production: {
     // ⚠️ デプロイ後に、ここをCloud RunのURLに変更してください
-    apiBaseUrl: 'https://shift-api-xxxxx-an.a.run.app'
+    apiBaseUrl: 'https://shift-namagement-apps-27faqfacya-an.a.run.app'
   }
 };
 
@@ -137,3 +137,4 @@ const API = {
 // グローバルスコープに公開
 window.API_BASE_URL = API_BASE_URL;
 window.API = API;
+
