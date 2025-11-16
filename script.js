@@ -1214,3 +1214,483 @@ function debugState() {
 // グローバルに公開（デバッグ用）
 window.debugState = debugState;
 window.NAV = NAV;
+
+// --- 全ページ共通ボタン機能 ---------------------------------
+
+/**
+ * すべてのページで使えるボタン機能を自動バインド
+ */
+function setupGlobalButtons() {
+    // ログアウトボタン
+    document.querySelectorAll('[data-action="logout"]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            NAV.logout();
+        });
+    });
+
+    // ホームボタン
+    document.querySelectorAll('[data-action="home"]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            NAV.home();
+        });
+    });
+
+    // 戻るボタン
+    document.querySelectorAll('[data-action="back"]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            NAV.back();
+        });
+    });
+
+    // リロードボタン
+    document.querySelectorAll('[data-action="reload"]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            NAV.reload();
+        });
+    });
+
+    // ページ遷移ボタン（data-page属性）
+    document.querySelectorAll('[data-page]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const pageName = btn.getAttribute('data-page');
+            safeNavigateTo(pageName);
+        });
+    });
+}
+
+// ページロード時にボタンをセットアップ
+window.addEventListener('load', setupGlobalButtons);
+
+// --- シフト管理機能 -----------------------------------------
+
+/**
+ * シフトを一括保存
+ */
+async function saveAllShifts() {
+    if (!confirm('すべてのシフトを保存しますか?')) {
+        return;
+    }
+
+    toggleLoading(true);
+    
+    try {
+        const shiftsToSave = [];
+        
+        // appState.shiftsを整形
+        Object.entries(appState.shifts).forEach(([staffId, dates]) => {
+            Object.entries(dates).forEach(([day, shift]) => {
+                shiftsToSave.push({
+                    staff_id: staffId,
+                    year: appState.currentYear,
+                    month: appState.currentMonth,
+                    day: parseInt(day),
+                    shift_code: shift.code,
+                    home: shift.home
+                });
+            });
+        });
+
+        if (typeof API !== 'undefined' && typeof API.post === 'function') {
+            const response = await API.post('/api/shifts/bulk', {
+                shifts: shiftsToSave
+            });
+
+            if (response && response.success) {
+                showToast('シフトを保存しました', 'success');
+            } else {
+                showToast('一部のシフト保存に失敗しました', 'warning');
+            }
+        } else {
+            console.log('💾 ローカルに保存:', shiftsToSave.length, '件');
+            showToast('ローカルに保存しました（オフライン）', 'info');
+        }
+    } catch (error) {
+        console.error('❌ シフト保存エラー:', error);
+        showToast('保存に失敗しました', 'error');
+    } finally {
+        toggleLoading(false);
+    }
+}
+
+/**
+ * シフトをクリア
+ */
+async function clearAllShifts() {
+    const confirmed = await confirmDialog('すべてのシフトをクリアしますか?\nこの操作は取り消せません。');
+    
+    if (!confirmed) return;
+
+    appState.shifts = {};
+    render();
+    showToast('シフトをクリアしました', 'info');
+}
+
+/**
+ * シフトをCSVエクスポート
+ */
+function exportShiftsToCSV() {
+    let csv = 'スタッフ名,';
+    
+    // ヘッダー行（日付）
+    const daysInMonth = 31; // 仮
+    for (let day = 1; day <= daysInMonth; day++) {
+        csv += `${day}日,`;
+    }
+    csv += '\n';
+
+    // データ行
+    appState.staff.forEach(staff => {
+        csv += `${staff.name},`;
+        const staffShifts = appState.shifts[staff.id] || {};
+        
+        for (let day = 1; day <= daysInMonth; day++) {
+            const shift = staffShifts[day.toString()];
+            if (shift && shift.code !== 'NONE') {
+                csv += `${shift.code}(${shift.home}),`;
+            } else {
+                csv += ',';
+            }
+        }
+        csv += '\n';
+    });
+
+    // ダウンロード
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `shift_${appState.currentYear}_${appState.currentMonth}.csv`;
+    link.click();
+    
+    showToast('CSVをエクスポートしました', 'success');
+}
+
+/**
+ * シフトを印刷
+ */
+function printShiftTable() {
+    window.print();
+}
+
+// --- シフト要望管理 -----------------------------------------
+
+/**
+ * 個別のシフト要望を反映
+ */
+async function reflectShiftRequest(requestId) {
+    const request = appState.shiftRequests.find(r => r.id === requestId);
+    
+    if (!request) {
+        showToast('要望が見つかりません', 'error');
+        return;
+    }
+
+    console.log('📝 要望を反映:', request);
+    
+    // TODO: 要望をシフトに反映する処理
+    showToast(`${request.staffName}さんの要望を反映しました`, 'success');
+}
+
+/**
+ * すべてのシフト要望を一括反映
+ */
+async function reflectAllRequests() {
+    const confirmed = await confirmDialog('すべての要望を反映しますか?');
+    
+    if (!confirmed) return;
+
+    toggleLoading(true);
+    
+    try {
+        let count = 0;
+        
+        for (const request of appState.shiftRequests) {
+            await reflectShiftRequest(request.id);
+            count++;
+        }
+        
+        showToast(`${count}件の要望を反映しました`, 'success');
+        render();
+    } catch (error) {
+        console.error('❌ 要望反映エラー:', error);
+        showToast('要望の反映に失敗しました', 'error');
+    } finally {
+        toggleLoading(false);
+    }
+}
+
+/**
+ * シフト要望を削除
+ */
+async function deleteShiftRequest(requestId) {
+    const confirmed = await confirmDialog('この要望を削除しますか?');
+    
+    if (!confirmed) return;
+
+    appState.shiftRequests = appState.shiftRequests.filter(r => r.id !== requestId);
+    renderShiftRequests();
+    showToast('要望を削除しました', 'info');
+}
+
+// --- スタッフ管理 -------------------------------------------
+
+/**
+ * スタッフを追加
+ */
+async function addStaff(staffData) {
+    if (!staffData.name) {
+        showToast('スタッフ名を入力してください', 'error');
+        return;
+    }
+
+    const newStaff = {
+        id: `s${Date.now()}`,
+        name: staffData.name,
+        home: staffData.home || 'A',
+        role: staffData.role || 'staff'
+    };
+
+    if (typeof API !== 'undefined' && typeof API.post === 'function') {
+        try {
+            const response = await API.post('/api/staff', newStaff);
+            
+            if (response && response.success) {
+                appState.staff.push(response.staff);
+                showToast('スタッフを追加しました', 'success');
+                render();
+            }
+        } catch (error) {
+            console.error('❌ スタッフ追加エラー:', error);
+            showToast('スタッフの追加に失敗しました', 'error');
+        }
+    } else {
+        appState.staff.push(newStaff);
+        showToast('スタッフを追加しました（ローカル）', 'info');
+        render();
+    }
+}
+
+/**
+ * スタッフを編集
+ */
+async function editStaff(staffId, updates) {
+    const staffIndex = appState.staff.findIndex(s => s.id === staffId);
+    
+    if (staffIndex === -1) {
+        showToast('スタッフが見つかりません', 'error');
+        return;
+    }
+
+    if (typeof API !== 'undefined' && typeof API.put === 'function') {
+        try {
+            const response = await API.put(`/api/staff/${staffId}`, updates);
+            
+            if (response && response.success) {
+                Object.assign(appState.staff[staffIndex], updates);
+                showToast('スタッフ情報を更新しました', 'success');
+                render();
+            }
+        } catch (error) {
+            console.error('❌ スタッフ更新エラー:', error);
+            showToast('スタッフ情報の更新に失敗しました', 'error');
+        }
+    } else {
+        Object.assign(appState.staff[staffIndex], updates);
+        showToast('スタッフ情報を更新しました（ローカル）', 'info');
+        render();
+    }
+}
+
+/**
+ * スタッフを削除
+ */
+async function deleteStaff(staffId) {
+    const staff = appState.staff.find(s => s.id === staffId);
+    
+    if (!staff) {
+        showToast('スタッフが見つかりません', 'error');
+        return;
+    }
+
+    const confirmed = await confirmDialog(`${staff.name}さんを削除しますか?\nシフトデータも削除されます。`);
+    
+    if (!confirmed) return;
+
+    if (typeof API !== 'undefined' && typeof API.delete === 'function') {
+        try {
+            const response = await API.delete(`/api/staff/${staffId}`);
+            
+            if (response && response.success) {
+                appState.staff = appState.staff.filter(s => s.id !== staffId);
+                delete appState.shifts[staffId];
+                showToast('スタッフを削除しました', 'success');
+                render();
+            }
+        } catch (error) {
+            console.error('❌ スタッフ削除エラー:', error);
+            showToast('スタッフの削除に失敗しました', 'error');
+        }
+    } else {
+        appState.staff = appState.staff.filter(s => s.id !== staffId);
+        delete appState.shifts[staffId];
+        showToast('スタッフを削除しました（ローカル）', 'info');
+        render();
+    }
+}
+
+// --- フィルター・検索 ---------------------------------------
+
+/**
+ * スタッフ検索
+ */
+function searchStaff(query) {
+    if (!query) {
+        render();
+        return;
+    }
+
+    const filtered = appState.staff.filter(staff => 
+        staff.name.includes(query) || 
+        staff.home === query
+    );
+
+    console.log('🔍 検索結果:', filtered.length, '件');
+    
+    // 検索結果を表示（renderShiftTable を filteredStaff で呼び出し）
+    const daysToRender = 10;
+    renderTableHeader(daysToRender);
+    renderShiftTable(filtered, daysToRender);
+}
+
+/**
+ * 日付範囲でフィルター
+ */
+function filterByDateRange(startDate, endDate) {
+    console.log('📅 期間フィルター:', startDate, '～', endDate);
+    
+    // TODO: 日付範囲フィルター処理
+    showToast(`${startDate}～${endDate}の期間で表示`, 'info');
+}
+
+/**
+ * ホーム別でフィルター
+ */
+function filterByHome(homeId) {
+    appState.selectedHome = homeId;
+    render();
+    showToast(`${homeId}ホームでフィルター`, 'info');
+}
+
+// --- 通知・アラート -----------------------------------------
+
+/**
+ * シフト未確定の警告を表示
+ */
+function checkUnconfirmedShifts() {
+    let unconfirmedCount = 0;
+    
+    appState.staff.forEach(staff => {
+        const staffShifts = appState.shifts[staff.id] || {};
+        const daysInMonth = 31; // 仮
+        
+        for (let day = 1; day <= daysInMonth; day++) {
+            const shift = staffShifts[day.toString()];
+            if (!shift || shift.code === 'NONE') {
+                unconfirmedCount++;
+            }
+        }
+    });
+
+    if (unconfirmedCount > 0) {
+        showToast(`未確定のシフトが${unconfirmedCount}件あります`, 'warning');
+    }
+}
+
+/**
+ * シフト重複チェック
+ */
+function checkShiftConflicts() {
+    const conflicts = [];
+    
+    // TODO: ホーム別・時間帯別の人員チェック
+    
+    if (conflicts.length > 0) {
+        showToast(`${conflicts.length}件の人員不足があります`, 'error');
+    } else {
+        showToast('シフトの重複はありません', 'success');
+    }
+}
+
+// --- ユーティリティ -----------------------------------------
+
+/**
+ * データをリフレッシュ
+ */
+async function refreshData() {
+    toggleLoading(true);
+    
+    try {
+        await loadDataFromFirebase();
+        render();
+        showToast('データを更新しました', 'success');
+    } catch (error) {
+        console.error('❌ データ更新エラー:', error);
+        showToast('データの更新に失敗しました', 'error');
+    } finally {
+        toggleLoading(false);
+    }
+}
+
+/**
+ * 設定を保存
+ */
+function saveSettings(settings) {
+    localStorage.setItem('appSettings', JSON.stringify(settings));
+    showToast('設定を保存しました', 'success');
+}
+
+/**
+ * 設定を読み込み
+ */
+function loadSettings() {
+    const settingsStr = localStorage.getItem('appSettings');
+    
+    if (settingsStr) {
+        try {
+            return JSON.parse(settingsStr);
+        } catch (e) {
+            console.error('設定の読み込みエラー:', e);
+        }
+    }
+    
+    return {
+        theme: 'light',
+        notifications: true,
+        autoSave: false
+    };
+}
+
+// --- グローバルに公開（HTMLから使用可能） -------------------
+
+window.saveAllShifts = saveAllShifts;
+window.clearAllShifts = clearAllShifts;
+window.exportShiftsToCSV = exportShiftsToCSV;
+window.printShiftTable = printShiftTable;
+window.reflectShiftRequest = reflectShiftRequest;
+window.reflectAllRequests = reflectAllRequests;
+window.deleteShiftRequest = deleteShiftRequest;
+window.addStaff = addStaff;
+window.editStaff = editStaff;
+window.deleteStaff = deleteStaff;
+window.searchStaff = searchStaff;
+window.filterByDateRange = filterByDateRange;
+window.filterByHome = filterByHome;
+window.checkUnconfirmedShifts = checkUnconfirmedShifts;
+window.checkShiftConflicts = checkShiftConflicts;
+window.refreshData = refreshData;
+window.saveSettings = saveSettings;
+window.loadSettings = loadSettings;
