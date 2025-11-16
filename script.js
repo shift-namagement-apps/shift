@@ -882,29 +882,52 @@ function goToHome() {
 }
 
 /**
- * ページ遷移のショートカット
+ * ページ遷移のショートカット（グローバルに公開）
+ * HTMLから直接呼び出し可能: onclick="NAV.adminHome()"
  */
 const NAV = {
-    // 共通ページ
-    login: () => navigateTo('index.html'),  // index.htmlがログイン画面
+    // === 共通ページ ===
+    login: () => navigateTo('index.html'),
     index: () => navigateTo('index.html'),
     
-    // 管理者ページ
+    // === 管理者専用ページ ===
     adminHome: () => safeNavigateTo('shift_home_admin.html'),
     staffManage: () => safeNavigateTo('shift_staff.html'),
-    createShift: () => safeNavigateTo('shift_create.html'),  // シフト作成画面
+    createShift: () => safeNavigateTo('shift_create.html'),
     memberManage: () => safeNavigateTo('shitf_member.html'),
     settings: () => safeNavigateTo('setting.html'),
     
-    // スタッフページ
+    // === スタッフページ ===
     staffHome: () => safeNavigateTo('shift_home_staff.html'),
     viewShift: () => safeNavigateTo('shift_view.html'),
     submitShift: () => safeNavigateTo('shift_submission.html'),
     
-    // その他
+    // === ユーティリティ ===
     logout: () => doLogout(),
     home: () => goToHome(),
-    back: () => window.history.back()
+    back: () => window.history.back(),
+    reload: () => window.location.reload(),
+    
+    // === 条件付き遷移（ロール確認） ===
+    // 管理者のみアクセス可能なページへの遷移
+    toAdminPage: (pageName) => {
+        if (checkIsAdmin()) {
+            navigateTo(pageName);
+        } else {
+            alert('管理者権限が必要です');
+        }
+    },
+    
+    // スタッフ以上でアクセス可能なページへの遷移
+    toStaffPage: (pageName) => {
+        const user = getCurrentUser();
+        if (user) {
+            navigateTo(pageName);
+        } else {
+            alert('ログインが必要です');
+            navigateTo('index.html');
+        }
+    }
 };
 
 /**
@@ -967,3 +990,227 @@ window.addEventListener('load', () => {
     displayUserName();
     toggleAdminMenu();
 });
+
+// --- ページ別初期化処理 -------------------------------------
+
+/**
+ * 各ページ固有の初期化処理
+ * ページ名に応じて自動実行される
+ */
+function initializePage() {
+    const currentPage = PageRouter.getCurrentPage();
+    console.log(`📄 ページ初期化: ${currentPage}`);
+    
+    switch(currentPage) {
+        case 'index.html':
+            initLoginPage();
+            break;
+        case 'shift_home_admin.html':
+            initAdminHomePage();
+            break;
+        case 'shift_home_staff.html':
+            initStaffHomePage();
+            break;
+        case 'shift_create.html':
+            initShiftCreatePage();
+            break;
+        case 'shift_staff.html':
+            initShiftManagePage();
+            break;
+        case 'shift_view.html':
+            initShiftViewPage();
+            break;
+        case 'shift_submission.html':
+            initShiftSubmissionPage();
+            break;
+        case 'shitf_member.html':
+            initMemberManagePage();
+            break;
+        case 'setting.html':
+            initSettingsPage();
+            break;
+        default:
+            console.log('ℹ️ 共通初期化のみ実行');
+    }
+}
+
+/**
+ * ログインページの初期化
+ */
+function initLoginPage() {
+    console.log('🔐 ログインページ初期化');
+    // ログイン済みの場合はホームへリダイレクト
+    if (typeof AUTH !== 'undefined') {
+        AUTH.verifyToken().then(isAuth => {
+            if (isAuth) {
+                console.log('✅ 既にログイン済み - ホームへ');
+                PageRouter.goHome();
+            }
+        });
+    }
+}
+
+/**
+ * 管理者ホームページの初期化
+ */
+function initAdminHomePage() {
+    console.log('👑 管理者ホーム初期化');
+    displayUserName();
+    // 管理者専用メニューの表示
+    const adminMenus = document.querySelectorAll('.admin-menu');
+    adminMenus.forEach(menu => menu.style.display = 'block');
+}
+
+/**
+ * スタッフホームページの初期化
+ */
+function initStaffHomePage() {
+    console.log('👤 スタッフホーム初期化');
+    displayUserName();
+    // スタッフメニューの表示
+    const staffMenus = document.querySelectorAll('.staff-menu');
+    staffMenus.forEach(menu => menu.style.display = 'block');
+}
+
+/**
+ * シフト作成ページの初期化
+ */
+function initShiftCreatePage() {
+    console.log('📝 シフト作成ページ初期化');
+    // シフト作成フォームの初期化処理
+}
+
+/**
+ * シフト管理ページの初期化
+ */
+function initShiftManagePage() {
+    console.log('📊 シフト管理ページ初期化');
+    // シフト管理機能の初期化
+}
+
+/**
+ * シフト閲覧ページの初期化
+ */
+function initShiftViewPage() {
+    console.log('👀 シフト閲覧ページ初期化');
+    // シフト閲覧機能の初期化
+}
+
+/**
+ * シフト提出ページの初期化
+ */
+function initShiftSubmissionPage() {
+    console.log('📤 シフト提出ページ初期化');
+    // シフト提出フォームの初期化
+}
+
+/**
+ * メンバー管理ページの初期化
+ */
+function initMemberManagePage() {
+    console.log('👥 メンバー管理ページ初期化');
+    // メンバー管理機能の初期化
+}
+
+/**
+ * 設定ページの初期化
+ */
+function initSettingsPage() {
+    console.log('⚙️ 設定ページ初期化');
+    // 設定画面の初期化
+}
+
+// ページ初期化を自動実行
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializePage);
+} else {
+    initializePage();
+}
+
+// --- 共通UI操作関数 -----------------------------------------
+
+/**
+ * ローディング表示の切り替え
+ */
+function toggleLoading(show = true) {
+    const loadingElement = document.getElementById('loading');
+    if (loadingElement) {
+        loadingElement.style.display = show ? 'block' : 'none';
+    }
+}
+
+/**
+ * トースト通知を表示
+ */
+function showToast(message, type = 'info') {
+    console.log(`📢 [${type.toUpperCase()}] ${message}`);
+    
+    // カスタムトースト要素がある場合
+    const toast = document.getElementById('toast-notification');
+    if (toast) {
+        toast.textContent = message;
+        toast.className = `toast toast-${type}`;
+        toast.style.display = 'block';
+        
+        setTimeout(() => {
+            toast.style.display = 'none';
+        }, 3000);
+    } else {
+        // フォールバック: alert
+        if (type === 'error') {
+            alert(`エラー: ${message}`);
+        } else if (type === 'success') {
+            console.log(`✅ ${message}`);
+        }
+    }
+}
+
+/**
+ * 確認ダイアログ（Promise版）
+ */
+function confirmDialog(message) {
+    return new Promise((resolve) => {
+        const result = confirm(message);
+        resolve(result);
+    });
+}
+
+/**
+ * モーダルダイアログを開く（汎用）
+ */
+function openDialog(dialogId) {
+    const dialog = document.getElementById(dialogId);
+    if (dialog) {
+        dialog.classList.add('show');
+        dialog.style.display = 'block';
+    }
+}
+
+/**
+ * モーダルダイアログを閉じる（汎用）
+ */
+function closeDialog(dialogId) {
+    const dialog = document.getElementById(dialogId);
+    if (dialog) {
+        dialog.classList.remove('show');
+        dialog.style.display = 'none';
+    }
+}
+
+// --- デバッグ用関数 -----------------------------------------
+
+/**
+ * 現在の状態をコンソールに出力（デバッグ用）
+ */
+function debugState() {
+    console.group('🔍 デバッグ情報');
+    console.log('現在のページ:', PageRouter.getCurrentPage());
+    console.log('ユーザー情報:', getCurrentUser());
+    console.log('管理者か:', checkIsAdmin());
+    console.log('appState:', appState);
+    console.groupEnd();
+}
+
+// グローバルに公開（デバッグ用）
+window.debugState = debugState;
+window.NAV = NAV;
