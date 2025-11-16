@@ -159,6 +159,11 @@
         </form>
     </div>
 
+    <!-- API設定を先に読み込む -->
+    <script src="config.js"></script>
+    <!-- 認証スクリプト -->
+    <script src="auth.js"></script>
+    
     <script>
         const loginForm = document.getElementById('login-form');
         const errorMessage = document.getElementById('error-message');
@@ -166,35 +171,30 @@
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            const userId = document.getElementById('user-id').value;
+            const username = document.getElementById('user-id').value.trim();
             const password = document.getElementById('password').value;
 
             // エラーメッセージを非表示
             errorMessage.classList.remove('show');
             errorMessage.textContent = '';
 
+            // 入力チェック
+            if (!username || !password) {
+                showError('ユーザー名とパスワードを入力してください');
+                return;
+            }
+
             try {
-                // TODO: 実際のログインAPIエンドポイントに変更
-                const response = await fetch('/api/login', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ userId, password }),
-                });
+                // ログイン処理（auth.js の AUTH.login を使用）
+                const result = await AUTH.login(username, password);
 
-                const data = await response.json();
-
-                if (response.ok) {
-                    // ログイン成功
-                    localStorage.setItem('authToken', data.token);
-                    localStorage.setItem('userId', userId);
-                    
-                    // シフト表画面にリダイレクト
-                    window.location.href = 'index.html';
+                if (result.success) {
+                    console.log('✅ ログイン成功:', result.user);
+                    // ロールに応じてリダイレクト
+                    ROUTER.redirectAfterLogin();
                 } else {
                     // ログイン失敗
-                    showError(data.message || 'IDまたはパスワードが正しくありません');
+                    showError(result.error || 'ユーザー名またはパスワードが正しくありません');
                 }
             } catch (error) {
                 console.error('ログインエラー:', error);
@@ -210,6 +210,11 @@
         // テスト用: Enterキーでログイン
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('user-id').focus();
+            
+            // デモ用ログイン情報を表示
+            console.log('💡 デモ用ログイン情報:');
+            console.log('管理者: admin / password');
+            console.log('スタッフ: staff / password');
         });
     </script>
 </body>
