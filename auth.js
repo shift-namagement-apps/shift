@@ -201,7 +201,9 @@ const ROUTER = {
      * ページ遷移
      */
     navigate(page) {
-        window.location.href = page;
+        // 相対パスに変換（先頭のスラッシュを削除）
+        const relativePage = page.startsWith('/') ? page.substring(1) : page;
+        window.location.href = relativePage;
     },
     
     /**
@@ -210,15 +212,15 @@ const ROUTER = {
     protectPage() {
         const currentPage = window.location.pathname.split('/').pop();
         
-        // ログインページは除外
-        if (currentPage === 'shift_login.html' || currentPage === '') {
+        // ログインページとindex.htmlは除外
+        if (currentPage === 'index.html' || currentPage === '' || !currentPage) {
             return;
         }
         
         // ログインしていない場合はログインページへ
         if (!AUTH.isLoggedIn()) {
             console.warn('⚠️ 未ログイン: ログインページへリダイレクト');
-            this.navigate('/shift_login.html');
+            this.navigate('index.html');
             return;
         }
         
@@ -227,7 +229,7 @@ const ROUTER = {
         if (adminPages.includes(currentPage) && !AUTH.isAdmin()) {
             console.warn('⚠️ 管理者権限が必要です');
             alert('管理者権限が必要です');
-            this.navigate('/shift_home_staff.html');
+            this.navigate('shift_home_staff.html');
             return;
         }
     },
@@ -246,10 +248,10 @@ const ROUTER = {
         // ロールに応じてリダイレクト
         if (user.role === 'admin') {
             console.log('🔑 管理者としてログイン');
-            this.navigate('/shift_home_admin.html');
+            this.navigate('shift_home_admin.html');
         } else {
             console.log('👤 スタッフとしてログイン');
-            this.navigate('/shift_home_staff.html');
+            this.navigate('shift_home_staff.html');
         }
     },
     
