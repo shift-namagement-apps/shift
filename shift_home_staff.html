@@ -192,7 +192,7 @@
         <!-- メニューグリッド -->
         <div class="menu-grid">
             <!-- シフト提出 -->
-            <div class="menu-card" onclick="alert('シフト提出画面に遷移します')">
+            <div class="menu-card" onclick="navigateToPage('shift_submission.html')">
                 <div class="card-header">
                     <div class="card-icon">📝</div>
                     <h2>シフト提出</h2>
@@ -201,7 +201,7 @@
             </div>
 
             <!-- 出勤簿作成 -->
-            <div class="menu-card" onclick="alert('出勤簿作成画面に遷移します')">
+            <div class="menu-card" onclick="navigateToPage('shitf_member.html')">
                 <div class="card-header">
                     <div class="card-icon">✓</div>
                     <h2>出勤簿作成</h2>
@@ -210,7 +210,7 @@
             </div>
 
             <!-- シフト閲覧 -->
-            <div class="menu-card" onclick="alert('シフト閲覧画面に遷移します')">
+            <div class="menu-card" onclick="navigateToPage('shift_view.html')">
                 <div class="card-header">
                     <div class="card-icon">📅</div>
                     <h2>シフト閲覧</h2>
@@ -229,16 +229,47 @@
     <script src="config.js"></script>
     <!-- 認証スクリプト -->
     <script src="auth.js"></script>
+    <!-- メインスクリプト -->
+    <script src="script.js"></script>
     
     <script>
-        // ページ読み込み時にユーザー情報を表示
+        // ページ読み込み時の初期化
         document.addEventListener('DOMContentLoaded', () => {
-            displayUserInfo();
+            // 認証チェック
+            if (typeof PageRouter !== 'undefined') {
+                PageRouter.checkPageAccess();
+            }
+            
+            // ユーザー情報を表示
+            const user = AUTH.getUser();
+            if (user) {
+                console.log('👤 ログインユーザー:', user.name, `(${user.role})`);
+            }
         });
         
-        // ログアウト処理（auth.jsのhandleLogoutを使用）
+        // ページ遷移関数
+        function navigateToPage(pageName) {
+            if (typeof PageRouter !== 'undefined') {
+                PageRouter.navigate(pageName);
+            } else {
+                // フォールバック: 直接遷移
+                const basePath = window.BASE_PATH || '/';
+                window.location.href = basePath + pageName;
+            }
+        }
+        
+        // ログアウト処理
         function logout() {
-            handleLogout();
+            if (confirm('ログアウトしますか？')) {
+                if (typeof AUTH !== 'undefined' && typeof AUTH.logout === 'function') {
+                    AUTH.logout();
+                } else {
+                    // フォールバック
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('user');
+                    window.location.href = 'index.html';
+                }
+            }
         }
     </script>
 </body>
