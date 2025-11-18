@@ -192,16 +192,16 @@
         <!-- メニューグリッド -->
         <div class="menu-grid">
             <!-- スタッフ管理 -->
-            <div class="menu-card" onclick="alert('スタッフ管理画面に遷移します')">
+            <div class="menu-card" onclick="navigateToPage('shift_staff.html')">
                 <div class="card-header">
-                    <div class="card-icon">�</div>
+                    <div class="card-icon">👥</div>
                     <h2>スタッフ管理</h2>
                 </div>
                 <p>スタッフの登録・編集・削除</p>
             </div>
 
             <!-- 出勤簿 -->
-            <div class="menu-card" onclick="alert('出勤簿画面に遷移します')">
+            <div class="menu-card" onclick="navigateToPage('shitf_member.html')">
                 <div class="card-header">
                     <div class="card-icon">✓</div>
                     <h2>出勤簿</h2>
@@ -210,7 +210,7 @@
             </div>
 
             <!-- シフト作成 -->
-            <div class="menu-card" onclick="alert('シフト作成画面に遷移します')">
+            <div class="menu-card" onclick="navigateToPage('shift_create.html')">
                 <div class="card-header">
                     <div class="card-icon">📝</div>
                     <h2>シフト作成</h2>
@@ -219,7 +219,7 @@
             </div>
 
             <!-- シフト閲覧 -->
-            <div class="menu-card" onclick="alert('シフト閲覧画面に遷移します')">
+            <div class="menu-card" onclick="navigateToPage('shift_view.html')">
                 <div class="card-header">
                     <div class="card-icon">📅</div>
                     <h2>シフト閲覧</h2>
@@ -228,7 +228,7 @@
             </div>
 
             <!-- 設定 -->
-            <div class="menu-card" onclick="alert('設定画面に遷移します')">
+            <div class="menu-card" onclick="navigateToPage('setting.html')">
                 <div class="card-header">
                     <div class="card-icon">⚙️</div>
                     <h2>設定</h2>
@@ -259,16 +259,47 @@
     <script src="config.js"></script>
     <!-- 認証スクリプト -->
     <script src="auth.js"></script>
+    <!-- メインスクリプト -->
+    <script src="script.js"></script>
     
     <script>
-        // ページ読み込み時にユーザー情報を表示
+        // ページ読み込み時の初期化
         document.addEventListener('DOMContentLoaded', () => {
-            displayUserInfo();
+            // 認証チェック
+            if (typeof PageRouter !== 'undefined') {
+                PageRouter.checkPageAccess();
+            }
+            
+            // ユーザー情報を表示
+            const user = AUTH.getUser();
+            if (user) {
+                console.log('👤 ログインユーザー:', user.name, `(${user.role})`);
+            }
         });
         
-        // ログアウト処理（auth.jsのhandleLogoutを使用）
+        // ページ遷移関数
+        function navigateToPage(pageName) {
+            if (typeof PageRouter !== 'undefined') {
+                PageRouter.navigate(pageName);
+            } else {
+                // フォールバック: 直接遷移
+                const basePath = window.BASE_PATH || '/';
+                window.location.href = basePath + pageName;
+            }
+        }
+        
+        // ログアウト処理
         function logout() {
-            handleLogout();
+            if (confirm('ログアウトしますか？')) {
+                if (typeof AUTH !== 'undefined' && typeof AUTH.logout === 'function') {
+                    AUTH.logout();
+                } else {
+                    // フォールバック
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('user');
+                    window.location.href = 'index.html';
+                }
+            }
         }
     </script>
 </body>
