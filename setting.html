@@ -376,6 +376,31 @@ input[type="reset"] {
         </table>
         </div>
         </div>
-    </form>    
+    </form>
+    
+    <!-- API設定を先に読み込む -->
+    <script src="config.js"></script>
+    <!-- 認証スクリプト -->
+    <script src="auth.js"></script>
+    
+    <script>
+        // ページ読み込み時の認証チェック
+        document.addEventListener('DOMContentLoaded', async () => {
+            // 認証チェック
+            if (typeof PageRouter !== 'undefined') {
+                const hasAccess = await PageRouter.checkPageAccess();
+                if (!hasAccess) {
+                    return; // 認証失敗時は処理を中断
+                }
+            }
+            
+            // ユーザー情報を表示
+            const user = AUTH ? AUTH.getUser() : null;
+            if (user) {
+                console.log('👤 ログインユーザー:', user.name, `(${user.role})`);
+            }
+        });
+    </script>
 </body>
+</html>
 </html>
