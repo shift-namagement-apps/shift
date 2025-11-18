@@ -181,7 +181,10 @@
 <body>
     <!-- ヘッダー -->
     <div class="header">
-        <h1>シフト管理システム</h1>
+        <div style="display: flex; align-items: center; gap: 20px;">
+            <button class="logout-button" onclick="goBack()" style="background: #f5f5f5; color: #333; border-color: #ddd;">← 戻る</button>
+            <h1>シフト管理システム</h1>
+        </div>
         <button class="logout-button" onclick="logout()">ログアウト</button>
     </div>
 
@@ -300,6 +303,11 @@
                     window.location.href = 'index.html';
                 }
             }
+        }
+        
+        // 戻るボタン
+        function goBack() {
+            window.history.back();
         }
     </script>
 </body>
