@@ -331,8 +331,6 @@
     <script src="config.js"></script>
     <!-- 認証スクリプト -->
     <script src="auth.js"></script>
-    <!-- ルーティングスクリプト -->
-    <script src="script.js"></script>
     
     <script>
         // ページ読み込み時の認証チェックとスタッフ読み込み
@@ -344,12 +342,12 @@
                 retries++;
             }
             
-            // 認証チェック
-            if (typeof PageRouter !== 'undefined') {
-                const hasAccess = await PageRouter.checkPageAccess();
-                if (!hasAccess) {
-                    return;
-                }
+            // 認証チェック（シンプル版）
+            const token = localStorage.getItem('shift_auth_token');
+            if (!token) {
+                console.log('⚠️ 未認証: ログインページへリダイレクト');
+                window.location.href = window.BASE_PATH || '/shift/';
+                return;
             }
             
             // ユーザー情報を表示
@@ -359,7 +357,6 @@
             }
             
             // トークンの存在確認
-            const token = localStorage.getItem('token');
             console.log('🔑 トークン存在:', !!token, token ? `(${token.substring(0, 20)}...)` : '');
             
             // スタッフリストを読み込み
