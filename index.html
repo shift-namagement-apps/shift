@@ -166,10 +166,33 @@
     
     <script>
         // ページ読み込み時に自動ログアウト
-        if (AUTH) {
-            AUTH.logout();
-            console.log('🚪 自動ログアウトしました');
-        }
+        document.addEventListener('DOMContentLoaded', async () => {
+            // 認証システムの初期化を待つ
+            let retries = 0;
+            while ((!AUTH || !ROUTER) && retries < 20) {
+                await new Promise(resolve => setTimeout(resolve, 100));
+                retries++;
+            }
+            
+            // ログアウト処理
+            if (AUTH && typeof AUTH.logout === 'function') {
+                AUTH.logout();
+                console.log('🚪 自動ログアウトしました');
+            } else {
+                // 手動でクリア
+                localStorage.removeItem('shift_auth_token');
+                localStorage.removeItem('shift_user');
+                console.log('🚪 ローカルストレージをクリアしました');
+            }
+            
+            // フォーカス
+            document.getElementById('user-id').focus();
+            
+            // デモ用ログイン情報を表示
+            console.log('💡 デモ用ログイン情報:');
+            console.log('管理者: admin / admin123');
+            console.log('スタッフ: staff / staff123');
+        });
         
         const loginForm = document.getElementById('login-form');
         const errorMessage = document.getElementById('error-message');
@@ -191,20 +214,46 @@
             }
 
             try {
+                console.log('🔐 ログイン試行:', username);
+                
+                // 認証システムが初期化されるまで待つ
+                let retries = 0;
+                while ((!AUTH || !ROUTER) && retries < 20) {
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                    retries++;
+                }
+                
+                if (!AUTH) {
+                    showError('認証システムが初期化されていません');
+                    return;
+                }
+                
                 // ログイン処理（auth.js の AUTH.login を使用）
                 const result = await AUTH.login(username, password);
 
                 if (result.success) {
                     console.log('✅ ログイン成功:', result.user);
+                    
                     // ロールに応じてリダイレクト
-                    ROUTER.redirectAfterLogin();
+                    if (ROUTER && typeof ROUTER.redirectAfterLogin === 'function') {
+                        ROUTER.redirectAfterLogin();
+                    } else {
+                        // 手動でリダイレクト
+                        const user = AUTH.getUser();
+                        const basePath = window.BASE_PATH || '/shift/';
+                        if (user && user.role === 'admin') {
+                            window.location.href = basePath + 'shift_home_admin.html';
+                        } else {
+                            window.location.href = basePath + 'shift_home_staff.html';
+                        }
+                    }
                 } else {
                     // ログイン失敗
                     showError(result.error || 'ユーザー名またはパスワードが正しくありません');
                 }
             } catch (error) {
                 console.error('ログインエラー:', error);
-                showError('ログインに失敗しました。もう一度お試しください。');
+                showError('ログインに失敗しました: ' + (error.message || 'もう一度お試しください'));
             }
         });
 
@@ -212,16 +261,6 @@
             errorMessage.textContent = message;
             errorMessage.classList.add('show');
         }
-
-        // テスト用: Enterキーでログイン
-        document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('user-id').focus();
-            
-            // デモ用ログイン情報を表示
-            console.log('💡 デモ用ログイン情報:');
-            console.log('管理者: admin / password');
-            console.log('スタッフ: staff / password');
-        });
     </script>
 </body>
 </html>
