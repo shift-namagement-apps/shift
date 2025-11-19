@@ -165,6 +165,12 @@
     <script src="auth.js"></script>
     
     <script>
+        // ページ読み込み時に自動ログアウト
+        if (AUTH) {
+            AUTH.logout();
+            console.log('🚪 自動ログアウトしました');
+        }
+        
         const loginForm = document.getElementById('login-form');
         const errorMessage = document.getElementById('error-message');
 
