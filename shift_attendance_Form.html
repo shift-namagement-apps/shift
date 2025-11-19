@@ -189,5 +189,23 @@
         
     </form>
     
+    <script>
+        // フォーム送信時の処理
+        document.querySelector('form').addEventListener('submit', function(e) {
+            e.preventDefault(); // デフォルトの送信を防止
+            
+            // ここでフォームデータを取得・処理
+            const formData = new FormData(this);
+            
+            // TODO: APIにデータを送信する処理を追加
+            console.log('フォームデータ:', Object.fromEntries(formData));
+            
+            // 送信完了メッセージ
+            alert('出勤簿を送信しました');
+            
+            // 前のページに戻る
+            window.history.back();
+        });
+    </script>
 </body>
 </html>
