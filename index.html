@@ -166,32 +166,14 @@
     
     <script>
         // ページ読み込み時に自動ログアウト
-        document.addEventListener('DOMContentLoaded', async () => {
-            // 認証システムの初期化を待つ
-            let retries = 0;
-            while ((!AUTH || !ROUTER) && retries < 20) {
-                await new Promise(resolve => setTimeout(resolve, 100));
-                retries++;
-            }
-            
-            // ログアウト処理
-            if (AUTH && typeof AUTH.logout === 'function') {
-                AUTH.logout();
-                console.log('🚪 自動ログアウトしました');
-            } else {
-                // 手動でクリア
-                localStorage.removeItem('shift_auth_token');
-                localStorage.removeItem('shift_user');
-                console.log('🚪 ローカルストレージをクリアしました');
-            }
+        document.addEventListener('DOMContentLoaded', () => {
+            // ローカルストレージをクリア
+            localStorage.removeItem('shift_auth_token');
+            localStorage.removeItem('shift_user');
+            console.log('🚪 ログアウト状態にしました');
             
             // フォーカス
             document.getElementById('user-id').focus();
-            
-            // デモ用ログイン情報を表示
-            console.log('💡 デモ用ログイン情報:');
-            console.log('管理者: admin / admin123');
-            console.log('スタッフ: staff / staff123');
         });
         
         const loginForm = document.getElementById('login-form');
@@ -203,73 +185,50 @@
             const username = document.getElementById('user-id').value.trim();
             const password = document.getElementById('password').value;
 
-            console.log('📝 フォーム送信:', { username, passwordLength: password.length });
-
-            // エラーメッセージを非表示
-            errorMessage.classList.remove('show');
-            errorMessage.textContent = '';
-
             // 入力チェック
             if (!username || !password) {
-                showError('ユーザー名とパスワードを入力してください');
+                showError('ユーザーIDとパスワードを入力してください');
                 return;
             }
 
-            try {
-                console.log('🔐 ログイン試行開始:', username);
-                console.log('📡 API URL:', window.API_BASE_URL);
-                
-                // 認証システムが初期化されるまで待つ
-                let retries = 0;
-                console.log('⏳ 認証システム初期化待機中...');
-                while ((!window.AUTH || !window.ROUTER) && retries < 20) {
-                    await new Promise(resolve => setTimeout(resolve, 100));
-                    retries++;
-                    if (retries % 5 === 0) {
-                        console.log(`⏳ 待機中... (${retries}/20) AUTH:${!!window.AUTH} ROUTER:${!!window.ROUTER}`);
-                    }
-                }
-                
-                console.log('✅ 認証システム:', window.AUTH ? '初期化済み' : '未初期化');
-                console.log('✅ ルーター:', window.ROUTER ? '初期化済み' : '未初期化');
-                
-                if (!window.AUTH) {
-                    showError('認証システムが初期化されていません');
-                    console.error('❌ AUTH が存在しません');
-                    return;
-                }
-                
-                // ログイン処理（auth.js の AUTH.login を使用）
-                console.log('🔑 AUTH.login 呼び出し...');
-                const result = await window.AUTH.login(username, password);
-                console.log('📊 ログイン結果:', result);
+            // エラーメッセージを非表示
+            errorMessage.classList.remove('show');
 
-                if (result.success) {
-                    console.log('✅ ログイン成功:', result.user);
+            try {
+                // APIに直接ログインリクエスト
+                const response = await fetch(`${window.API_BASE_URL}/api/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username: username,
+                        password: password
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    // トークンとユーザー情報を保存
+                    localStorage.setItem('shift_auth_token', data.token);
+                    localStorage.setItem('shift_user', JSON.stringify(data.user));
+                    
+                    console.log('✅ ログイン成功:', data.user);
                     
                     // status に基づいてリダイレクト（1=管理者, 0=スタッフ）
-                    const user = result.user;
                     const basePath = window.BASE_PATH || '/shift/';
-                    
-                    // status が 1 なら管理者、0 ならスタッフ
-                    const targetPage = (user.status === 1) 
+                    const targetPage = (data.user.status === 1) 
                         ? 'shift_home_admin.html' 
                         : 'shift_home_staff.html';
                     
-                    console.log('👤 ユーザー情報:', user);
-                    console.log('🔢 Status:', user.status, '→', user.status === 1 ? '管理者' : 'スタッフ');
-                    console.log('🎯 リダイレクト先:', basePath + targetPage);
-                    
                     window.location.href = basePath + targetPage;
                 } else {
-                    // ログイン失敗
-                    console.error('❌ ログイン失敗:', result.error);
-                    showError(result.error || 'ユーザー名またはパスワードが正しくありません');
+                    showError(data.error || 'ユーザーIDまたはパスワードが正しくありません');
                 }
             } catch (error) {
                 console.error('❌ ログインエラー:', error);
-                console.error('スタックトレース:', error.stack);
-                showError('ログインに失敗しました: ' + (error.message || 'もう一度お試しください'));
+                showError('ログインに失敗しました。もう一度お試しください。');
             }
         });
 
