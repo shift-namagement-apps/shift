@@ -331,10 +331,19 @@
     <script src="config.js"></script>
     <!-- 認証スクリプト -->
     <script src="auth.js"></script>
+    <!-- ルーティングスクリプト -->
+    <script src="script.js"></script>
     
     <script>
         // ページ読み込み時の認証チェックとスタッフ読み込み
         document.addEventListener('DOMContentLoaded', async () => {
+            // 認証システムの初期化を待つ
+            let retries = 0;
+            while (!AUTH && retries < 10) {
+                await new Promise(resolve => setTimeout(resolve, 100));
+                retries++;
+            }
+            
             // 認証チェック
             if (typeof PageRouter !== 'undefined') {
                 const hasAccess = await PageRouter.checkPageAccess();
@@ -349,6 +358,10 @@
                 console.log('👤 ログインユーザー:', user.name, `(${user.role})`);
             }
             
+            // トークンの存在確認
+            const token = localStorage.getItem('token');
+            console.log('🔑 トークン存在:', !!token, token ? `(${token.substring(0, 20)}...)` : '');
+            
             // スタッフリストを読み込み
             await loadStaffList();
         });
@@ -356,19 +369,30 @@
         // スタッフリストを読み込み
         async function loadStaffList() {
             try {
+                const token = localStorage.getItem('token');
+                console.log('📋 スタッフリスト取得開始...');
+                console.log('🔑 使用トークン:', token ? `${token.substring(0, 30)}...` : 'なし');
+                
                 const response = await fetch(`${API_BASE_URL}/api/users/list`, {
                     headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                        'Authorization': `Bearer ${token}`
                     }
                 });
                 
-                if (!response.ok) throw new Error('スタッフリストの取得に失敗しました');
+                console.log('📡 レスポンスステータス:', response.status);
+                
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    console.error('❌ APIエラー:', errorData);
+                    throw new Error(errorData.error || 'スタッフリストの取得に失敗しました');
+                }
                 
                 const data = await response.json();
+                console.log('✅ スタッフリスト取得成功:', data);
                 displayStaffList(data.users || []);
             } catch (error) {
                 console.error('エラー:', error);
-                alert('スタッフリストの読み込みに失敗しました');
+                alert('スタッフリストの読み込みに失敗しました: ' + error.message);
             }
         }
         
