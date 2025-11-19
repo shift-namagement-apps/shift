@@ -195,6 +195,9 @@
             errorMessage.classList.remove('show');
 
             try {
+                console.log('🔐 ログイン試行:', username);
+                console.log('📡 API URL:', window.API_BASE_URL);
+                
                 // APIに直接ログインリクエスト
                 const response = await fetch(`${window.API_BASE_URL}/api/auth/login`, {
                     method: 'POST',
@@ -207,23 +210,42 @@
                     })
                 });
 
+                console.log('📡 レスポンスステータス:', response.status);
                 const data = await response.json();
+                console.log('📊 レスポンスデータ:', data);
 
                 if (response.ok && data.success) {
+                    console.log('✅ ログイン成功:', data.user);
+                    console.log('🔢 User Status:', data.user.status, 'Role:', data.user.role);
+                    
                     // トークンとユーザー情報を保存
                     localStorage.setItem('shift_auth_token', data.token);
                     localStorage.setItem('shift_user', JSON.stringify(data.user));
                     
-                    console.log('✅ ログイン成功:', data.user);
+                    // 保存確認
+                    const savedToken = localStorage.getItem('shift_auth_token');
+                    const savedUser = localStorage.getItem('shift_user');
+                    console.log('💾 保存確認 - トークン:', !!savedToken, 'ユーザー:', !!savedUser);
                     
                     // status に基づいてリダイレクト（1=管理者, 0=スタッフ）
                     const basePath = window.BASE_PATH || '/shift/';
-                    const targetPage = (data.user.status === 1) 
-                        ? 'shift_home_admin.html' 
-                        : 'shift_home_staff.html';
+                    let targetPage;
                     
-                    window.location.href = basePath + targetPage;
+                    if (data.user.status === 1) {
+                        targetPage = 'shift_home_admin.html';
+                        console.log('👑 管理者としてログイン');
+                    } else {
+                        targetPage = 'shift_home_staff.html';
+                        console.log('👤 スタッフとしてログイン');
+                    }
+                    
+                    const fullUrl = basePath + targetPage;
+                    console.log('🎯 リダイレクト先:', fullUrl);
+                    
+                    // 即座にリダイレクト
+                    window.location.href = fullUrl;
                 } else {
+                    console.error('❌ ログイン失敗:', data);
                     showError(data.error || 'ユーザーIDまたはパスワードが正しくありません');
                 }
             } catch (error) {
