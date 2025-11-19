@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>出勤簿登録フォーム</title>
+
+    <style>
+      .title{
+        text-align: center;
+        font-size: 50px;
+      }  
+
+      .form{
+        font-size: 20px;
+        padding: 10px;
+        display: flex;
+        text-align: center;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      th h2{
+        text-align: center;   
+      }
+      
+
+      table {
+        border-collapse: separate;
+        border-spacing: 0 15px;
+        margin: 0 auto;
+        table-layout: fixed;  
+        width: 300px;        
+        border-collapse: collapse;
+        margin: 20px auto;
+      }
+  
+      select {
+         width: 145px;   
+        padding: 7px;   
+        font-size: 18px; 
+        margin-bottom: 10px;
+        }
+
+      textarea {
+         width: 130px;   
+        padding: 7px;   
+        font-size: 18px;
+        margin-bottom: 10px; 
+        }
+
+      input {
+         width: 130px;   
+        padding: 7px;   
+        font-size: 18px; 
+        margin-bottom: 10px;
+        }
+
+
+    table > th{
+        padding: 10px;
+    }
+
+    .submit{
+        margin-top: 40px;
+        width: 130px;
+        height: 50px;
+        font-size: 18px;
+    }
+
+    td{
+        margin: 30px;
+    }
+    </style>
+
+</head>
+<body>
+ <h1 class="title">出勤簿登録</h1>
+    <form action="" class="form">
+        <table>
+            <tr>
+                <th>
+                    <label for="date">
+                        日付:
+                    </label>
+                </th>
+                <td>
+                    <input type="date" id="date">
+                </td>
+            </tr>
+            <tr>
+                <th>
+                    <label for="start">                        
+                        始業時刻:
+                    </label>
+                </th>
+                <td>
+                    <input type="time" name="" id="start">
+                </td>
+            </tr>
+            <tr>
+                <th>
+                    <label for="finish">
+                        終業時刻:
+                    </label>
+                </th>
+                <td>
+                    <input type="time" name="" id="finish">
+                </td>
+            </tr>
+            <tr>
+                <th>
+                    <label for="finish">
+                        休憩時間:
+                    </label>
+                </th>
+                <td>
+                     <select id="break-time" name="break-time">
+                        <option value="0.25">0時間15分</option>
+                        <option value="0.5">0時間30分</option>
+                        <option value="0.75">0時間45分</option>
+                        <option value="1">1時間00分</option>
+                        <option value="1.25">1時間15分</option>
+                        <option value="1.5">1時間30分</option>
+                        <option value="1.75">1時間45分</option>
+                        <option value="2">2時間00分</option>
+                    </select>
+                </td>
+            </tr>
+            </table>
+            <tr>
+                <th>        
+                    <h2 class="other">その他</h2>
+                </th>
+            </tr>
+            <table>
+            <tr>
+                <th>
+                    <label for="add">
+                        備考欄:
+                    </label>
+                </th>
+                <td>
+                    <select  id="add">
+                        <option value="add-1">備考１</option>
+                        <option value="add-1">備考２</option>
+                        <option value="add-1">備考３</option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <th>
+                    <label for="textarea">
+                    </label>
+                </th>
+                <td>
+                    <textarea name="" id="textarea"></textarea>
+                </td>
+            </tr>
+        <tr>
+            <th>
+                <label for="place">                  
+               勤務地を選択:
+                </label>
+            </th>
+            <td>
+                <select id="place">
+                    <option value="place-1">勤務先1</option>
+                    <option value="place-2">勤務先2</option>
+                    <option value="place-3">勤務先3</option>
+                    <option value="place-4">勤務先4</option>
+                    <option value="place-5">勤務先5</option>
+                </select>
+            </td>
+        </tr>
+        <tr>
+            <th>
+                <label for="traffic">
+                    交通費合計(円):
+                </label>
+            </th>
+            <td>
+                <input type="number" name="" id="traffic">
+            </td>
+        </tr>           
+        </table>
+
+        <input class="submit" type="submit" value="送信">
+        
+    </form>
+    
+</body>
+</html>
