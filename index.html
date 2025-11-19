@@ -247,22 +247,20 @@
                 if (result.success) {
                     console.log('✅ ログイン成功:', result.user);
                     
-                    // ロールに応じてリダイレクト
-                    if (window.ROUTER && typeof window.ROUTER.redirectAfterLogin === 'function') {
-                        console.log('🔀 ROUTER.redirectAfterLogin 使用');
-                        window.ROUTER.redirectAfterLogin();
-                    } else {
-                        // 手動でリダイレクト
-                        console.log('🔀 手動リダイレクト');
-                        const user = window.AUTH.getUser();
-                        console.log('👤 ユーザー情報:', user);
-                        const basePath = window.BASE_PATH || '/shift/';
-                        const targetPage = (user && user.role === 'admin') 
-                            ? 'shift_home_admin.html' 
-                            : 'shift_home_staff.html';
-                        console.log('🎯 リダイレクト先:', basePath + targetPage);
-                        window.location.href = basePath + targetPage;
-                    }
+                    // status に基づいてリダイレクト（1=管理者, 0=スタッフ）
+                    const user = result.user;
+                    const basePath = window.BASE_PATH || '/shift/';
+                    
+                    // status が 1 なら管理者、0 ならスタッフ
+                    const targetPage = (user.status === 1) 
+                        ? 'shift_home_admin.html' 
+                        : 'shift_home_staff.html';
+                    
+                    console.log('👤 ユーザー情報:', user);
+                    console.log('🔢 Status:', user.status, '→', user.status === 1 ? '管理者' : 'スタッフ');
+                    console.log('🎯 リダイレクト先:', basePath + targetPage);
+                    
+                    window.location.href = basePath + targetPage;
                 } else {
                     // ログイン失敗
                     console.error('❌ ログイン失敗:', result.error);
