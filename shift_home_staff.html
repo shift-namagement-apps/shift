@@ -241,21 +241,28 @@
     <script src="config.js"></script>
     <!-- 認証スクリプト -->
     <script src="auth.js"></script>
-    <!-- メインスクリプト -->
-    <script src="script.js"></script>
     
     <script>
         // ページ読み込み時の初期化
         document.addEventListener('DOMContentLoaded', () => {
-            // 認証チェック
-            if (typeof PageRouter !== 'undefined') {
-                PageRouter.checkPageAccess();
+            // 認証チェック（シンプル版）
+            const token = localStorage.getItem('shift_auth_token');
+            const userJson = localStorage.getItem('shift_user');
+            
+            console.log('🔍 認証チェック - トークン:', !!token, 'ユーザー:', !!userJson);
+            
+            if (!token || !userJson) {
+                console.log('⚠️ 未認証: ログインページへリダイレクト');
+                window.location.href = window.BASE_PATH || '/shift/';
+                return;
             }
             
             // ユーザー情報を表示
-            const user = AUTH.getUser();
-            if (user) {
-                console.log('👤 ログインユーザー:', user.name, `(${user.role})`);
+            try {
+                const user = JSON.parse(userJson);
+                console.log('👤 ログインユーザー:', user.name || user.username, `(status: ${user.status})`);
+            } catch (e) {
+                console.error('ユーザー情報の解析エラー:', e);
             }
         });
         
