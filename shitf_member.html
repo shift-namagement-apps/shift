@@ -286,70 +286,44 @@
 
         <!-- アクションバー -->
         <div class="action-bar">
-            <button class="add-button">+ スタッフを追加</button>
+            <button class="add-button" onclick="showAddStaffModal()">+ スタッフを追加</button>
         </div>
 
         <!-- スタッフリスト -->
-        <div class="staff-list">
-            <!-- スタッフカード1 -->
-            <div class="staff-card">
-                <div class="staff-name">
-                    <span class="field-label">人名</span>
-                    <span class="field-value">ヤマダ タロウ</span>
+        <div class="staff-list" id="staff-list">
+            <!-- JavaScriptで動的に生成 -->
+        </div>
+    </div>
+    
+    <!-- スタッフ追加モーダル -->
+    <div id="add-staff-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+        <div style="background: white; padding: 30px; border-radius: 8px; width: 90%; max-width: 500px;">
+            <h2 style="margin-bottom: 20px; color: #333;">スタッフを追加</h2>
+            <form id="add-staff-form">
+                <div style="margin-bottom: 16px;">
+                    <label style="display: block; margin-bottom: 8px; color: #555; font-weight: 500;">スタッフID</label>
+                    <input type="text" id="staff-id" placeholder="ST-XXX" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">
                 </div>
-                <div class="staff-id">
-                    <span class="field-label">ID</span>
-                    <span class="field-value">ST-001</span>
+                <div style="margin-bottom: 16px;">
+                    <label style="display: block; margin-bottom: 8px; color: #555; font-weight: 500;">氏名</label>
+                    <input type="text" id="staff-name" placeholder="ヤマダ タロウ" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">
                 </div>
-                <div class="staff-status">
-                    <span class="field-label">ステータス</span>
-                    <span class="status-badge admin">管理者</span>
+                <div style="margin-bottom: 16px;">
+                    <label style="display: block; margin-bottom: 8px; color: #555; font-weight: 500;">パスワード</label>
+                    <input type="password" id="staff-password" placeholder="パスワード" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">
                 </div>
-                <div class="action-buttons">
-                    <button class="edit-button">編集</button>
-                    <button class="delete-button">削除</button>
+                <div style="margin-bottom: 24px;">
+                    <label style="display: block; margin-bottom: 8px; color: #555; font-weight: 500;">ステータス</label>
+                    <select id="staff-status" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">
+                        <option value="0">従業員 (status: 0)</option>
+                        <option value="1">管理者 (status: 1)</option>
+                    </select>
                 </div>
-            </div>
-
-            <!-- スタッフカード2 -->
-            <div class="staff-card">
-                <div class="staff-name">
-                    <span class="field-label">人名</span>
-                    <span class="field-value">サトウ ハナコ</span>
+                <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                    <button type="button" onclick="closeAddStaffModal()" style="padding: 10px 20px; background: #f5f5f5; border: 1px solid #ddd; border-radius: 4px; cursor: pointer; font-size: 14px;">キャンセル</button>
+                    <button type="submit" style="padding: 10px 20px; background: #4a90e2; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 500;">追加</button>
                 </div>
-                <div class="staff-id">
-                    <span class="field-label">ID</span>
-                    <span class="field-value">ST-002</span>
-                </div>
-                <div class="staff-status">
-                    <span class="field-label">ステータス</span>
-                    <span class="status-badge employee">従業員</span>
-                </div>
-                <div class="action-buttons">
-                    <button class="edit-button">編集</button>
-                    <button class="delete-button">削除</button>
-                </div>
-            </div>
-
-            <!-- スタッフカード3 -->
-            <div class="staff-card">
-                <div class="staff-name">
-                    <span class="field-label">人名</span>
-                    <span class="field-value">スズキ イチロウ</span>
-                </div>
-                <div class="staff-id">
-                    <span class="field-label">ID</span>
-                    <span class="field-value">ST-003</span>
-                </div>
-                <div class="staff-status">
-                    <span class="field-label">ステータス</span>
-                    <span class="status-badge employee">従業員</span>
-                </div>
-                <div class="action-buttons">
-                    <button class="edit-button">編集</button>
-                    <button class="delete-button">削除</button>
-                </div>
-            </div>
+            </form>
         </div>
     </div>
     
@@ -359,13 +333,13 @@
     <script src="auth.js"></script>
     
     <script>
-        // ページ読み込み時の認証チェック
+        // ページ読み込み時の認証チェックとスタッフ読み込み
         document.addEventListener('DOMContentLoaded', async () => {
             // 認証チェック
             if (typeof PageRouter !== 'undefined') {
                 const hasAccess = await PageRouter.checkPageAccess();
                 if (!hasAccess) {
-                    return; // 認証失敗時は処理を中断
+                    return;
                 }
             }
             
@@ -374,7 +348,152 @@
             if (user) {
                 console.log('👤 ログインユーザー:', user.name, `(${user.role})`);
             }
+            
+            // スタッフリストを読み込み
+            await loadStaffList();
         });
+        
+        // スタッフリストを読み込み
+        async function loadStaffList() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/users/list`, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+                
+                if (!response.ok) throw new Error('スタッフリストの取得に失敗しました');
+                
+                const data = await response.json();
+                displayStaffList(data.users || []);
+            } catch (error) {
+                console.error('エラー:', error);
+                alert('スタッフリストの読み込みに失敗しました');
+            }
+        }
+        
+        // スタッフリストを表示
+        function displayStaffList(users) {
+            const listEl = document.getElementById('staff-list');
+            listEl.innerHTML = '';
+            
+            // admin と staff は除外
+            const staffUsers = users.filter(u => u.id !== 'admin' && u.id !== 'staff');
+            
+            if (staffUsers.length === 0) {
+                listEl.innerHTML = '<div class="empty-state"><p>登録されているスタッフがいません</p></div>';
+                return;
+            }
+            
+            staffUsers.forEach(user => {
+                const card = document.createElement('div');
+                card.className = 'staff-card';
+                card.innerHTML = `
+                    <div class="staff-name">
+                        <span class="field-label">人名</span>
+                        <span class="field-value">${user.name || user.id}</span>
+                    </div>
+                    <div class="staff-id">
+                        <span class="field-label">ID</span>
+                        <span class="field-value">${user.id}</span>
+                    </div>
+                    <div class="staff-status">
+                        <span class="field-label">ステータス</span>
+                        <span class="status-badge ${user.status === 1 ? 'admin' : 'employee'}">
+                            ${user.status === 1 ? '管理者' : '従業員'}
+                        </span>
+                    </div>
+                    <div class="action-buttons">
+                        <button class="edit-button" onclick="editStaff('${user.id}')">編集</button>
+                        <button class="delete-button" onclick="deleteStaff('${user.id}')">削除</button>
+                    </div>
+                `;
+                listEl.appendChild(card);
+            });
+        }
+        
+        // モーダル表示
+        function showAddStaffModal() {
+            const modal = document.getElementById('add-staff-modal');
+            modal.style.display = 'flex';
+        }
+        
+        // モーダル非表示
+        function closeAddStaffModal() {
+            const modal = document.getElementById('add-staff-modal');
+            modal.style.display = 'none';
+            document.getElementById('add-staff-form').reset();
+        }
+        
+        // スタッフ追加フォーム送信
+        document.getElementById('add-staff-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const staffId = document.getElementById('staff-id').value;
+            const staffName = document.getElementById('staff-name').value;
+            const staffPassword = document.getElementById('staff-password').value;
+            const staffStatus = parseInt(document.getElementById('staff-status').value);
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/users/add`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify({
+                        user_id: staffId,
+                        name: staffName,
+                        password: staffPassword,
+                        status: staffStatus
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error || 'スタッフの追加に失敗しました');
+                }
+                
+                alert('スタッフを追加しました');
+                closeAddStaffModal();
+                await loadStaffList();
+            } catch (error) {
+                console.error('エラー:', error);
+                alert(error.message);
+            }
+        });
+        
+        // スタッフ削除
+        async function deleteStaff(userId) {
+            if (!confirm(`スタッフ ${userId} を削除しますか？`)) return;
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/users/delete/${userId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error || 'スタッフの削除に失敗しました');
+                }
+                
+                alert('スタッフを削除しました');
+                await loadStaffList();
+            } catch (error) {
+                console.error('エラー:', error);
+                alert(error.message);
+            }
+        }
+        
+        // スタッフ編集（TODO: 実装）
+        function editStaff(userId) {
+            alert('編集機能は未実装です: ' + userId);
+        }
     </script>
 </body>
 </html>
