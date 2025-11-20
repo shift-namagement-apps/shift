@@ -1,18 +1,76 @@
 /**
  * シフト管理アプリ - 認証・画面遷移管理
- * 修正版
+ * ログイン状態の管理と画面遷移の制御
  */
 
-// 設定ファイルで window.API_BASE_URL が定義されている前提
-// 定数がなければ window オブジェクトから取得するヘルパー
-const getBaseUrl = () => window.API_BASE_URL || ''; 
+// API_BASE_URLを取得するヘルパー関数
+const getBaseUrl = () => window.API_BASE_URL || '';
 
 const AUTH = {
-    TOKEN_KEY: 'shift_app_token',
-    USER_KEY: 'shift_app_user',
+    // ローカルストレージのキー
+    TOKEN_KEY: 'shift_auth_token',
+    USER_KEY: 'shift_user',
     
-    // ... (login, logout 関数はそのまま) ...
-
+    /**
+     * ログイン処理
+     */
+    async login(username, password) {
+        try {
+            const response = await this.request('POST', '/api/auth/login', {
+                username: username,
+                password: password
+            });
+            
+            if (response.success) {
+                // トークンとユーザー情報を保存
+                this.saveToken(response.token);
+                this.saveUser(response.user);
+                
+                console.log('✅ ログイン成功:', response.user);
+                return {
+                    success: true,
+                    user: response.user
+                };
+            } else {
+                return {
+                    success: false,
+                    error: response.error
+                };
+            }
+        } catch (error) {
+            console.error('❌ ログインエラー:', error);
+            return {
+                success: false,
+                error: 'ログインに失敗しました'
+            };
+        }
+    },
+    
+    /**
+     * ログアウト処理
+     */
+    async logout() {
+        try {
+            const token = this.getToken();
+            if (token) {
+                // サーバー側にログアウトを通知（任意）
+                await fetch(`${API_BASE_URL}/api/auth/logout`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+            }
+        } catch (error) {
+            console.error('ログアウトエラー:', error);
+        } finally {
+            // ローカルストレージをクリア
+            this.clearAuth();
+            console.log('✅ ログアウトしました');
+        }
+    },
+    
     /**
      * トークン検証（修正版）
      */
@@ -24,7 +82,6 @@ const AUTH = {
         }
         
         try {
-            // API_BASE_URLの参照方法を修正
             const response = await fetch(`${getBaseUrl()}/api/auth/verify`, {
                 method: 'GET',
                 headers: {
@@ -41,10 +98,9 @@ const AUTH = {
             }
 
             // サーバーエラー(500系)などの場合は、ログアウトせずにfalseだけ返す
-            // (一時的なサーバーダウンでログアウトさせないため)
             if (!response.ok) {
                 console.warn(`⚠️ サーバー確認失敗: ${response.status}`);
-                return false; 
+                return false;
             }
             
             const data = await response.json();
@@ -53,20 +109,68 @@ const AUTH = {
                 this.saveUser(data.user);
                 return true;
             } else {
-                // 明示的に失敗が返された場合
                 this.clearAuth();
                 return false;
             }
         } catch (error) {
-            // ネットワークエラーなどの場合はログアウトさせない！
+            // ネットワークエラーなどの場合はログアウトさせない
             console.error('トークン検証中の通信エラー:', error);
-            // this.clearAuth();  <-- 削除しました
-            return false; 
+            return false;
         }
     },
-
-    // ... (saveToken, getToken などの関数はそのまま) ...
-
+    
+    /**
+     * トークンを保存
+     */
+    saveToken(token) {
+        localStorage.setItem(this.TOKEN_KEY, token);
+    },
+    
+    /**
+     * トークンを取得
+     */
+    getToken() {
+        return localStorage.getItem(this.TOKEN_KEY);
+    },
+    
+    /**
+     * ユーザー情報を保存
+     */
+    saveUser(user) {
+        localStorage.setItem(this.USER_KEY, JSON.stringify(user));
+    },
+    
+    /**
+     * ユーザー情報を取得
+     */
+    getUser() {
+        const userJson = localStorage.getItem(this.USER_KEY);
+        return userJson ? JSON.parse(userJson) : null;
+    },
+    
+    /**
+     * 認証情報をクリア
+     */
+    clearAuth() {
+        localStorage.removeItem(this.TOKEN_KEY);
+        localStorage.removeItem(this.USER_KEY);
+    },
+    
+    /**
+     * ログイン状態をチェック
+     */
+    isLoggedIn() {
+        return !!this.getToken();
+    },
+    
+    /**
+     * 管理者かどうかをチェック
+     */
+    isAdmin() {
+        const user = this.getUser();
+        return user && user.role === 'admin';
+    },
+    
     /**
      * 認証付きAPIリクエスト（修正版）
      */
@@ -86,12 +190,11 @@ const AUTH = {
         }
         
         try {
-            // API_BASE_URLの参照方法を修正
             const response = await fetch(`${getBaseUrl()}${endpoint}`, options);
             
             if (response.status === 401) {
                 this.clearAuth();
-                ROUTER.navigate('/shift_login.html');
+                ROUTER.navigate('shift_login.html');
                 return null;
             }
 
@@ -107,27 +210,42 @@ const AUTH = {
 // ==================== 画面遷移管理 ====================
 
 const ROUTER = {
-    // ... (navigate 関数はそのまま) ...
-
     /**
-     * 認証が必要なページの保護（タイポ修正）
+     * ページ遷移
+     */
+    navigate(page) {
+        // BASE_PATHを考慮した遷移（config.jsで定義）
+        const basePath = window.BASE_PATH || '/';
+        const relativePage = page.startsWith('/') ? page.substring(1) : page;
+        
+        // GitHub Pages環境では /shift/ を含める
+        if (basePath !== '/') {
+            window.location.href = basePath + relativePage;
+        } else {
+            window.location.href = relativePage;
+        }
+    },
+    
+    /**
+     * 認証が必要なページの保護（修正版）
      */
     protectPage() {
         const currentPage = window.location.pathname.split('/').pop();
         
+        // ログインページとindex.htmlは除外
         if (currentPage === 'index.html' || currentPage === '' || !currentPage || currentPage === 'shift_login.html') {
             return;
         }
         
+        // ログインしていない場合はログインページへ
         if (!AUTH.isLoggedIn()) {
             console.warn('⚠️ 未ログイン: ログインページへリダイレクト');
-            this.navigate('shift_login.html'); // index.htmlではなくログインページへ
+            this.navigate('index.html');
             return;
         }
         
-        // タイポ修正: shitf -> shift
-        const adminPages = ['shift_home_admin.html', 'shift_member.html'];
-        
+        // 管理者専用ページの保護
+        const adminPages = ['shift_home_admin.html', 'shitf_member.html'];
         if (adminPages.includes(currentPage) && !AUTH.isAdmin()) {
             console.warn('⚠️ 管理者権限が必要です');
             alert('管理者権限が必要です');
@@ -136,14 +254,53 @@ const ROUTER = {
         }
     },
     
-    // ... (残りの関数はそのまま) ...
+    /**
+     * ログイン後のリダイレクト
+     */
+    redirectAfterLogin() {
+        const user = AUTH.getUser();
+        
+        if (!user) {
+            console.error('❌ ユーザー情報が取得できません');
+            return;
+        }
+        
+        // ロールに応じてリダイレクト
+        if (user.role === 'admin') {
+            console.log('🔑 管理者としてログイン');
+            this.navigate('shift_home_admin.html');
+        } else {
+            console.log('👤 スタッフとしてログイン');
+            this.navigate('shift_home_staff.html');
+        }
+    },
+    
+    /**
+     * 現在のページ名を取得
+     */
+    getCurrentPage() {
+        return window.location.pathname.split('/').pop();
+    }
 };
 
 // ==================== ページ読み込み時の処理 ====================
 
 document.addEventListener('DOMContentLoaded', async () => {
-    // ... (前半そのまま) ...
-
+    console.log('🔐 認証システム初期化中...');
+    
+    const currentPage = ROUTER.getCurrentPage();
+    
+    // ログインページの場合
+    if (currentPage === 'shift_login.html' || currentPage === '') {
+        // 既にログイン済みの場合はホームへリダイレクト
+        if (AUTH.isLoggedIn()) {
+            const isValid = await AUTH.verifyToken();
+            if (isValid) {
+                console.log('✅ 既にログイン済み');
+                ROUTER.redirectAfterLogin();
+                return;
+            }
+        }
     } else {
         // その他のページは認証チェック
         ROUTER.protectPage();
@@ -151,12 +308,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         // トークンの検証
         if (AUTH.isLoggedIn()) {
             const isValid = await AUTH.verifyToken();
-            // isValidがfalseでも、通信エラーの可能性があるので
-            // 即座にリダイレクトするかは慎重に判断する。
-            // ただし、protectPage()でトークン有無は確認しているので
-            // ここでは「401が返ってきてトークンが消された場合」のみリダイレクトする
-            if (!AUTH.isLoggedIn()) { 
-                ROUTER.navigate('/shift_login.html');
+            // トークンが消された場合のみリダイレクト
+            if (!AUTH.isLoggedIn()) {
+                ROUTER.navigate('shift_login.html');
             }
         }
     }
@@ -164,4 +318,42 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.log('✅ 認証システム初期化完了');
 });
 
-// ... (残りの部分そのまま) ...
+// ==================== ユーティリティ関数 ====================
+
+/**
+ * 現在のユーザー情報を表示
+ */
+function displayUserInfo() {
+    const user = AUTH.getUser();
+    
+    if (!user) {
+        return;
+    }
+    
+    // ユーザー名表示エリアがあれば更新
+    const userNameElement = document.getElementById('user-name');
+    if (userNameElement) {
+        userNameElement.textContent = user.name;
+    }
+    
+    const userRoleElement = document.getElementById('user-role');
+    if (userRoleElement) {
+        userRoleElement.textContent = user.role === 'admin' ? '管理者' : 'スタッフ';
+    }
+}
+
+/**
+ * ログアウトボタンのイベントハンドラ
+ */
+async function handleLogout() {
+    if (confirm('ログアウトしますか？')) {
+        await AUTH.logout();
+        ROUTER.navigate('/shift_login.html');
+    }
+}
+
+// グローバルスコープに公開
+window.AUTH = AUTH;
+window.ROUTER = ROUTER;
+window.displayUserInfo = displayUserInfo;
+window.handleLogout = handleLogout;
