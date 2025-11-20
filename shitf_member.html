@@ -327,6 +327,40 @@
         </div>
     </div>
     
+    <!-- スタッフ編集モーダル -->
+    <div id="edit-staff-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+        <div style="background: white; padding: 30px; border-radius: 8px; width: 90%; max-width: 500px;">
+            <h2 style="margin-bottom: 20px; color: #333;">スタッフを編集</h2>
+            <form id="edit-staff-form">
+                <input type="hidden" id="edit-staff-original-id">
+                <div style="margin-bottom: 16px;">
+                    <label style="display: block; margin-bottom: 8px; color: #555; font-weight: 500;">スタッフID</label>
+                    <input type="text" id="edit-staff-id" readonly style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; background: #f5f5f5; cursor: not-allowed;">
+                </div>
+                <div style="margin-bottom: 16px;">
+                    <label style="display: block; margin-bottom: 8px; color: #555; font-weight: 500;">氏名</label>
+                    <input type="text" id="edit-staff-name" placeholder="ヤマダ タロウ" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">
+                </div>
+                <div style="margin-bottom: 16px;">
+                    <label style="display: block; margin-bottom: 8px; color: #555; font-weight: 500;">新しいパスワード</label>
+                    <input type="password" id="edit-staff-password" placeholder="変更する場合のみ入力" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">
+                    <small style="color: #777; font-size: 12px;">空欄の場合はパスワードを変更しません</small>
+                </div>
+                <div style="margin-bottom: 24px;">
+                    <label style="display: block; margin-bottom: 8px; color: #555; font-weight: 500;">ステータス</label>
+                    <select id="edit-staff-status" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">
+                        <option value="0">従業員 (status: 0)</option>
+                        <option value="1">管理者 (status: 1)</option>
+                    </select>
+                </div>
+                <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                    <button type="button" onclick="closeEditStaffModal()" style="padding: 10px 20px; background: #f5f5f5; border: 1px solid #ddd; border-radius: 4px; cursor: pointer; font-size: 14px;">キャンセル</button>
+                    <button type="submit" style="padding: 10px 20px; background: #4a90e2; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 500;">更新</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
     <!-- API設定を先に読み込む -->
     <script src="config.js"></script>
     <!-- 認証スクリプト -->
@@ -505,10 +539,107 @@
             }
         }
         
-        // スタッフ編集（TODO: 実装）
-        function editStaff(userId) {
-            alert('編集機能は未実装です: ' + userId);
+        // スタッフ編集
+        async function editStaff(userId) {
+            try {
+                const token = localStorage.getItem('shift_auth_token');
+                const response = await fetch(`${API_BASE_URL}/api/users/list`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('スタッフ情報の取得に失敗しました');
+                }
+                
+                const data = await response.json();
+                const user = data.users.find(u => u.id === userId);
+                
+                if (!user) {
+                    throw new Error('スタッフが見つかりません');
+                }
+                
+                // モーダルに情報を設定
+                document.getElementById('edit-staff-original-id').value = user.id;
+                document.getElementById('edit-staff-id').value = user.id;
+                document.getElementById('edit-staff-name').value = user.name || user.id;
+                document.getElementById('edit-staff-password').value = '';
+                document.getElementById('edit-staff-status').value = user.status;
+                
+                // モーダルを表示
+                document.getElementById('edit-staff-modal').style.display = 'flex';
+            } catch (error) {
+                console.error('エラー:', error);
+                alert(error.message);
+            }
         }
+        
+        // 編集モーダル非表示
+        function closeEditStaffModal() {
+            const modal = document.getElementById('edit-staff-modal');
+            modal.style.display = 'none';
+            document.getElementById('edit-staff-form').reset();
+        }
+        
+        // スタッフ編集フォーム送信
+        document.getElementById('edit-staff-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const userId = document.getElementById('edit-staff-original-id').value;
+            const staffName = document.getElementById('edit-staff-name').value;
+            const staffPassword = document.getElementById('edit-staff-password').value;
+            const staffStatus = parseInt(document.getElementById('edit-staff-status').value);
+            
+            try {
+                const token = localStorage.getItem('shift_auth_token');
+                
+                // まず既存のユーザーを削除
+                const deleteResponse = await fetch(`${API_BASE_URL}/api/users/delete/${userId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (!deleteResponse.ok) {
+                    const deleteData = await deleteResponse.json();
+                    throw new Error(deleteData.error || 'スタッフの削除に失敗しました');
+                }
+                
+                // 新しい情報で追加（パスワードが空の場合は元のパスワードを維持できないため、必須にする）
+                if (!staffPassword) {
+                    throw new Error('パスワードを入力してください');
+                }
+                
+                const addResponse = await fetch(`${API_BASE_URL}/api/users/add`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        user_id: userId,
+                        name: staffName,
+                        password: staffPassword,
+                        status: staffStatus
+                    })
+                });
+                
+                const addData = await addResponse.json();
+                
+                if (!addResponse.ok) {
+                    throw new Error(addData.error || 'スタッフの更新に失敗しました');
+                }
+                
+                alert('スタッフ情報を更新しました');
+                closeEditStaffModal();
+                await loadStaffList();
+            } catch (error) {
+                console.error('エラー:', error);
+                alert(error.message);
+            }
+        });
     </script>
 </body>
 </html>
