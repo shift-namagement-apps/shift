@@ -165,16 +165,37 @@
     <script src="auth.js"></script>
     
     <script>
-        // ページ読み込み時に自動ログアウト
+        // ページ読み込み時の初期化
         document.addEventListener('DOMContentLoaded', () => {
-            // ローカルストレージをクリア
-            localStorage.removeItem('shift_auth_token');
-            localStorage.removeItem('shift_user');
-            console.log('🚪 ログアウト状態にしました');
-            
             // フォーカス
             document.getElementById('user-id').focus();
+            
+            // 初回セットアップ確認（データベースにユーザーがいない場合は自動作成）
+            checkAndSetup();
         });
+        
+        // 初回セットアップ確認
+        async function checkAndSetup() {
+            try {
+                // セットアップAPIを呼び出し（既にユーザーがいる場合はエラーが返るが無視）
+                const response = await fetch(`${window.API_BASE_URL}/api/setup`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('✅ 初回セットアップ完了:', data);
+                } else {
+                    // 既にセットアップ済みの場合は無視
+                    console.log('ℹ️ データベースは既にセットアップ済みです');
+                }
+            } catch (error) {
+                console.log('ℹ️ セットアップチェック:', error.message);
+            }
+        }
         
         const loginForm = document.getElementById('login-form');
         const errorMessage = document.getElementById('error-message');
@@ -196,7 +217,6 @@
 
             try {
                 console.log('🔐 ログイン試行:', username);
-                console.log('📡 API URL:', window.API_BASE_URL);
                 
                 // APIに直接ログインリクエスト
                 const response = await fetch(`${window.API_BASE_URL}/api/auth/login`, {
@@ -210,40 +230,23 @@
                     })
                 });
 
-                console.log('📡 レスポンスステータス:', response.status);
                 const data = await response.json();
-                console.log('📊 レスポンスデータ:', data);
 
                 if (response.ok && data.success) {
                     console.log('✅ ログイン成功:', data.user);
-                    console.log('🔢 User Status:', data.user.status, 'Role:', data.user.role);
                     
                     // トークンとユーザー情報を保存
                     localStorage.setItem('shift_auth_token', data.token);
                     localStorage.setItem('shift_user', JSON.stringify(data.user));
                     
-                    // 保存確認
-                    const savedToken = localStorage.getItem('shift_auth_token');
-                    const savedUser = localStorage.getItem('shift_user');
-                    console.log('💾 保存確認 - トークン:', !!savedToken, 'ユーザー:', !!savedUser);
-                    
                     // status に基づいてリダイレクト（1=管理者, 0=スタッフ）
                     const basePath = window.BASE_PATH || '/shift/';
-                    let targetPage;
+                    const targetPage = (data.user.status === 1) 
+                        ? 'shift_home_admin.html' 
+                        : 'shift_home_staff.html';
                     
-                    if (data.user.status === 1) {
-                        targetPage = 'shift_home_admin.html';
-                        console.log('👑 管理者としてログイン');
-                    } else {
-                        targetPage = 'shift_home_staff.html';
-                        console.log('👤 スタッフとしてログイン');
-                    }
-                    
-                    const fullUrl = basePath + targetPage;
-                    console.log('🎯 リダイレクト先:', fullUrl);
-                    
-                    // 即座にリダイレクト
-                    window.location.href = fullUrl;
+                    console.log('🎯 リダイレクト先:', basePath + targetPage);
+                    window.location.href = basePath + targetPage;
                 } else {
                     console.error('❌ ログイン失敗:', data);
                     showError(data.error || 'ユーザーIDまたはパスワードが正しくありません');
