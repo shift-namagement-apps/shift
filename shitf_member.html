@@ -335,13 +335,6 @@
     <script>
         // ページ読み込み時の認証チェックとスタッフ読み込み
         document.addEventListener('DOMContentLoaded', async () => {
-            // 認証システムの初期化を待つ
-            let retries = 0;
-            while (!AUTH && retries < 10) {
-                await new Promise(resolve => setTimeout(resolve, 100));
-                retries++;
-            }
-            
             // 認証チェック（シンプル版）
             const token = localStorage.getItem('shift_auth_token');
             if (!token) {
@@ -351,9 +344,10 @@
             }
             
             // ユーザー情報を表示
-            const user = AUTH ? AUTH.getUser() : null;
-            if (user) {
-                console.log('👤 ログインユーザー:', user.name, `(${user.role})`);
+            const userJson = localStorage.getItem('shift_user');
+            if (userJson) {
+                const user = JSON.parse(userJson);
+                console.log('👤 ログインユーザー:', user.user_id, `(status: ${user.status})`);
             }
             
             // トークンの存在確認
@@ -366,7 +360,7 @@
         // スタッフリストを読み込み
         async function loadStaffList() {
             try {
-                const token = localStorage.getItem('token');
+                const token = localStorage.getItem('shift_auth_token');
                 console.log('📋 スタッフリスト取得開始...');
                 console.log('🔑 使用トークン:', token ? `${token.substring(0, 30)}...` : 'なし');
                 
@@ -460,7 +454,7 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                        'Authorization': `Bearer ${localStorage.getItem('shift_auth_token')}`
                     },
                     body: JSON.stringify({
                         user_id: staffId,
@@ -493,7 +487,7 @@
                 const response = await fetch(`${API_BASE_URL}/api/users/delete/${userId}`, {
                     method: 'DELETE',
                     headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                        'Authorization': `Bearer ${localStorage.getItem('shift_auth_token')}`
                     }
                 });
                 
