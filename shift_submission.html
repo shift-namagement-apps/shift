@@ -637,21 +637,64 @@
             render();
         }
 
-        function submitShift() {
+        async function submitShift() {
             const shiftCount = Object.keys(appState.myShifts).length;
             if (shiftCount === 0) {
                 alert('シフト希望が入力されていません。');
                 return;
             }
 
+            // ホームが指定されていないシフトをチェック
+            const invalidShifts = Object.entries(appState.myShifts).filter(([day, shift]) => {
+                return shift.code !== 'NONE' && !shift.home;
+            });
+
+            if (invalidShifts.length > 0) {
+                const days = invalidShifts.map(([day]) => day).join(', ');
+                alert(`以下の日付でホームが指定されていません: ${days}日\n\nホームを指定してください。`);
+                return;
+            }
+
             if (confirm(`${appState.currentYear}年${appState.currentMonth}月のシフト希望を提出しますか？\n入力済み: ${shiftCount}日分`)) {
-                // TODO: 実際のAPI送信処理
-                console.log('提出データ:', appState.myShifts);
-                alert('シフト希望を提出しました！');
-                
-                // 提出後はクリア
-                appState.myShifts = {};
-                render();
+                try {
+                    const token = localStorage.getItem('shift_auth_token');
+                    if (!token) {
+                        alert('ログインが必要です');
+                        window.location.href = window.BASE_PATH || '/shift/';
+                        return;
+                    }
+
+                    console.log('📤 提出データ:', appState.myShifts);
+
+                    const response = await fetch(`${API_BASE_URL}/api/shift-requests/submit`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({
+                            year: appState.currentYear,
+                            month: appState.currentMonth,
+                            shifts: appState.myShifts
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (!response.ok) {
+                        throw new Error(data.error || 'シフト希望の提出に失敗しました');
+                    }
+
+                    console.log('✅ 提出成功:', data);
+                    alert(`シフト希望を提出しました！\n保存件数: ${data.saved_count}件`);
+                    
+                    // 提出後はクリア
+                    appState.myShifts = {};
+                    render();
+                } catch (error) {
+                    console.error('❌ 提出エラー:', error);
+                    alert('シフト希望の提出に失敗しました: ' + error.message);
+                }
             }
         }
     </script>
