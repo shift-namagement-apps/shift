@@ -203,6 +203,15 @@
                 <p>スタッフの登録・編集・削除</p>
             </div>
 
+            <!-- 月次初期化 -->
+            <div class="menu-card" onclick="showMonthInitModal()">
+                <div class="card-header">
+                    <div class="card-icon">🗓️</div>
+                    <h2>月次初期化</h2>
+                </div>
+                <p>シフト要望データベース構造の作成</p>
+            </div>
+
             <!-- 出勤簿 -->
             <div class="menu-card" onclick="navigateToPage('shift_staff.html')">
                 <div class="card-header">
@@ -244,6 +253,46 @@
     <!-- フッター -->
     <div class="footer">
         <p>© 2025 シフト管理システム</p>
+    </div>
+
+    <!-- 月次初期化モーダル -->
+    <div id="month-init-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+        <div style="background: white; padding: 30px; border-radius: 8px; width: 90%; max-width: 400px;">
+            <h2 style="margin-bottom: 20px; color: #333;">月次データベース初期化</h2>
+            <p style="margin-bottom: 20px; color: #666; font-size: 14px; line-height: 1.6;">
+                指定された年月のシフト要望データベース構造を作成します。<br>
+                全日付・全ホーム(A～E)・全シフトコード(A,B,C,EL,N,L,SP)の組み合わせが作成されます。
+            </p>
+            <div style="margin-bottom: 16px;">
+                <label style="display: block; margin-bottom: 8px; color: #555; font-weight: 500;">年</label>
+                <select id="init-year" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">
+                    <option value="2024">2024</option>
+                    <option value="2025" selected>2025</option>
+                    <option value="2026">2026</option>
+                </select>
+            </div>
+            <div style="margin-bottom: 24px;">
+                <label style="display: block; margin-bottom: 8px; color: #555; font-weight: 500;">月</label>
+                <select id="init-month" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">
+                    <option value="1">1月</option>
+                    <option value="2">2月</option>
+                    <option value="3">3月</option>
+                    <option value="4">4月</option>
+                    <option value="5">5月</option>
+                    <option value="6">6月</option>
+                    <option value="7">7月</option>
+                    <option value="8">8月</option>
+                    <option value="9">9月</option>
+                    <option value="10">10月</option>
+                    <option value="11" selected>11月</option>
+                    <option value="12">12月</option>
+                </select>
+            </div>
+            <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                <button onclick="closeMonthInitModal()" style="padding: 10px 20px; background: #f5f5f5; border: 1px solid #ddd; border-radius: 4px; cursor: pointer; font-size: 14px;">キャンセル</button>
+                <button onclick="executeMonthInit()" style="padding: 10px 20px; background: #4a90e2; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 500;">初期化実行</button>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -315,6 +364,63 @@
         // 戻るボタン
         function goBack() {
             window.history.back();
+        }
+        
+        // 月次初期化モーダルを表示
+        function showMonthInitModal() {
+            const modal = document.getElementById('month-init-modal');
+            modal.style.display = 'flex';
+        }
+        
+        // 月次初期化モーダルを閉じる
+        function closeMonthInitModal() {
+            const modal = document.getElementById('month-init-modal');
+            modal.style.display = 'none';
+        }
+        
+        // 月次初期化を実行
+        async function executeMonthInit() {
+            const year = document.getElementById('init-year').value;
+            const month = document.getElementById('init-month').value;
+            
+            if (!confirm(`${year}年${month}月のデータベース構造を初期化しますか？\n\n※既存データは上書きされません`)) {
+                return;
+            }
+            
+            try {
+                const token = localStorage.getItem('shift_auth_token');
+                if (!token) {
+                    alert('ログインが必要です');
+                    return;
+                }
+                
+                console.log(`📅 月次初期化実行: ${year}年${month}月`);
+                
+                const response = await fetch(`${API_BASE_URL}/api/shift-requests/initialize-month`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        year: parseInt(year),
+                        month: parseInt(month)
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error || '初期化に失敗しました');
+                }
+                
+                console.log('✅ 初期化成功:', data);
+                alert(`${year}年${month}月の構造を初期化しました！\n\n作成数: ${data.created_count}件\n日数: ${data.days}日\nホーム数: ${data.homes}\nシフトコード数: ${data.shift_codes}`);
+                closeMonthInitModal();
+            } catch (error) {
+                console.error('❌ 初期化エラー:', error);
+                alert('初期化に失敗しました: ' + error.message);
+            }
         }
     </script>
 </body>
