@@ -69,11 +69,21 @@
                 </select>
             </div>
 
-            <h3>シフト要望</h3>
-            <ul class="shift-request-list" id="shift-request-list">
+            <h3>シフト要望カレンダー</h3>
+            <div class="view-toggle">
+                <button class="btn-toggle active" data-view="calendar">カレンダー</button>
+                <button class="btn-toggle" data-view="list">リスト</button>
+            </div>
+            
+            <div id="calendar-view" class="calendar-view">
+                <!-- カレンダーがここに表示されます -->
+            </div>
+            
+            <div id="list-view" class="shift-request-list-container" style="display: none;">
+                <ul class="shift-request-list" id="shift-request-list">
                 </ul>
-
-            <button class="btn btn-reflect-all" id="reflect-all-btn" onclick="bulkApproveShiftRequests()">すべて一括承認</button>
+                <button class="btn btn-reflect-all" id="reflect-all-btn" onclick="bulkApproveShiftRequests()">すべて一括承認</button>
+            </div>
         </nav>
 
         <div class="main-wrapper">
