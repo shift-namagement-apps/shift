@@ -934,8 +934,16 @@ function handleDateChange() {
     appState.currentYear = parseInt(dom.yearSelect.value, 10);
     appState.currentMonth = parseInt(dom.monthSelect.value, 10);
     console.log('日付変更:', appState.currentYear, appState.currentMonth);
-    // 年月を変更しても、10日分の固定データで再描画される
-    render();
+    
+    // Firebaseから新しい年月のデータを再読み込み
+    loadDataFromFirebase().then(() => {
+        render();
+        // カレンダービューが表示されている場合は再描画
+        const calendarView = document.getElementById('calendar-view');
+        if (calendarView && calendarView.style.display !== 'none') {
+            renderCalendarView();
+        }
+    });
 }
 
 // --- ヘルパー関数 -----------------------------------------
@@ -1187,7 +1195,122 @@ function initStaffHomePage() {
  */
 function initShiftCreatePage() {
     console.log('📝 シフト作成ページ初期化');
-    // シフト作成フォームの初期化処理
+    
+    // ビュー切り替えボタンの設定
+    const toggleButtons = document.querySelectorAll('.btn-toggle');
+    toggleButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const view = btn.dataset.view;
+            
+            // ボタンのアクティブ状態を切り替え
+            toggleButtons.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            
+            // ビューの表示/非表示を切り替え
+            const calendarView = document.getElementById('calendar-view');
+            const listView = document.getElementById('list-view');
+            
+            if (view === 'calendar') {
+                calendarView.style.display = 'block';
+                listView.style.display = 'none';
+                renderCalendarView();
+            } else {
+                calendarView.style.display = 'none';
+                listView.style.display = 'block';
+            }
+        });
+    });
+    
+    // 初期表示はカレンダー
+    renderCalendarView();
+}
+
+/**
+ * カレンダービューを描画
+ */
+function renderCalendarView() {
+    const calendarView = document.getElementById('calendar-view');
+    if (!calendarView) return;
+    
+    const year = appState.currentYear;
+    const month = appState.currentMonth;
+    
+    // その月の1日と最終日を取得
+    const firstDay = new Date(year, month - 1, 1);
+    const lastDay = new Date(year, month, 0);
+    const daysInMonth = lastDay.getDate();
+    
+    // カレンダーの開始日（月曜始まり）
+    const startDay = firstDay.getDay(); // 0=日曜, 1=月曜, ...
+    const startOffset = startDay === 0 ? 6 : startDay - 1; // 月曜始まりに調整
+    
+    // カレンダーHTML生成
+    let html = '<div class="calendar-grid">';
+    
+    // 曜日ヘッダー
+    const weekdays = ['月', '火', '水', '木', '金', '土', '日'];
+    weekdays.forEach(day => {
+        html += `<div class="calendar-header">${day}</div>`;
+    });
+    
+    // 前月の日付（空白）
+    for (let i = 0; i < startOffset; i++) {
+        html += '<div class="calendar-day other-month"></div>';
+    }
+    
+    // 今日の日付
+    const today = new Date();
+    const isCurrentMonth = today.getFullYear() === year && (today.getMonth() + 1) === month;
+    const todayDate = today.getDate();
+    
+    // その月の日付
+    for (let day = 1; day <= daysInMonth; day++) {
+        const isToday = isCurrentMonth && day === todayDate;
+        const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        
+        // その日のシフト要望を取得
+        const dayRequests = appState.shiftRequests.filter(req => {
+            return req.date === dateStr;
+        });
+        
+        html += `<div class="calendar-day ${isToday ? 'today' : ''}" data-date="${dateStr}">`;
+        html += `<div class="calendar-day-header">${day}日</div>`;
+        html += '<div class="calendar-requests">';
+        
+        // シフト要望を表示
+        dayRequests.forEach(req => {
+            const approvedClass = req.status === 1 ? 'approved' : '';
+            html += `<div class="calendar-request-item ${approvedClass}" data-request-id="${req.id}">`;
+            html += `<span class="calendar-request-name" title="${req.staffName}">${req.staffName}</span>`;
+            html += `<span class="calendar-request-shift">${req.shiftCode}</span>`;
+            html += `<span class="calendar-request-home">${req.home}</span>`;
+            html += '</div>';
+        });
+        
+        html += '</div></div>';
+    }
+    
+    // 次月の日付（空白で埋める）
+    const totalCells = startOffset + daysInMonth;
+    const remainingCells = 7 - (totalCells % 7);
+    if (remainingCells < 7) {
+        for (let i = 0; i < remainingCells; i++) {
+            html += '<div class="calendar-day other-month"></div>';
+        }
+    }
+    
+    html += '</div>';
+    calendarView.innerHTML = html;
+    
+    // カレンダーの日付クリックイベント
+    document.querySelectorAll('.calendar-day:not(.other-month)').forEach(dayEl => {
+        dayEl.addEventListener('click', (e) => {
+            const dateStr = dayEl.dataset.date;
+            if (dateStr) {
+                showDayDetailModal(dateStr);
+            }
+        });
+    });
 }
 
 /**
@@ -1885,6 +2008,105 @@ async function bulkApproveShiftRequests() {
     }
 }
 
+/**
+ * 日付詳細モーダルを表示
+ */
+function showDayDetailModal(dateStr) {
+    const dayRequests = appState.shiftRequests.filter(req => req.date === dateStr);
+    
+    if (dayRequests.length === 0) {
+        alert(`${dateStr}のシフト要望はありません`);
+        return;
+    }
+    
+    // 既存のモーダルがある場合は削除
+    const existingModal = document.getElementById('day-detail-modal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    // モーダルHTML生成
+    let modalHtml = `
+        <div id="day-detail-modal" class="modal" style="display: block;">
+            <div class="modal-content" style="max-width: 600px;">
+                <div class="modal-header">
+                    <h2>${dateStr} のシフト要望</h2>
+                    <span class="modal-close" onclick="document.getElementById('day-detail-modal').remove()">&times;</span>
+                </div>
+                <div class="modal-body" style="max-height: 400px; overflow-y: auto;">
+                    <table class="shift-table" style="width: 100%;">
+                        <thead>
+                            <tr>
+                                <th>スタッフ</th>
+                                <th>ホーム</th>
+                                <th>シフト</th>
+                                <th>状態</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+    `;
+    
+    dayRequests.forEach(req => {
+        const statusText = req.status === 1 ? '承認済' : '未承認';
+        const statusClass = req.status === 1 ? 'approved' : 'pending';
+        const approveBtn = req.status === 0 ? 
+            `<button class="btn btn-sm" onclick="approveSingleRequest('${req.date}', '${req.home}', '${req.shiftCode}', '${req.userId}')">承認</button>` : 
+            '―';
+        
+        modalHtml += `
+            <tr>
+                <td>${req.staffName}</td>
+                <td>${req.home}</td>
+                <td><strong>${req.shiftCode}</strong></td>
+                <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                <td>${approveBtn}</td>
+            </tr>
+        `;
+    });
+    
+    modalHtml += `
+                        </tbody>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-cancel" onclick="document.getElementById('day-detail-modal').remove()">閉じる</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+}
+
+/**
+ * 単一シフト要望を承認
+ */
+async function approveSingleRequest(date, home, shiftCode, userId) {
+    try {
+        const response = await API.post('/api/shift-requests/approve', {
+            date: date,
+            home: home,
+            shift_code: shiftCode,
+            user_id: userId
+        });
+        
+        if (response.success) {
+            alert('承認しました');
+            // モーダルを閉じて再読み込み
+            document.getElementById('day-detail-modal')?.remove();
+            await loadDataFromFirebase();
+            render();
+            renderCalendarView();
+        } else {
+            alert('承認に失敗しました: ' + response.error);
+        }
+    } catch (error) {
+        console.error('承認エラー:', error);
+        alert('承認中にエラーが発生しました');
+    }
+}
+
 window.saveAllShifts = saveAllShifts;
 window.clearAllShifts = clearAllShifts;
 window.exportShiftsToCSV = exportShiftsToCSV;
@@ -1905,3 +2127,6 @@ window.checkShiftConflicts = checkShiftConflicts;
 window.refreshData = refreshData;
 window.saveSettings = saveSettings;
 window.loadSettings = loadSettings;
+window.showDayDetailModal = showDayDetailModal;
+window.approveSingleRequest = approveSingleRequest;
+window.renderCalendarView = renderCalendarView;
