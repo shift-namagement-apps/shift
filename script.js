@@ -98,7 +98,16 @@ const PageRouter = {
      */
     navigate(pageName) {
         console.log(`📄 ページ遷移: ${pageName}`);
-        window.location.href = pageName;
+        
+        // BASE_PATHを考慮した遷移（config.jsで定義）
+        const basePath = window.BASE_PATH || '/';
+        
+        // GitHub Pages環境では /shift/ を含める
+        if (basePath !== '/') {
+            window.location.href = basePath + pageName;
+        } else {
+            window.location.href = pageName;
+        }
     },
 
     /**
@@ -612,19 +621,96 @@ function renderShiftTable(staffList, daysCount) {
 /**
  * シフト要望リストを描画
  */
-function renderShiftRequests() {
-    let html = '';
-    // 画像に表示されている5件のみ描画
-    appState.shiftRequests.slice(0, 5).forEach(req => {
-        html += `
-            <li class="shift-request-item" data-request-id="${req.id}">
-                <div class="staff-name">${req.staffName}</div>
-                <div class="request-time">${req.request}</div>
-                <button class="btn btn-reflect">反映</button>
-            </li>
-        `;
-    });
-    dom.shiftRequestList.innerHTML = html;
+/**
+ * シフト要望を描画（API連携版）
+ */
+async function renderShiftRequests() {
+    if (!dom.shiftRequestList) return;
+    
+    try {
+        const token = localStorage.getItem('shift_auth_token');
+        if (!token) {
+            dom.shiftRequestList.innerHTML = '<li class="shift-request-item">ログインが必要です</li>';
+            return;
+        }
+        
+        // 現在の年月のシフト要望を取得
+        const response = await fetch(
+            `${API_BASE_URL}/api/shift-requests/get?year=${appState.currentYear}&month=${appState.currentMonth}`,
+            {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            }
+        );
+        
+        if (!response.ok) {
+            throw new Error('シフト要望の取得に失敗しました');
+        }
+        
+        const data = await response.json();
+        const shiftsData = data.shifts || {};
+        
+        // シフト要望を配列に変換
+        const requestsList = [];
+        Object.entries(shiftsData).forEach(([date, homes]) => {
+            Object.entries(homes).forEach(([home, shiftCodes]) => {
+                Object.entries(shiftCodes).forEach(([shiftCode, users]) => {
+                    users.forEach(user => {
+                        requestsList.push({
+                            date: date,
+                            home: home,
+                            shift_code: shiftCode,
+                            user_id: user.user_id,
+                            user_name: user.user_name,
+                            status: user.status || 0,
+                            submitted_at: user.submitted_at
+                        });
+                    });
+                });
+            });
+        });
+        
+        // 未承認のものを優先的に表示
+        requestsList.sort((a, b) => a.status - b.status);
+        
+        let html = '';
+        if (requestsList.length === 0) {
+            html = '<li class="shift-request-item">シフト要望はありません</li>';
+        } else {
+            requestsList.slice(0, 20).forEach(req => {
+                const statusBadge = req.status === 1 
+                    ? '<span class="status-badge approved">承認済</span>' 
+                    : '<span class="status-badge pending">未承認</span>';
+                const dateObj = new Date(req.date);
+                const displayDate = `${dateObj.getMonth() + 1}/${dateObj.getDate()}`;
+                
+                html += `
+                    <li class="shift-request-item ${req.status === 1 ? 'approved' : ''}" 
+                        data-date="${req.date}" 
+                        data-home="${req.home}" 
+                        data-shift-code="${req.shift_code}" 
+                        data-user-id="${req.user_id}">
+                        <div class="request-info">
+                            <div class="staff-name">${req.user_name}</div>
+                            <div class="request-details">${displayDate} ${req.home}ホーム ${req.shift_code}</div>
+                            ${statusBadge}
+                        </div>
+                        ${req.status === 0 ? `
+                            <div class="request-actions">
+                                <button class="btn btn-reflect" onclick="approveShiftRequest('${req.date}', '${req.home}', '${req.shift_code}', '${req.user_id}')">承認</button>
+                            </div>
+                        ` : ''}
+                    </li>
+                `;
+            });
+        }
+        
+        dom.shiftRequestList.innerHTML = html;
+    } catch (error) {
+        console.error('❌ シフト要望の描画エラー:', error);
+        dom.shiftRequestList.innerHTML = '<li class="shift-request-item">エラーが発生しました</li>';
+    }
 }
 
 /**
@@ -1676,6 +1762,105 @@ function loadSettings() {
 
 // --- グローバルに公開（HTMLから使用可能） -------------------
 
+/**
+ * シフト要望を承認
+ */
+async function approveShiftRequest(date, home, shiftCode, userId) {
+    try {
+        const token = localStorage.getItem('shift_auth_token');
+        if (!token) {
+            alert('ログインが必要です');
+            return;
+        }
+        
+        const response = await fetch(`${API_BASE_URL}/api/shift-requests/approve`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                date: date,
+                home: home,
+                shift_code: shiftCode,
+                user_id: userId
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(data.error || '承認に失敗しました');
+        }
+        
+        showToast('シフト要望を承認しました', 'success');
+        await renderShiftRequests();  // リストを再描画
+    } catch (error) {
+        console.error('❌ 承認エラー:', error);
+        alert('承認に失敗しました: ' + error.message);
+    }
+}
+
+/**
+ * すべてのシフト要望を一括承認
+ */
+async function bulkApproveShiftRequests() {
+    try {
+        const token = localStorage.getItem('shift_auth_token');
+        if (!token) {
+            alert('ログインが必要です');
+            return;
+        }
+        
+        // 未承認の要望を収集
+        const pendingRequests = [];
+        const items = document.querySelectorAll('.shift-request-item:not(.approved)');
+        
+        items.forEach(item => {
+            const date = item.dataset.date;
+            const home = item.dataset.home;
+            const shiftCode = item.dataset.shiftCode;
+            const userId = item.dataset.userId;
+            
+            if (date && home && shiftCode && userId) {
+                pendingRequests.push({ date, home, shift_code: shiftCode, user_id: userId });
+            }
+        });
+        
+        if (pendingRequests.length === 0) {
+            alert('承認可能なシフト要望がありません');
+            return;
+        }
+        
+        if (!confirm(`${pendingRequests.length}件のシフト要望を一括承認しますか？`)) {
+            return;
+        }
+        
+        const response = await fetch(`${API_BASE_URL}/api/shift-requests/bulk-approve`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                requests: pendingRequests
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(data.error || '一括承認に失敗しました');
+        }
+        
+        showToast(`${data.approved_count}件のシフト要望を承認しました`, 'success');
+        await renderShiftRequests();  // リストを再描画
+    } catch (error) {
+        console.error('❌ 一括承認エラー:', error);
+        alert('一括承認に失敗しました: ' + error.message);
+    }
+}
+
 window.saveAllShifts = saveAllShifts;
 window.clearAllShifts = clearAllShifts;
 window.exportShiftsToCSV = exportShiftsToCSV;
@@ -1689,6 +1874,8 @@ window.deleteStaff = deleteStaff;
 window.searchStaff = searchStaff;
 window.filterByDateRange = filterByDateRange;
 window.filterByHome = filterByHome;
+window.approveShiftRequest = approveShiftRequest;
+window.bulkApproveShiftRequests = bulkApproveShiftRequests;
 window.checkUnconfirmedShifts = checkUnconfirmedShifts;
 window.checkShiftConflicts = checkShiftConflicts;
 window.refreshData = refreshData;
