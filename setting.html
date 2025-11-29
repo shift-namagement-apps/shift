@@ -307,7 +307,7 @@ input[type="reset"] {
 </head>
 <body>
  <header>
-    <a href="#" class="back" onclick="event.preventDefault(); window.history.back();">←戻る</a>
+    <a href="#" class="back" onclick="goBack(); return false;">←戻る</a>
     <div class="title">設定画面</div>
  </header>
     <form action="" class="option">
@@ -406,6 +406,17 @@ input[type="reset"] {
     <script src="auth.js"></script>
     
     <script>
+        // 戻るボタンの処理
+        function goBack() {
+            if (window.history.length > 1) {
+                window.history.back();
+            } else {
+                // 履歴がない場合はホームへ
+                const basePath = window.BASE_PATH || '/shift/';
+                window.location.href = basePath + 'shift_home_admin.html';
+            }
+        }
+        
         // ページ読み込み時の認証チェック
         document.addEventListener('DOMContentLoaded', async () => {
             // 認証チェック
