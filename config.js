@@ -47,11 +47,19 @@ const API = {
         }
       });
 
+      const headers = {
+        'Content-Type': 'application/json'
+      };
+      
+      // 認証トークンを追加
+      const token = localStorage.getItem('shift_auth_token');
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const response = await fetch(url, {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json'
-        }
+        headers: headers
       });
 
       if (!response.ok) {
@@ -70,11 +78,19 @@ const API = {
    */
   async post(endpoint, data = {}) {
     try {
+      const headers = {
+        'Content-Type': 'application/json'
+      };
+      
+      // 認証トークンを追加
+      const token = localStorage.getItem('shift_auth_token');
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
       const response = await fetch(`${API_BASE_URL}${endpoint}`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: headers,
         body: JSON.stringify(data)
       });
 
@@ -94,11 +110,19 @@ const API = {
    */
   async put(endpoint, data = {}) {
     try {
+      const headers = {
+        'Content-Type': 'application/json'
+      };
+      
+      // 認証トークンを追加
+      const token = localStorage.getItem('shift_auth_token');
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
       const response = await fetch(`${API_BASE_URL}${endpoint}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: headers,
         body: JSON.stringify(data)
       });
 
@@ -118,11 +142,19 @@ const API = {
    */
   async delete(endpoint) {
     try {
+      const headers = {
+        'Content-Type': 'application/json'
+      };
+      
+      // 認証トークンを追加
+      const token = localStorage.getItem('shift_auth_token');
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
       const response = await fetch(`${API_BASE_URL}${endpoint}`, {
         method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json'
-        }
+        headers: headers
       });
 
       if (!response.ok) {
