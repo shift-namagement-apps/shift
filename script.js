@@ -308,20 +308,44 @@ async function loadDataFromFirebase() {
             console.log(`✅ ${shiftsResponse.count}件のシフトを読み込みました`);
         }
 
-        // シフト要望を取得
-        const requestsResponse = await API.get('/api/shift-requests', {
+        // シフト要望を取得（新API構造）
+        const requestsResponse = await API.get('/api/shift-requests/get', {
             year: appState.currentYear,
             month: appState.currentMonth
         });
 
-        if (requestsResponse && requestsResponse.success) {
-            appState.shiftRequests = requestsResponse.requests.map(req => ({
-                id: req.id,
-                staffName: req.staff_name,
-                request: `${req.day}日 ${req.request}`,
-                status: req.status
-            }));
-            console.log(`✅ ${requestsResponse.count}件の要望を読み込みました`);
+        if (requestsResponse && requestsResponse.success && requestsResponse.shifts) {
+            // 新しいデータ構造を解析: { "2025-11-01": { "A": { "A": [...users], "B": [...users] } } }
+            const requestsList = [];
+            const shiftsData = requestsResponse.shifts;
+            
+            for (const [dateStr, homeData] of Object.entries(shiftsData)) {
+                const [year, month, day] = dateStr.split('-').map(Number);
+                
+                for (const [home, shiftCodes] of Object.entries(homeData)) {
+                    for (const [shiftCode, users] of Object.entries(shiftCodes)) {
+                        users.forEach(user => {
+                            requestsList.push({
+                                id: `${dateStr}-${home}-${shiftCode}-${user.user_id}`,
+                                date: dateStr,
+                                day: day,
+                                home: home,
+                                shiftCode: shiftCode,
+                                userId: user.user_id,
+                                staffName: user.user_name,
+                                status: user.status || 0,
+                                submittedAt: user.submitted_at
+                            });
+                        });
+                    }
+                }
+            }
+            
+            appState.shiftRequests = requestsList;
+            console.log(`✅ ${requestsList.length}件の要望を読み込みました`);
+        } else {
+            appState.shiftRequests = [];
+            console.log('ℹ️ シフト要望はありません');
         }
 
     } catch (error) {
