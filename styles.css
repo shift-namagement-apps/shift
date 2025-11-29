@@ -813,6 +813,127 @@ body {
     display: none;
 }
 
+/* -------------------------
+ * メインカレンダー表示
+ * ------------------------- */
+.main-calendar-container {
+    background-color: var(--bg-main);
+    padding: 1.5rem;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+}
+
+.main-calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.main-calendar-header {
+    text-align: center;
+    padding: 0.75rem;
+    background-color: var(--bg-table-header);
+    font-weight: bold;
+    font-size: 0.9rem;
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color);
+}
+
+.main-calendar-day {
+    background-color: var(--bg-main);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 0.75rem;
+    min-height: 150px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+}
+
+.main-calendar-day:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    border-color: #007bff;
+}
+
+.main-calendar-day.other-month {
+    background-color: #f8f9fa;
+    opacity: 0.6;
+}
+
+.main-calendar-day-header {
+    font-weight: bold;
+    font-size: 1.1rem;
+    margin-bottom: 0.75rem;
+    color: var(--text-dark);
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 0.5rem;
+}
+
+.main-calendar-day.today .main-calendar-day-header {
+    color: #007bff;
+    background-color: #e7f3ff;
+    margin: -0.75rem -0.75rem 0.75rem -0.75rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--border-radius) var(--border-radius) 0 0;
+}
+
+.main-calendar-requests {
+    font-size: 0.8rem;
+    max-height: 100px;
+    overflow-y: auto;
+}
+
+.main-calendar-request-item {
+    background-color: #f8f9fa;
+    padding: 0.4rem;
+    margin: 0.3rem 0;
+    border-radius: 0.25rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-left: 3px solid #ffc107;
+}
+
+.main-calendar-request-item.approved {
+    background-color: #d4edda;
+    border-left-color: #28a745;
+}
+
+.main-calendar-request-name {
+    font-weight: bold;
+    color: var(--text-dark);
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.85rem;
+}
+
+.main-calendar-request-shift {
+    margin-left: 0.5rem;
+    padding: 0.2rem 0.5rem;
+    background-color: #007bff;
+    color: white;
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+    font-weight: bold;
+}
+
+.main-calendar-request-home {
+    margin-left: 0.5rem;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.main-calendar-day-summary {
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--border-color);
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+}
+
 @media screen and (max-width: 768px) {
     body {
         padding: 0.5rem;
