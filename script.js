@@ -254,6 +254,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 初期描画
     render();
     
+    // ページ固有の初期化（render後に実行）
+    const currentPage = PageRouter.getCurrentPage();
+    if (currentPage === 'shift_create.html') {
+        initShiftCreatePage();
+    }
+    
     // 画像に合わせて初期値を設定
     if (dom.yearSelect) dom.yearSelect.value = appState.currentYear;
     if (dom.monthSelect) dom.monthSelect.value = appState.currentMonth;
@@ -1230,7 +1236,13 @@ function initShiftCreatePage() {
  */
 function renderCalendarView() {
     const calendarView = document.getElementById('calendar-view');
-    if (!calendarView) return;
+    if (!calendarView) {
+        console.warn('⚠️ カレンダービュー要素が見つかりません');
+        return;
+    }
+    
+    console.log(`📅 カレンダー描画: ${appState.currentYear}年${appState.currentMonth}月`);
+    console.log(`📊 シフト要望数: ${appState.shiftRequests.length}件`);
     
     const year = appState.currentYear;
     const month = appState.currentMonth;
