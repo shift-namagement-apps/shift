@@ -69,21 +69,10 @@
                 </select>
             </div>
 
-            <h3>シフト要望カレンダー</h3>
-            <div class="view-toggle">
-                <button class="btn-toggle active" data-view="calendar">カレンダー</button>
-                <button class="btn-toggle" data-view="list">リスト</button>
-            </div>
-            
-            <div id="calendar-view" class="calendar-view">
-                <!-- カレンダーがここに表示されます -->
-            </div>
-            
-            <div id="list-view" class="shift-request-list-container" style="display: none;">
-                <ul class="shift-request-list" id="shift-request-list">
-                </ul>
-                <button class="btn btn-reflect-all" id="reflect-all-btn" onclick="bulkApproveShiftRequests()">すべて一括承認</button>
-            </div>
+            <h3>シフト要望</h3>
+            <ul class="shift-request-list" id="shift-request-list">
+            </ul>
+            <button class="btn btn-reflect-all" id="reflect-all-btn" onclick="bulkApproveShiftRequests()">すべて一括承認</button>
         </nav>
 
         <div class="main-wrapper">
@@ -116,7 +105,12 @@
             </header>
 
             <main class="main-content">
-                <div class="shift-table-container">
+                <h3>シフトカレンダー</h3>
+                <div id="main-calendar-view" class="main-calendar-container">
+                    <!-- カレンダーがここに表示されます -->
+                </div>
+                
+                <div class="shift-table-container" style="display: none;">
                     <table class="shift-table" id="shift-table">
                         <thead id="shift-table-header">
                             </thead>
@@ -125,8 +119,8 @@
                     </table>
                 </div>
 
-                <h3 class="daily-summary-title">ホーム別日次集計</h3>
-                <div class="summary-table-container">
+                <h3 class="daily-summary-title" style="display: none;">ホーム別日次集計</h3>
+                <div class="summary-table-container" style="display: none;">
                     <table class="summary-table" id="daily-summary-table">
                         <tbody id="daily-summary-body">
                             </tbody>
