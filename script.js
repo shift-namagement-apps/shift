@@ -944,10 +944,10 @@ function handleDateChange() {
     // Firebaseから新しい年月のデータを再読み込み
     loadDataFromFirebase().then(() => {
         render();
-        // カレンダービューが表示されている場合は再描画
-        const calendarView = document.getElementById('calendar-view');
-        if (calendarView && calendarView.style.display !== 'none') {
-            renderCalendarView();
+        // メインカレンダーを再描画
+        const currentPage = PageRouter.getCurrentPage();
+        if (currentPage === 'shift_create.html') {
+            renderMainCalendarView();
         }
     });
 }
@@ -1202,46 +1202,21 @@ function initStaffHomePage() {
 function initShiftCreatePage() {
     console.log('📝 シフト作成ページ初期化');
     
-    // ビュー切り替えボタンの設定
-    const toggleButtons = document.querySelectorAll('.btn-toggle');
-    toggleButtons.forEach(btn => {
-        btn.addEventListener('click', () => {
-            const view = btn.dataset.view;
-            
-            // ボタンのアクティブ状態を切り替え
-            toggleButtons.forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            
-            // ビューの表示/非表示を切り替え
-            const calendarView = document.getElementById('calendar-view');
-            const listView = document.getElementById('list-view');
-            
-            if (view === 'calendar') {
-                calendarView.style.display = 'block';
-                listView.style.display = 'none';
-                renderCalendarView();
-            } else {
-                calendarView.style.display = 'none';
-                listView.style.display = 'block';
-            }
-        });
-    });
-    
-    // 初期表示はカレンダー
-    renderCalendarView();
+    // メインカレンダーを描画
+    renderMainCalendarView();
 }
 
 /**
- * カレンダービューを描画
+ * メインカレンダービューを描画（中央の大きなカレンダー）
  */
-function renderCalendarView() {
-    const calendarView = document.getElementById('calendar-view');
-    if (!calendarView) {
-        console.warn('⚠️ カレンダービュー要素が見つかりません');
+function renderMainCalendarView() {
+    const calendarContainer = document.getElementById('main-calendar-view');
+    if (!calendarContainer) {
+        console.warn('⚠️ メインカレンダー要素が見つかりません');
         return;
     }
     
-    console.log(`📅 カレンダー描画: ${appState.currentYear}年${appState.currentMonth}月`);
+    console.log(`📅 メインカレンダー描画: ${appState.currentYear}年${appState.currentMonth}月`);
     console.log(`📊 シフト要望数: ${appState.shiftRequests.length}件`);
     
     const year = appState.currentYear;
@@ -1257,17 +1232,17 @@ function renderCalendarView() {
     const startOffset = startDay === 0 ? 6 : startDay - 1; // 月曜始まりに調整
     
     // カレンダーHTML生成
-    let html = '<div class="calendar-grid">';
+    let html = '<div class="main-calendar-grid">';
     
     // 曜日ヘッダー
     const weekdays = ['月', '火', '水', '木', '金', '土', '日'];
     weekdays.forEach(day => {
-        html += `<div class="calendar-header">${day}</div>`;
+        html += `<div class="main-calendar-header">${day}</div>`;
     });
     
     // 前月の日付（空白）
     for (let i = 0; i < startOffset; i++) {
-        html += '<div class="calendar-day other-month"></div>';
+        html += '<div class="main-calendar-day other-month"></div>';
     }
     
     // 今日の日付
@@ -1285,21 +1260,47 @@ function renderCalendarView() {
             return req.date === dateStr;
         });
         
-        html += `<div class="calendar-day ${isToday ? 'today' : ''}" data-date="${dateStr}">`;
-        html += `<div class="calendar-day-header">${day}日</div>`;
-        html += '<div class="calendar-requests">';
+        // ホーム別にグループ化
+        const homeGroups = {};
+        dayRequests.forEach(req => {
+            if (!homeGroups[req.home]) {
+                homeGroups[req.home] = [];
+            }
+            homeGroups[req.home].push(req);
+        });
+        
+        html += `<div class="main-calendar-day ${isToday ? 'today' : ''}" data-date="${dateStr}">`;
+        html += `<div class="main-calendar-day-header">${day}日</div>`;
+        html += '<div class="main-calendar-requests">';
         
         // シフト要望を表示
         dayRequests.forEach(req => {
             const approvedClass = req.status === 1 ? 'approved' : '';
-            html += `<div class="calendar-request-item ${approvedClass}" data-request-id="${req.id}">`;
-            html += `<span class="calendar-request-name" title="${req.staffName}">${req.staffName}</span>`;
-            html += `<span class="calendar-request-shift">${req.shiftCode}</span>`;
-            html += `<span class="calendar-request-home">${req.home}</span>`;
+            html += `<div class="main-calendar-request-item ${approvedClass}" data-request-id="${req.id}">`;
+            html += `<span class="main-calendar-request-name" title="${req.staffName}">${req.staffName}</span>`;
+            html += `<span class="main-calendar-request-shift">${req.shiftCode}</span>`;
+            html += `<span class="main-calendar-request-home">${req.home}</span>`;
             html += '</div>';
         });
         
-        html += '</div></div>';
+        // 要望がない場合
+        if (dayRequests.length === 0) {
+            html += '<div style="color: #adb5bd; font-size: 0.75rem; text-align: center; margin-top: 1rem;">要望なし</div>';
+        }
+        
+        html += '</div>';
+        
+        // 日次サマリー
+        if (dayRequests.length > 0) {
+            const approvedCount = dayRequests.filter(r => r.status === 1).length;
+            const pendingCount = dayRequests.filter(r => r.status === 0).length;
+            html += `<div class="main-calendar-day-summary">`;
+            html += `<span style="color: #28a745;">✓ ${approvedCount}</span> / `;
+            html += `<span style="color: #ffc107;">● ${pendingCount}</span>`;
+            html += `</div>`;
+        }
+        
+        html += '</div>';
     }
     
     // 次月の日付（空白で埋める）
@@ -1307,15 +1308,15 @@ function renderCalendarView() {
     const remainingCells = 7 - (totalCells % 7);
     if (remainingCells < 7) {
         for (let i = 0; i < remainingCells; i++) {
-            html += '<div class="calendar-day other-month"></div>';
+            html += '<div class="main-calendar-day other-month"></div>';
         }
     }
     
     html += '</div>';
-    calendarView.innerHTML = html;
+    calendarContainer.innerHTML = html;
     
     // カレンダーの日付クリックイベント
-    document.querySelectorAll('.calendar-day:not(.other-month)').forEach(dayEl => {
+    document.querySelectorAll('.main-calendar-day:not(.other-month)').forEach(dayEl => {
         dayEl.addEventListener('click', (e) => {
             const dateStr = dayEl.dataset.date;
             if (dateStr) {
@@ -2141,4 +2142,4 @@ window.saveSettings = saveSettings;
 window.loadSettings = loadSettings;
 window.showDayDetailModal = showDayDetailModal;
 window.approveSingleRequest = approveSingleRequest;
-window.renderCalendarView = renderCalendarView;
+window.renderMainCalendarView = renderMainCalendarView;
