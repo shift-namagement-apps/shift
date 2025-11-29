@@ -94,6 +94,17 @@ body {
     border-radius: 0.25rem;
     padding: 0.75rem;
     margin-bottom: 0.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.shift-request-item.approved {
+    background-color: #2a4a3a;
+}
+
+.shift-request-item .request-info {
+    flex: 1;
 }
 
 .shift-request-item .staff-name {
@@ -101,9 +112,44 @@ body {
     font-size: 0.9rem;
 }
 
+.shift-request-item .request-details {
+    font-size: 0.8rem;
+    margin: 0.25rem 0;
+    color: #adb5bd;
+}
+
 .shift-request-item .request-time {
     font-size: 0.8rem;
     margin: 0.25rem 0 0.5rem 0;
+}
+
+.shift-request-item .request-actions {
+    margin-left: 1rem;
+}
+
+.shift-request-item .btn-reflect {
+    width: auto;
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    border-radius: 0.25rem;
+    font-weight: bold;
+    margin-top: 0.25rem;
+}
+
+.status-badge.pending {
+    background-color: #dc3545;
+    color: white;
+}
+
+.status-badge.approved {
+    background-color: #28a745;
+    color: white;
 }
 
 .btn {
