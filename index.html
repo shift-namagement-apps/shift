@@ -167,6 +167,10 @@
     <script>
         // ページ読み込み時の初期化
         document.addEventListener('DOMContentLoaded', () => {
+            // config.jsが読み込まれるまで待機
+            console.log('📍 BASE_PATH:', window.BASE_PATH);
+            console.log('📍 API_BASE_URL:', window.API_BASE_URL);
+            
             // フォーカス
             document.getElementById('user-id').focus();
             
@@ -240,13 +244,21 @@
                     localStorage.setItem('shift_user', JSON.stringify(data.user));
                     
                     // status に基づいてリダイレクト（1=管理者, 0=スタッフ）
-                    const basePath = window.BASE_PATH || '/shift/';
+                    // GitHub Pages環境では /shift/ を含める
+                    const isGitHubPages = window.location.hostname.includes('github.io');
+                    const basePath = isGitHubPages ? '/shift/' : '/';
                     const targetPage = (data.user.status === 1) 
                         ? 'shift_home_admin.html' 
                         : 'shift_home_staff.html';
                     
-                    console.log('🎯 リダイレクト先:', basePath + targetPage);
-                    window.location.href = basePath + targetPage;
+                    const redirectUrl = basePath + targetPage;
+                    console.log('🎯 リダイレクト先:', redirectUrl);
+                    console.log('🎯 完全なURL:', window.location.origin + redirectUrl);
+                    
+                    // リダイレクト実行
+                    setTimeout(() => {
+                        window.location.href = redirectUrl;
+                    }, 100);
                 } else {
                     console.error('❌ ログイン失敗:', data);
                     showError(data.error || 'ユーザーIDまたはパスワードが正しくありません');
