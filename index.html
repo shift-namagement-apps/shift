@@ -206,9 +206,13 @@
 
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
+            
+            console.log('🎬 フォーム送信イベント発火');
 
             const username = document.getElementById('user-id').value.trim();
             const password = document.getElementById('password').value;
+            
+            console.log('📝 入力値:', { username, password: '****' });
 
             // 入力チェック
             if (!username || !password) {
@@ -218,15 +222,22 @@
 
             // エラーメッセージを非表示
             errorMessage.classList.remove('show');
+            
+            console.log('✅ 入力チェック完了');
 
             try {
                 console.log('🔐 ログイン試行:', username);
                 console.log('📡 API URL:', window.API_BASE_URL);
                 
+                if (!window.API_BASE_URL) {
+                    throw new Error('API_BASE_URLが定義されていません');
+                }
+                
                 // APIに直接ログインリクエスト
                 const loginUrl = `${window.API_BASE_URL}/api/auth/login`;
                 console.log('📡 リクエストURL:', loginUrl);
                 
+                console.log('📤 fetchリクエスト開始...');
                 const response = await fetch(loginUrl, {
                     method: 'POST',
                     headers: {
