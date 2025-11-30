@@ -238,16 +238,27 @@
                 console.log('📡 リクエストURL:', loginUrl);
                 
                 console.log('📤 fetchリクエスト開始...');
-                const response = await fetch(loginUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        username: username,
-                        password: password
-                    })
-                });
+                console.log('⏳ fetch実行中...');
+                
+                let response;
+                try {
+                    response = await fetch(loginUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            username: username,
+                            password: password
+                        })
+                    });
+                    console.log('✅ fetch完了');
+                } catch (fetchError) {
+                    console.error('❌ fetchエラー:', fetchError);
+                    console.error('❌ エラー詳細:', fetchError.message);
+                    console.error('❌ エラータイプ:', fetchError.name);
+                    throw fetchError;
+                }
 
                 console.log('📥 レスポンスステータス:', response.status);
                 console.log('📥 レスポンスOK:', response.ok);
