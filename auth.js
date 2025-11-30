@@ -194,7 +194,7 @@ const AUTH = {
             
             if (response.status === 401) {
                 this.clearAuth();
-                ROUTER.navigate('shift_login.html');
+                ROUTER.navigate('index.html');
                 return null;
             }
 
@@ -289,20 +289,23 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.log('🔐 認証システム初期化中...');
     
     const currentPage = ROUTER.getCurrentPage();
+    console.log('📄 現在のページ:', currentPage);
     
-    // ログインページの場合
-    if (currentPage === 'shift_login.html' || currentPage === '') {
+    // ログインページの場合（index.html または shift_login.html）
+    if (currentPage === 'index.html' || currentPage === 'shift_login.html' || currentPage === '') {
+        console.log('ℹ️ ログインページ - 認証チェックをスキップ');
         // 既にログイン済みの場合はホームへリダイレクト
         if (AUTH.isLoggedIn()) {
             const isValid = await AUTH.verifyToken();
             if (isValid) {
-                console.log('✅ 既にログイン済み');
+                console.log('✅ 既にログイン済み - リダイレクト');
                 ROUTER.redirectAfterLogin();
                 return;
             }
         }
     } else {
         // その他のページは認証チェック
+        console.log('🔒 保護されたページ - 認証チェック実行');
         ROUTER.protectPage();
         
         // トークンの検証
@@ -310,7 +313,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const isValid = await AUTH.verifyToken();
             // トークンが消された場合のみリダイレクト
             if (!AUTH.isLoggedIn()) {
-                ROUTER.navigate('shift_login.html');
+                ROUTER.navigate('index.html');
             }
         }
     }
@@ -348,7 +351,7 @@ function displayUserInfo() {
 async function handleLogout() {
     if (confirm('ログアウトしますか？')) {
         await AUTH.logout();
-        ROUTER.navigate('/shift_login.html');
+        ROUTER.navigate('index.html');
     }
 }
 
