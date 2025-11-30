@@ -253,6 +253,10 @@
                 
                 let response;
                 try {
+                    // タイムアウト設定（30秒）
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 30000);
+                    
                     response = await fetch(loginUrl, {
                         method: 'POST',
                         headers: {
@@ -261,13 +265,20 @@
                         body: JSON.stringify({
                             username: username,
                             password: password
-                        })
+                        }),
+                        signal: controller.signal
                     });
+                    
+                    clearTimeout(timeoutId);
                     console.log('✅ fetch完了');
                 } catch (fetchError) {
                     console.error('❌ fetchエラー:', fetchError);
                     console.error('❌ エラー詳細:', fetchError.message);
                     console.error('❌ エラータイプ:', fetchError.name);
+                    
+                    if (fetchError.name === 'AbortError') {
+                        throw new Error('リクエストがタイムアウトしました。サーバーの応答がありません。');
+                    }
                     throw fetchError;
                 }
 
