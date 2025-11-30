@@ -204,9 +204,19 @@
         const loginForm = document.getElementById('login-form');
         const errorMessage = document.getElementById('error-message');
 
+        let isSubmitting = false; // 二重送信防止フラグ
+        
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
+            e.stopPropagation(); // イベント伝播を停止
             
+            // 既に送信中の場合は処理をスキップ
+            if (isSubmitting) {
+                console.log('⚠️ 既に送信処理中です');
+                return;
+            }
+            
+            isSubmitting = true;
             console.log('🎬 フォーム送信イベント発火');
 
             const username = document.getElementById('user-id').value.trim();
@@ -217,6 +227,7 @@
             // 入力チェック
             if (!username || !password) {
                 showError('ユーザーIDとパスワードを入力してください');
+                isSubmitting = false;
                 return;
             }
 
@@ -299,6 +310,9 @@
                 console.error('❌ エラー詳細:', error.message);
                 console.error('❌ スタックトレース:', error.stack);
                 showError('ログインに失敗しました。ネットワーク接続を確認してください。');
+            } finally {
+                // 送信完了後、フラグをリセット
+                isSubmitting = false;
             }
         });
 
