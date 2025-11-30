@@ -221,9 +221,13 @@
 
             try {
                 console.log('🔐 ログイン試行:', username);
+                console.log('📡 API URL:', window.API_BASE_URL);
                 
                 // APIに直接ログインリクエスト
-                const response = await fetch(`${window.API_BASE_URL}/api/auth/login`, {
+                const loginUrl = `${window.API_BASE_URL}/api/auth/login`;
+                console.log('📡 リクエストURL:', loginUrl);
+                
+                const response = await fetch(loginUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -234,7 +238,11 @@
                     })
                 });
 
+                console.log('📥 レスポンスステータス:', response.status);
+                console.log('📥 レスポンスOK:', response.ok);
+
                 const data = await response.json();
+                console.log('📥 レスポンスデータ:', data);
 
                 if (response.ok && data.success) {
                     console.log('✅ ログイン成功:', data.user);
@@ -261,11 +269,14 @@
                     }, 100);
                 } else {
                     console.error('❌ ログイン失敗:', data);
+                    console.error('❌ レスポンスステータス:', response.status);
                     showError(data.error || 'ユーザーIDまたはパスワードが正しくありません');
                 }
             } catch (error) {
                 console.error('❌ ログインエラー:', error);
-                showError('ログインに失敗しました。もう一度お試しください。');
+                console.error('❌ エラー詳細:', error.message);
+                console.error('❌ スタックトレース:', error.stack);
+                showError('ログインに失敗しました。ネットワーク接続を確認してください。');
             }
         });
 
