@@ -294,15 +294,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     // ログインページの場合（index.html または shift_login.html）
     if (currentPage === 'index.html' || currentPage === 'shift_login.html' || currentPage === '') {
         console.log('ℹ️ ログインページ - 認証チェックをスキップ');
-        // 既にログイン済みの場合はホームへリダイレクト
-        if (AUTH.isLoggedIn()) {
-            const isValid = await AUTH.verifyToken();
-            if (isValid) {
-                console.log('✅ 既にログイン済み - リダイレクト');
-                ROUTER.redirectAfterLogin();
-                return;
-            }
-        }
+        // ログインページでは既存の認証情報をクリア（再ログインを強制）
+        // これにより、ログインフォームの動作と競合しないようにする
+        console.log('🧹 ログインページ: 既存認証情報をスキップ');
     } else {
         // その他のページは認証チェック
         console.log('🔒 保護されたページ - 認証チェック実行');
