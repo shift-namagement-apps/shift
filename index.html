@@ -173,33 +173,7 @@
             
             // フォーカス
             document.getElementById('user-id').focus();
-            
-            // 初回セットアップ確認（データベースにユーザーがいない場合は自動作成）
-            checkAndSetup();
         });
-        
-        // 初回セットアップ確認
-        async function checkAndSetup() {
-            try {
-                // セットアップAPIを呼び出し（既にユーザーがいる場合はエラーが返るが無視）
-                const response = await fetch(`${window.API_BASE_URL}/api/setup`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
-                
-                if (response.ok) {
-                    const data = await response.json();
-                    console.log('✅ 初回セットアップ完了:', data);
-                } else {
-                    // 既にセットアップ済みの場合は無視
-                    console.log('ℹ️ データベースは既にセットアップ済みです');
-                }
-            } catch (error) {
-                console.log('ℹ️ セットアップチェック:', error.message);
-            }
-        }
         
         const loginForm = document.getElementById('login-form');
         const errorMessage = document.getElementById('error-message');
