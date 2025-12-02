@@ -189,22 +189,176 @@
         
     </form>
     
+    <!-- API設定を先に読み込む -->
+    <script src="config.js"></script>
+    <!-- 認証スクリプト -->
+    <script src="auth.js"></script>
+    
     <script>
+        // ページ読み込み時に設定データを取得
+        document.addEventListener('DOMContentLoaded', async () => {
+            // 認証チェック
+            const token = localStorage.getItem('shift_auth_token');
+            if (!token) {
+                alert('ログインが必要です');
+                window.location.href = window.BASE_PATH || '/shift/';
+                return;
+            }
+            
+            // 今日の日付をデフォルト設定
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('date').value = today;
+            
+            // 備考テンプレートと勤務地を読み込み
+            await loadBikouTemplates();
+            await loadWorkplaces();
+        });
+        
+        // 備考テンプレートを読み込み
+        async function loadBikouTemplates() {
+            try {
+                const token = localStorage.getItem('shift_auth_token');
+                const response = await fetch(`${API_BASE_URL}/api/bikou-templates`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success && data.templates.length > 0) {
+                    const select = document.getElementById('add');
+                    select.innerHTML = '<option value="">選択してください</option>';
+                    
+                    data.templates.forEach(template => {
+                        const option = document.createElement('option');
+                        option.value = template.text;
+                        option.textContent = template.text;
+                        select.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                console.error('備考テンプレート取得エラー:', error);
+            }
+        }
+        
+        // 勤務地を読み込み
+        async function loadWorkplaces() {
+            try {
+                const token = localStorage.getItem('shift_auth_token');
+                const response = await fetch(`${API_BASE_URL}/api/homes`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success && data.homes.length > 0) {
+                    const select = document.getElementById('place');
+                    select.innerHTML = '<option value="">選択してください</option>';
+                    
+                    data.homes.forEach(home => {
+                        const option = document.createElement('option');
+                        option.value = home.name + 'ホーム';
+                        option.textContent = home.name + 'ホーム';
+                        select.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                console.error('勤務地取得エラー:', error);
+            }
+        }
+        
+        // 備考テンプレート選択時にテキストエリアに入力
+        document.getElementById('add').addEventListener('change', function() {
+            const textarea = document.getElementById('textarea');
+            if (this.value) {
+                // 既存の内容がある場合は改行して追加
+                if (textarea.value) {
+                    textarea.value += '\\n' + this.value;
+                } else {
+                    textarea.value = this.value;
+                }
+            }
+        });
+        
         // フォーム送信時の処理
-        document.querySelector('form').addEventListener('submit', function(e) {
-            e.preventDefault(); // デフォルトの送信を防止
+        document.querySelector('form').addEventListener('submit', async function(e) {
+            e.preventDefault();
             
-            // ここでフォームデータを取得・処理
-            const formData = new FormData(this);
+            // 入力値を取得
+            const date = document.getElementById('date').value;
+            const startTime = document.getElementById('start').value;
+            const endTime = document.getElementById('finish').value;
+            const breakTime = document.getElementById('break-time').value;
+            const notes = document.getElementById('textarea').value;
+            const workplace = document.getElementById('place').value;
+            const transportationCost = document.getElementById('traffic').value || 0;
             
-            // TODO: APIにデータを送信する処理を追加
-            console.log('フォームデータ:', Object.fromEntries(formData));
+            // バリデーション
+            if (!date || !startTime || !endTime) {
+                alert('日付、始業時刻、終業時刻は必須です');
+                return;
+            }
             
-            // 送信完了メッセージ
-            alert('出勤簿を送信しました');
+            // 送信データを作成
+            const attendanceData = {
+                date: date,
+                start_time: startTime,
+                end_time: endTime,
+                break_time: parseFloat(breakTime),
+                notes: notes,
+                workplace: workplace,
+                transportation_cost: parseInt(transportationCost)
+            };
             
-            // 前のページに戻る
-            window.history.back();
+            console.log('送信データ:', attendanceData);
+            
+            // APIに送信
+            try {
+                const token = localStorage.getItem('shift_auth_token');
+                if (!token) {
+                    alert('認証トークンがありません。再ログインしてください。');
+                    window.location.href = window.BASE_PATH || '/shift/';
+                    return;
+                }
+                
+                const response = await fetch(`${API_BASE_URL}/api/attendance`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(attendanceData)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert('出勤簿を登録しました\\n\\nFirestore: 保存成功\\nGoogle Sheets: ' + 
+                          (result.sheets_result.success ? '書き込み成功' : '書き込み失敗'));
+                    
+                    // フォームをリセット
+                    this.reset();
+                    
+                    // 今日の日付を再設定
+                    const today = new Date().toISOString().split('T')[0];
+                    document.getElementById('date').value = today;
+                    
+                    // 前のページに戻るか、ホームに戻る
+                    // window.history.back();
+                } else {
+                    alert('エラー: ' + result.error);
+                }
+            } catch (error) {
+                console.error('送信エラー:', error);
+                alert('送信中にエラーが発生しました: ' + error.message);
+            }
         });
     </script>
 </body>
