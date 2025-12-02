@@ -404,19 +404,10 @@ input[type="reset"] {
     <script src="config.js"></script>
     <!-- 認証スクリプト -->
     <script src="auth.js"></script>
+    <!-- 設定画面スクリプト -->
+    <script src="setting.js"></script>
     
     <script>
-        // 戻るボタンの処理
-        function goBack() {
-            if (window.history.length > 1) {
-                window.history.back();
-            } else {
-                // 履歴がない場合はホームへ
-                const basePath = window.BASE_PATH || '/shift/';
-                window.location.href = basePath + 'shift_home_admin.html';
-            }
-        }
-        
         // ページ読み込み時の認証チェック
         document.addEventListener('DOMContentLoaded', async () => {
             // 認証チェック
