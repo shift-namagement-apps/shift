@@ -322,11 +322,16 @@
             // APIに送信
             try {
                 const token = localStorage.getItem('shift_auth_token');
+                console.log('🔑 トークン確認:', token ? '存在' : '未設定');
+                
                 if (!token) {
                     alert('認証トークンがありません。再ログインしてください。');
                     window.location.href = window.BASE_PATH || '/shift/';
                     return;
                 }
+                
+                console.log('📡 送信先URL:', `${API_BASE_URL}/api/attendance`);
+                console.log('📤 送信データ:', JSON.stringify(attendanceData, null, 2));
                 
                 const response = await fetch(`${API_BASE_URL}/api/attendance`, {
                     method: 'POST',
@@ -337,11 +342,29 @@
                     body: JSON.stringify(attendanceData)
                 });
                 
-                const result = await response.json();
+                console.log('📥 レスポンスステータス:', response.status, response.statusText);
+                
+                // レスポンスのテキストを取得してログ出力
+                const responseText = await response.text();
+                console.log('📥 レスポンス本文:', responseText);
+                
+                let result;
+                try {
+                    result = JSON.parse(responseText);
+                } catch (parseError) {
+                    console.error('❌ JSONパースエラー:', parseError);
+                    console.error('レスポンステキスト:', responseText);
+                    alert('サーバーからの応答が不正です。コンソールを確認してください。');
+                    return;
+                }
+                
+                console.log('✅ パース結果:', result);
                 
                 if (result.success) {
-                    alert('出勤簿を登録しました\\n\\nFirestore: 保存成功\\nGoogle Sheets: ' + 
-                          (result.sheets_result.success ? '書き込み成功' : '書き込み失敗'));
+                    const sheetsStatus = result.sheets_result?.success ? '✅ 書き込み成功' : '❌ 書き込み失敗';
+                    const sheetsMessage = result.sheets_result?.message || result.sheets_result?.error || '';
+                    
+                    alert(`出勤簿を登録しました\n\n✅ Firestore: 保存成功\n${sheetsStatus}\n${sheetsMessage}`);
                     
                     // フォームをリセット
                     this.reset();
@@ -353,10 +376,12 @@
                     // 前のページに戻るか、ホームに戻る
                     // window.history.back();
                 } else {
+                    console.error('❌ サーバーエラー:', result.error);
                     alert('エラー: ' + result.error);
                 }
             } catch (error) {
-                console.error('送信エラー:', error);
+                console.error('❌ 送信エラー:', error);
+                console.error('エラー詳細:', error.stack);
                 alert('送信中にエラーが発生しました: ' + error.message);
             }
         });
