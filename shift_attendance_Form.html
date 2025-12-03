@@ -267,6 +267,9 @@
         async function loadWorkplaces() {
             try {
                 const token = localStorage.getItem('shift_auth_token');
+                console.log('🏠 勤務地データ取得開始...');
+                console.log('🔗 URL:', `${API_BASE_URL}/api/homes`);
+                
                 const response = await fetch(`${API_BASE_URL}/api/homes`, {
                     method: 'GET',
                     headers: {
@@ -275,9 +278,11 @@
                     }
                 });
                 
+                console.log('📥 勤務地レスポンス:', response.status, response.statusText);
                 const data = await response.json();
+                console.log('📊 勤務地データ:', data);
                 
-                if (data.success && data.homes.length > 0) {
+                if (data.success && data.homes && data.homes.length > 0) {
                     const select = document.getElementById('place');
                     select.innerHTML = '<option value="">選択してください</option>';
                     
@@ -287,12 +292,15 @@
                         option.value = home.name;
                         option.textContent = home.name + 'ホーム';
                         select.appendChild(option);
+                        console.log('✅ 勤務地追加:', home.name);
                     });
+                    console.log('✅ 勤務地データの読み込み完了');
                 } else {
                     console.warn('⚠️ 勤務地データが取得できませんでした');
+                    console.warn('データの内容:', data);
                 }
             } catch (error) {
-                console.error('勤務地取得エラー:', error);
+                console.error('❌ 勤務地取得エラー:', error);
             }
         }
         
