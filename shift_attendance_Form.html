@@ -205,6 +205,25 @@
                 return;
             }
             
+            // ユーザー情報を取得して保存
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/auth/verify`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                const data = await response.json();
+                if (data.success && data.user) {
+                    // ユーザー情報をセッションストレージに保存
+                    sessionStorage.setItem('current_user', JSON.stringify(data.user));
+                    console.log('✅ ユーザー情報取得:', data.user);
+                }
+            } catch (error) {
+                console.error('ユーザー情報取得エラー:', error);
+            }
+            
             // 今日の日付をデフォルト設定
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('date').value = today;
@@ -264,10 +283,13 @@
                     
                     data.homes.forEach(home => {
                         const option = document.createElement('option');
-                        option.value = home.name + 'ホーム';
+                        // valueとtextContentの両方を統一
+                        option.value = home.name;
                         option.textContent = home.name + 'ホーム';
                         select.appendChild(option);
                     });
+                } else {
+                    console.warn('⚠️ 勤務地データが取得できませんでした');
                 }
             } catch (error) {
                 console.error('勤務地取得エラー:', error);
