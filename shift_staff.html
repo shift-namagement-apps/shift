@@ -591,17 +591,22 @@
     </header>
     
     <main>
+        <!-- 戻るボタン -->
+        <a href="shift_home_staff.html" class="back-button">
+            ← スタッフホームに戻る
+        </a>
+        
         <div class="calendar-container">
             <div class="calendar-header">
-                <h2>マイシフト</h2>
+                <h2>マイシフト（承認済み）</h2>
                 <div class="month-nav">
                     <button onclick="prevMonth()">◀ 前月</button>
-                    <span id="currentMonth">2025年10月</span>
+                    <span id="currentMonth">読込中...</span>
                     <button onclick="nextMonth()">次月 ▶</button>
                 </div>
             </div>
             
-            <div class="calendar">
+            <div class="calendar" id="calendar">
                 <div class="calendar-day-header sunday">日</div>
                 <div class="calendar-day-header">月</div>
                 <div class="calendar-day-header">火</div>
@@ -738,22 +743,29 @@
             <!-- 凡例 -->
             <div class="legend">
                 <div class="legend-item">
-                    <div class="legend-color morning">午前</div>
-                    <span class="legend-label">午前勤務</span>
-                </div>
-                <div class="legend-item">
-                    <div class="legend-color afternoon">午後</div>
-                    <span class="legend-label">午後勤務</span>
-                </div>
-                <div class="legend-item">
-                    <div class="legend-color allday">終日</div>
-                    <span class="legend-label">終日勤務</span>
+                    <span class="legend-label">A: 早番、B: 遅番、C: 日勤、EL: 早遅、N: 夜勤、L: 遅勤、SP: 専従</span>
                 </div>
             </div>
         </div>
     </main>
     
     <script>
+        // 現在表示中の年月
+        let currentYear = new Date().getFullYear();
+        let currentMonth = new Date().getMonth() + 1; // 1-12
+        let currentUser = null;
+        
+        // シフトコードの定義
+        const SHIFT_CODES = {
+            'A': { name: '早番', color: 'morning' },
+            'B': { name: '遅番', color: 'afternoon' },
+            'C': { name: '日勤', color: 'allday' },
+            'EL': { name: '早遅', color: 'allday' },
+            'N': { name: '夜勤', color: 'afternoon' },
+            'L': { name: '遅勤', color: 'afternoon' },
+            'SP': { name: '専従', color: 'morning' }
+        };
+        
         // ドロップダウンメニューの表示切替
         function toggleDropdown() {
             const menu = document.getElementById('dropdownMenu');
@@ -782,26 +794,175 @@
         // ログアウト
         function logout() {
             if (confirm('ログアウトしますか?')) {
-                alert('ログアウトしました');
-                // 実際の実装では、ログアウト処理とログイン画面への遷移
+                localStorage.removeItem('shift_auth_token');
+                sessionStorage.clear();
+                window.location.href = window.BASE_PATH || '/shift/';
             }
         }
         
         // 出勤入力画面へ
         function goToAttendance() {
-            alert('出勤入力画面に移動します');
-            // 実際の実装では、出勤入力フォームへ遷移
+            window.location.href = 'shift_attendance_Form.html';
         }
         
         // 月の切り替え
         function prevMonth() {
-            alert('前月のシフトを表示します');
-            // 実際の実装では、前月のデータを取得して表示
+            currentMonth--;
+            if (currentMonth < 1) {
+                currentMonth = 12;
+                currentYear--;
+            }
+            loadShiftData();
         }
         
         function nextMonth() {
-            alert('次月のシフトを表示します');
-            // 実際の実装では、次月のデータを取得して表示
+            currentMonth++;
+            if (currentMonth > 12) {
+                currentMonth = 1;
+                currentYear++;
+            }
+            loadShiftData();
+        }
+        
+        // カレンダーを描画
+        function renderCalendar(shifts) {
+            const calendar = document.getElementById('calendar');
+            
+            // ヘッダーは残して、日付部分だけクリア
+            while (calendar.children.length > 7) {
+                calendar.removeChild(calendar.lastChild);
+            }
+            
+            // 月の情報を取得
+            const firstDay = new Date(currentYear, currentMonth - 1, 1);
+            const lastDay = new Date(currentYear, currentMonth, 0);
+            const daysInMonth = lastDay.getDate();
+            const startDayOfWeek = firstDay.getDay(); // 0=日曜, 1=月曜...
+            
+            // 月表示を更新
+            document.getElementById('currentMonth').textContent = 
+                `${currentYear}年${currentMonth}月`;
+            
+            // 今日の日付
+            const today = new Date();
+            const isCurrentMonth = today.getFullYear() === currentYear && 
+                                   today.getMonth() + 1 === currentMonth;
+            const todayDate = isCurrentMonth ? today.getDate() : -1;
+            
+            // 最初の週の空白セル
+            for (let i = 0; i < startDayOfWeek; i++) {
+                const emptyDay = document.createElement('div');
+                emptyDay.className = 'calendar-day';
+                calendar.appendChild(emptyDay);
+            }
+            
+            // 各日付のセルを作成
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dayCell = document.createElement('div');
+                const dayOfWeek = (startDayOfWeek + day - 1) % 7;
+                
+                // 基本クラス
+                dayCell.className = 'calendar-day';
+                if (dayOfWeek === 0) dayCell.classList.add('sunday');
+                if (dayOfWeek === 6) dayCell.classList.add('saturday');
+                if (day === todayDate) dayCell.classList.add('today');
+                
+                // 日付番号
+                const dayNumber = document.createElement('div');
+                dayNumber.className = 'day-number';
+                dayNumber.textContent = day;
+                dayCell.appendChild(dayNumber);
+                
+                // その日のシフトを検索
+                const dateStr = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const dayShifts = shifts[dateStr];
+                
+                if (dayShifts) {
+                    // シフトがある場合、各ホームとシフトコードを表示
+                    Object.entries(dayShifts).forEach(([home, shiftCodes]) => {
+                        Object.keys(shiftCodes).forEach(code => {
+                            const shiftInfo = document.createElement('div');
+                            const shiftDef = SHIFT_CODES[code] || { name: code, color: 'allday' };
+                            shiftInfo.className = `shift-info shift-${shiftDef.color}`;
+                            shiftInfo.textContent = `${home}ホーム ${shiftDef.name}`;
+                            dayCell.appendChild(shiftInfo);
+                        });
+                    });
+                }
+                
+                calendar.appendChild(dayCell);
+            }
+        }
+        
+        // シフトデータを読み込み
+        async function loadShiftData() {
+            if (!currentUser) {
+                console.error('ユーザー情報がありません');
+                return;
+            }
+            
+            try {
+                const token = localStorage.getItem('shift_auth_token');
+                if (!token) {
+                    console.error('認証トークンがありません');
+                    window.location.href = window.BASE_PATH || '/shift/';
+                    return;
+                }
+                
+                console.log(`📅 ${currentYear}年${currentMonth}月のシフトを取得中...`);
+                
+                // APIからシフトデータを取得（承認済みのみ）
+                const response = await fetch(
+                    `${API_BASE_URL}/api/shift-requests/get?year=${currentYear}&month=${currentMonth}`,
+                    {
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    }
+                );
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                
+                const data = await response.json();
+                console.log('📥 取得したデータ:', data);
+                
+                if (!data.success) {
+                    throw new Error(data.error || 'データ取得失敗');
+                }
+                
+                // 自分のシフトのみをフィルタリング（status=1 承認済み）
+                const myShifts = {};
+                
+                Object.entries(data.shifts || {}).forEach(([date, dateData]) => {
+                    Object.entries(dateData).forEach(([home, homeData]) => {
+                        Object.entries(homeData).forEach(([shiftCode, users]) => {
+                            // usersは配列
+                            const myShift = users.find(u => 
+                                u.user_id === currentUser.id && u.status === 1
+                            );
+                            
+                            if (myShift) {
+                                if (!myShifts[date]) myShifts[date] = {};
+                                if (!myShifts[date][home]) myShifts[date][home] = {};
+                                myShifts[date][home][shiftCode] = myShift;
+                            }
+                        });
+                    });
+                });
+                
+                console.log('✅ 自分の承認済みシフト:', myShifts);
+                
+                // カレンダーを描画
+                renderCalendar(myShifts);
+                
+            } catch (error) {
+                console.error('❌ シフトデータ取得エラー:', error);
+                alert('シフトデータの取得に失敗しました: ' + error.message);
+                renderCalendar({}); // 空のカレンダーを表示
+            }
         }
     </script>
     
@@ -821,10 +982,35 @@
                 }
             }
             
-            // ユーザー情報を表示
-            const user = AUTH ? AUTH.getUser() : null;
-            if (user) {
-                console.log('👤 ログインユーザー:', user.name, `(${user.role})`);
+            // ユーザー情報を取得
+            const token = localStorage.getItem('shift_auth_token');
+            if (!token) {
+                window.location.href = window.BASE_PATH || '/shift/';
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/auth/verify`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                if (data.success && data.user) {
+                    currentUser = data.user;
+                    console.log('👤 ログインユーザー:', currentUser.name, `(${currentUser.role})`);
+                    
+                    // シフトデータを読み込み
+                    await loadShiftData();
+                } else {
+                    throw new Error('ユーザー情報の取得に失敗しました');
+                }
+            } catch (error) {
+                console.error('認証エラー:', error);
+                localStorage.removeItem('shift_auth_token');
+                window.location.href = window.BASE_PATH || '/shift/';
             }
         });
     </script>
