@@ -26,6 +26,110 @@
             gap: 1rem;
             min-width: 0;
         }
+        
+        /* シフト表のスクロール対応 */
+        .shift-table-container {
+            max-height: calc(20 * 50px + 60px); /* 20人分の高さ + ヘッダー */
+            overflow-y: auto;
+            overflow-x: auto;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: white;
+        }
+        
+        .shift-table {
+            width: auto;
+            min-width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+        
+        /* スタッフ名列を固定 */
+        .shift-table thead th:first-child,
+        .shift-table tbody td:first-child {
+            position: sticky;
+            left: 0;
+            background: white;
+            z-index: 10;
+            border-right: 2px solid #ddd;
+        }
+        
+        .shift-table thead th:first-child {
+            z-index: 20;
+            background: #f8f9fa;
+        }
+        
+        /* テーブル行の高さ固定 */
+        .shift-table tbody tr {
+            height: 50px;
+        }
+        
+        .shift-table tbody td {
+            min-width: 80px;
+            max-width: 80px;
+            width: 80px;
+            text-align: center;
+            vertical-align: middle;
+            border: 1px solid #e0e0e0;
+            padding: 4px;
+        }
+        
+        .shift-table tbody td:first-child {
+            min-width: 150px;
+            max-width: 150px;
+            width: 150px;
+            text-align: left;
+            padding-left: 12px;
+            font-weight: 500;
+        }
+        
+        .shift-table thead th {
+            min-width: 80px;
+            max-width: 80px;
+            width: 80px;
+            text-align: center;
+            padding: 12px 4px;
+            background: #f8f9fa;
+            border: 1px solid #e0e0e0;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            z-index: 15;
+        }
+        
+        .shift-table thead th:first-child {
+            min-width: 150px;
+            max-width: 150px;
+            width: 150px;
+            text-align: left;
+            padding-left: 12px;
+        }
+        
+        /* スクロールバーのスタイル */
+        .shift-table-container::-webkit-scrollbar {
+            width: 12px;
+            height: 12px;
+        }
+        
+        .shift-table-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 6px;
+        }
+        
+        .shift-table-container::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 6px;
+        }
+        
+        .shift-table-container::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        
+        /* 空行のスタイル */
+        .shift-table tbody tr.empty-row td {
+            background: #fafafa;
+            border: 1px solid #e0e0e0;
+        }
     </style>
 </head>
 <body>
@@ -180,6 +284,132 @@
     <script src="script.js"></script>
     
     <script>
+        // シフト表のカスタム描画関数（status=0のみ、20人分固定、10日分表示）
+        const DAYS_TO_DISPLAY = 10;
+        const MIN_STAFF_ROWS = 20;
+        
+        // 元のrenderShiftTable関数を上書き
+        const originalRenderShiftTable = window.renderShiftTable;
+        
+        window.renderShiftTable = async function(staffList, daysCount) {
+            try {
+                // status=0（承認待ち）のスタッフのみをフィルタリング
+                const token = localStorage.getItem('shift_auth_token');
+                if (!token) {
+                    console.error('認証トークンがありません');
+                    return;
+                }
+                
+                // 全スタッフ情報を取得
+                const staffResponse = await fetch(`${API_BASE_URL}/api/staff`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (!staffResponse.ok) {
+                    throw new Error('スタッフ情報の取得に失敗しました');
+                }
+                
+                const staffData = await staffResponse.json();
+                if (!staffData.success) {
+                    throw new Error(staffData.error || 'データ取得エラー');
+                }
+                
+                // status=0のスタッフのみフィルタ
+                const pendingStaff = staffData.staff.filter(s => s.status === 0);
+                console.log(`✅ status=0のスタッフ: ${pendingStaff.length}名`);
+                
+                // ヘッダーを描画（10日分）
+                renderCustomHeader();
+                
+                // ボディを描画（20人分の枠）
+                renderCustomBody(pendingStaff);
+                
+            } catch (error) {
+                console.error('❌ シフト表描画エラー:', error);
+                alert('シフト表の表示に失敗しました: ' + error.message);
+            }
+        };
+        
+        function renderCustomHeader() {
+            const thead = document.getElementById('shift-table-header');
+            let html = '<tr><th>スタッフ名</th>';
+            
+            // 現在の年月から10日分のヘッダーを作成
+            const year = window.appState?.currentYear || new Date().getFullYear();
+            const month = window.appState?.currentMonth || (new Date().getMonth() + 1);
+            
+            for (let day = 1; day <= DAYS_TO_DISPLAY; day++) {
+                const date = new Date(year, month - 1, day);
+                const dayOfWeek = ['日', '月', '火', '水', '木', '金', '土'][date.getDay()];
+                const isSunday = date.getDay() === 0;
+                const isSaturday = date.getDay() === 6;
+                
+                let headerClass = '';
+                if (isSunday) headerClass = 'text-danger';
+                else if (isSaturday) headerClass = 'text-primary';
+                
+                html += `<th class="${headerClass}">${day}日<br><small>(${dayOfWeek})</small></th>`;
+            }
+            
+            html += '<th>月合計</th></tr>';
+            thead.innerHTML = html;
+        }
+        
+        function renderCustomBody(staffList) {
+            const tbody = document.getElementById('shift-table-body');
+            let html = '';
+            
+            const year = window.appState?.currentYear || new Date().getFullYear();
+            const month = window.appState?.currentMonth || (new Date().getMonth() + 1);
+            
+            // 実際のスタッフ行を描画
+            staffList.forEach(staff => {
+                html += `<tr><td>${staff.name}</td>`;
+                
+                const staffShifts = window.appState?.shifts?.[staff.id] || {};
+                
+                // 10日分のセルを作成
+                for (let day = 1; day <= DAYS_TO_DISPLAY; day++) {
+                    const shift = staffShifts[day.toString()] || { code: 'NONE', home: '' };
+                    const shiftInfo = window.SHIFT_CODES?.[shift.code] || { class: '', label: '' };
+                    
+                    const homeClass = shift.home ? `home-${shift.home.toLowerCase()}` : '';
+                    
+                    html += `<td 
+                                class="${homeClass}"
+                                data-staff-id="${staff.id}"
+                                data-staff-name="${staff.name}"
+                                data-date="${day}">`;
+                    
+                    if (shift.code !== 'NONE') {
+                        html += `<div class="shift-code ${shiftInfo.class}">${shift.code}</div>`;
+                    }
+                    html += '</td>';
+                }
+                
+                // 月合計（仮）
+                html += `<td>-</td>`;
+                html += '</tr>';
+            });
+            
+            // 20人に満たない場合は空行を追加
+            const currentRowCount = staffList.length;
+            const emptyRowsNeeded = Math.max(0, MIN_STAFF_ROWS - currentRowCount);
+            
+            for (let i = 0; i < emptyRowsNeeded; i++) {
+                html += '<tr class="empty-row"><td></td>';
+                for (let day = 1; day <= DAYS_TO_DISPLAY; day++) {
+                    html += '<td></td>';
+                }
+                html += '<td></td></tr>';
+            }
+            
+            tbody.innerHTML = html;
+        }
+        
         // ページ読み込み時の認証チェック
         document.addEventListener('DOMContentLoaded', async () => {
             // 認証チェック
