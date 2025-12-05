@@ -607,137 +607,7 @@
             </div>
             
             <div class="calendar" id="calendar">
-                <div class="calendar-day-header sunday">日</div>
-                <div class="calendar-day-header">月</div>
-                <div class="calendar-day-header">火</div>
-                <div class="calendar-day-header">水</div>
-                <div class="calendar-day-header">木</div>
-                <div class="calendar-day-header">金</div>
-                <div class="calendar-day-header saturday">土</div>
-                
-                <!-- 10月のカレンダー（1日は水曜日から） -->
-                <div class="calendar-day"></div>
-                <div class="calendar-day"></div>
-                <div class="calendar-day">
-                    <div class="day-number">1</div>
-                    <div class="shift-info shift-allday">終日勤務<br>9:00-18:00</div>
-                </div>
-                <div class="calendar-day">
-                    <div class="day-number">2</div>
-                    <div class="shift-info shift-morning">午前<br>9:00-13:00</div>
-                </div>
-                <div class="calendar-day">
-                    <div class="day-number">3</div>
-                    <div class="shift-info shift-afternoon">午後<br>14:00-18:00</div>
-                </div>
-                <div class="calendar-day">
-                    <div class="day-number">4</div>
-                    <div class="shift-info shift-allday">終日勤務<br>9:00-18:00</div>
-                </div>
-                <div class="calendar-day saturday">
-                    <div class="day-number">5</div>
-                </div>
-                
-                <div class="calendar-day sunday">
-                    <div class="day-number">6</div>
-                </div>
-                <div class="calendar-day">
-                    <div class="day-number">7</div>
-                    <div class="shift-info shift-allday">終日勤務<br>9:00-18:00</div>
-                </div>
-                <div class="calendar-day">
-                    <div class="day-number">8</div>
-                    <div class="shift-info shift-morning">午前<br>9:00-13:00</div>
-                </div>
-                <div class="calendar-day">
-                    <div class="day-number">9</div>
-                    <div class="shift-info shift-afternoon">午後<br>14:00-18:00</div>
-                </div>
-                <div class="calendar-day">
-                    <div class="day-number">10</div>
-                    <div class="shift-info shift-allday">終日勤務<br>9:00-18:00</div>
-                </div>
-                <div class="calendar-day">
-                    <div class="day-number">11</div>
-                    <div class="shift-info shift-morning">午前<br>9:00-13:00</div>
-                </div>
-                <div class="calendar-day saturday">
-                    <div class="day-number">12</div>
-                </div>
-                
-                <div class="calendar-day sunday">
-                    <div class="day-number">13</div>
-                </div>
-                <div class="calendar-day">
-                    <div class="day-number">14</div>
-                    <div class="shift-info shift-allday">終日勤務<br>9:00-18:00</div>
-                </div>
-                <div class="calendar-day">
-                    <div class="day-number">15</div>
-                    <div class="shift-info shift-afternoon">午後<br>14:00-18:00</div>
-                </div>
-                <div class="calendar-day">
-                    <div class="day-number">16</div>
-                    <div class="shift-info shift-allday">終日勤務<br>9:00-18:00</div>
-                </div>
-                <div class="calendar-day">
-                    <div class="day-number">17</div>
-                    <div class="shift-info shift-morning">午前<br>9:00-13:00</div>
-                </div>
-                <div class="calendar-day">
-                    <div class="day-number">18</div>
-                    <div class="shift-info shift-afternoon">午後<br>14:00-18:00</div>
-                </div>
-                <div class="calendar-day saturday">
-                    <div class="day-number">19</div>
-                </div>
-                
-                <div class="calendar-day sunday today">
-                    <div class="day-number">20</div>
-                </div>
-                <div class="calendar-day">
-                    <div class="day-number">21</div>
-                    <div class="shift-info shift-allday">終日勤務<br>9:00-18:00</div>
-                </div>
-                <div class="calendar-day">
-                    <div class="day-number">22</div>
-                    <div class="shift-info shift-morning">午前<br>9:00-13:00</div>
-                </div>
-                <div class="calendar-day">
-                    <div class="day-number">23</div>
-                    <div class="shift-info shift-afternoon">午後<br>14:00-18:00</div>
-                </div>
-                <div class="calendar-day">
-                    <div class="day-number">24</div>
-                    <div class="shift-info shift-allday">終日勤務<br>9:00-18:00</div>
-                </div>
-                <div class="calendar-day">
-                    <div class="day-number">25</div>
-                    <div class="shift-info shift-morning">午前<br>9:00-13:00</div>
-                </div>
-                <div class="calendar-day saturday">
-                    <div class="day-number">26</div>
-                </div>
-                
-                <div class="calendar-day sunday">
-                    <div class="day-number">27</div>
-                </div>
-                <div class="calendar-day">
-                    <div class="day-number">28</div>
-                    <div class="shift-info shift-allday">終日勤務<br>9:00-18:00</div>
-                </div>
-                <div class="calendar-day">
-                    <div class="day-number">29</div>
-                    <div class="shift-info shift-afternoon">午後<br>14:00-18:00</div>
-                </div>
-                <div class="calendar-day">
-                    <div class="day-number">30</div>
-                    <div class="shift-info shift-allday">終日勤務<br>9:00-18:00</div>
-                </div>
-                <div class="calendar-day">
-                    <div class="day-number">31</div>
-                    <div class="shift-info shift-morning">午前<br>9:00-13:00</div>
-                </div>
+                <!-- データ読み込み中は空のカレンダー -->
             </div>
             
             <!-- 凡例 -->
@@ -828,10 +698,19 @@
         function renderCalendar(shifts) {
             const calendar = document.getElementById('calendar');
             
-            // ヘッダーは残して、日付部分だけクリア
-            while (calendar.children.length > 7) {
-                calendar.removeChild(calendar.lastChild);
-            }
+            // カレンダー全体をクリア
+            calendar.innerHTML = '';
+            
+            // ヘッダー行を追加
+            const dayHeaders = ['日', '月', '火', '水', '木', '金', '土'];
+            dayHeaders.forEach((day, index) => {
+                const header = document.createElement('div');
+                header.className = 'calendar-day-header';
+                if (index === 0) header.classList.add('sunday');
+                if (index === 6) header.classList.add('saturday');
+                header.textContent = day;
+                calendar.appendChild(header);
+            });
             
             // 月の情報を取得
             const firstDay = new Date(currentYear, currentMonth - 1, 1);
@@ -933,43 +812,16 @@
                     throw new Error(data.error || 'データ取得失敗');
                 }
                 
-                // スタッフ情報を取得して従業員のみフィルタリング
-                const staffResponse = await fetch(`${API_BASE_URL}/api/staff`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
-                
-                if (!staffResponse.ok) {
-                    throw new Error('スタッフ情報の取得に失敗しました');
-                }
-                
-                const staffData = await staffResponse.json();
-                if (!staffData.success) {
-                    throw new Error(staffData.error || 'スタッフデータ取得エラー');
-                }
-                
-                // role='staff'（従業員）のユーザーIDを抽出
-                const staffUserIds = new Set(
-                    staffData.staff
-                        .filter(s => s.role === 'staff')
-                        .map(s => s.id)
-                );
-                
-                console.log(`👥 従業員: ${staffUserIds.size}名`);
-                
-                // 自分のシフトのみをフィルタリング（status=1 承認済み、かつ従業員のみ）
+                // 自分のシフトのみをフィルタリング（status=1 承認済み）
                 const myShifts = {};
                 
                 Object.entries(data.shifts || {}).forEach(([date, dateData]) => {
                     Object.entries(dateData).forEach(([home, homeData]) => {
                         Object.entries(homeData).forEach(([shiftCode, users]) => {
-                            // usersは配列
+                            // usersは配列 - 自分のIDとstatus=1のみ
                             const myShift = users.find(u => 
                                 u.user_id === currentUser.id && 
-                                u.status === 1 &&
-                                staffUserIds.has(u.user_id)
+                                u.status === 1
                             );
                             
                             if (myShift) {
@@ -981,7 +833,7 @@
                     });
                 });
                 
-                console.log('✅ 自分の承認済みシフト（従業員のみ）:', myShifts);
+                console.log('✅ 自分の承認済みシフト:', myShifts);
                 
                 // カレンダーを描画
                 renderCalendar(myShifts);
