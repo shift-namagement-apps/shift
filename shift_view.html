@@ -480,22 +480,31 @@
             const month = window.appState?.currentMonth || (new Date().getMonth() + 1);
             const daysInMonth = new Date(year, month, 0).getDate();
             
-            // 月間集計
-            const monthlySummary = document.getElementById('monthly-summary');
-            let totalWorkDays = 0;
-            let totalStaff = 0;
+            // シフトコード別の集計
+            const shiftCodeCounts = {
+                'A': 0,  // 日勤
+                'B': 0,  // 夜勤
+                'C': 0,  // 遅番
+                'EL': 0, // 早朝
+                'N': 0,  // 公休
+                'L': 0,  // 有休
+                'SP': 0  // 特休
+            };
             
             // ホーム別集計
-            const homeSummary = document.getElementById('home-summary');
             const homeStats = { A: 0, B: 0, C: 0, D: 0, E: 0 };
             
             if (window.appState?.shifts) {
                 Object.values(window.appState.shifts).forEach(staffShifts => {
-                    totalStaff++;
                     Object.entries(staffShifts).forEach(([day, shift]) => {
-                        if (!['N', 'L', 'SP'].includes(shift.code)) {
-                            totalWorkDays++;
-                            if (shift.home && homeStats[shift.home] !== undefined) {
+                        // シフトコード別カウント
+                        if (shift.code && shiftCodeCounts[shift.code] !== undefined) {
+                            shiftCodeCounts[shift.code]++;
+                        }
+                        
+                        // ホーム別カウント（公休系以外）
+                        if (shift.home && !['N', 'L', 'SP'].includes(shift.code)) {
+                            if (homeStats[shift.home] !== undefined) {
                                 homeStats[shift.home]++;
                             }
                         }
@@ -503,30 +512,43 @@
                 });
             }
             
-            // 月間集計を表示
-            monthlySummary.innerHTML = `
-                <li class="summary-list-item">
-                    <span class="label">総スタッフ数</span>
-                    <span class="value">${totalStaff}名</span>
-                </li>
-                <li class="summary-list-item">
-                    <span class="label">総勤務日数</span>
-                    <span class="value">${totalWorkDays}日</span>
-                </li>
-                <li class="summary-list-item">
-                    <span class="label">平均勤務日数</span>
-                    <span class="value">${totalStaff > 0 ? (totalWorkDays / totalStaff).toFixed(1) : 0}日</span>
-                </li>
-            `;
+            // 月間集計を表示（シフトコード別）
+            const monthlySummary = document.getElementById('monthly-summary');
+            const shiftCodeLabels = {
+                'A': '日勤 (A)',
+                'B': '夜勤 (B)',
+                'C': '遅番 (C)',
+                'EL': '早朝 (EL)',
+                'L': '有休 (L)',
+                'N': '公休 (N)',
+                'SP': '特休 (SP)'
+            };
+            
+            let monthlyHtml = '';
+            for (const [code, label] of Object.entries(shiftCodeLabels)) {
+                const count = shiftCodeCounts[code] || 0;
+                monthlyHtml += `
+                    <li class="summary-list-item">
+                        <span class="label">${label}</span>
+                        <span class="value">${count}</span>
+                    </li>`;
+            }
+            monthlySummary.innerHTML = monthlyHtml;
             
             // ホーム別集計を表示
-            homeSummary.innerHTML = Object.entries(homeStats)
-                .map(([home, count]) => `
-                    <li class="summary-list-item home-summary-${home.toLowerCase()}">
-                        <span class="label">${home}ホーム</span>
+            const homeSummary = document.getElementById('home-summary');
+            const homeLabels = { A: 'Aホーム', B: 'Bホーム', C: 'Cホーム', D: 'Dホーム', E: 'Eホーム' };
+            
+            let homeHtml = '';
+            for (const [homeKey, label] of Object.entries(homeLabels)) {
+                const count = homeStats[homeKey] || 0;
+                homeHtml += `
+                    <li class="summary-list-item home-summary-${homeKey.toLowerCase()}">
+                        <span class="label">${label}</span>
                         <span class="value">${count}日</span>
-                    </li>
-                `).join('');
+                    </li>`;
+            }
+            homeSummary.innerHTML = homeHtml;
         }
         
         // ページ読み込み時の認証チェック
