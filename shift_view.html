@@ -321,11 +321,17 @@
                 const pendingStaff = staffData.staff.filter(s => s.status === 0);
                 console.log(`✅ status=0のスタッフ: ${pendingStaff.length}名`);
                 
-                // ヘッダーを描画（10日分）
+                // シフト要望データを取得
+                await loadShiftRequests();
+                
+                // ヘッダーを描画（30日分）
                 renderCustomHeader();
                 
-                // ボディを描画（20人分の枠）
+                // ボディを描画（10人分の枠）
                 renderCustomBody(pendingStaff);
+                
+                // 集計を更新
+                updateSummaries();
                 
             } catch (error) {
                 console.error('❌ シフト表描画エラー:', error);
@@ -333,15 +339,71 @@
             }
         };
         
+        // シフト要望データを読み込み
+        async function loadShiftRequests() {
+            try {
+                const token = localStorage.getItem('shift_auth_token');
+                const year = window.appState?.currentYear || new Date().getFullYear();
+                const month = window.appState?.currentMonth || (new Date().getMonth() + 1);
+                
+                const response = await fetch(
+                    `${API_BASE_URL}/api/shift-requests/get?year=${year}&month=${month}`,
+                    {
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    }
+                );
+                
+                if (!response.ok) {
+                    throw new Error('シフト要望の取得に失敗しました');
+                }
+                
+                const data = await response.json();
+                
+                if (data.success && data.shifts) {
+                    // シフト要望を appState.shifts に格納
+                    if (!window.appState) window.appState = {};
+                    window.appState.shifts = {};
+                    
+                    Object.entries(data.shifts).forEach(([dateStr, homes]) => {
+                        const [y, m, day] = dateStr.split('-').map(Number);
+                        
+                        Object.entries(homes).forEach(([home, shiftCodes]) => {
+                            Object.entries(shiftCodes).forEach(([shiftCode, users]) => {
+                                users.forEach(user => {
+                                    if (user.status === 1) { // 承認済みのみ
+                                        if (!window.appState.shifts[user.user_id]) {
+                                            window.appState.shifts[user.user_id] = {};
+                                        }
+                                        window.appState.shifts[user.user_id][day.toString()] = {
+                                            code: shiftCode,
+                                            home: home
+                                        };
+                                    }
+                                });
+                            });
+                        });
+                    });
+                    
+                    console.log('✅ シフトデータを読み込みました:', window.appState.shifts);
+                }
+            } catch (error) {
+                console.error('❌ シフト要望取得エラー:', error);
+            }
+        }
+        
         function renderCustomHeader() {
             const thead = document.getElementById('shift-table-header');
             let html = '<tr><th>スタッフ名</th>';
             
-            // 現在の年月から10日分のヘッダーを作成
+            // 現在の年月から30日分のヘッダーを作成
             const year = window.appState?.currentYear || new Date().getFullYear();
             const month = window.appState?.currentMonth || (new Date().getMonth() + 1);
+            const daysInMonth = new Date(year, month, 0).getDate();
             
-            for (let day = 1; day <= DAYS_TO_DISPLAY; day++) {
+            for (let day = 1; day <= DAYS_TO_DISPLAY && day <= daysInMonth; day++) {
                 const date = new Date(year, month - 1, day);
                 const dayOfWeek = ['日', '月', '火', '水', '木', '金', '土'][date.getDay()];
                 const isSunday = date.getDay() === 0;
@@ -364,50 +426,107 @@
             
             const year = window.appState?.currentYear || new Date().getFullYear();
             const month = window.appState?.currentMonth || (new Date().getMonth() + 1);
+            const daysInMonth = new Date(year, month, 0).getDate();
             
             // 実際のスタッフ行を描画
             staffList.forEach(staff => {
                 html += `<tr><td>${staff.name}</td>`;
                 
                 const staffShifts = window.appState?.shifts?.[staff.id] || {};
+                let workDays = 0;
                 
-                // 10日分のセルを作成
-                for (let day = 1; day <= DAYS_TO_DISPLAY; day++) {
+                // 30日分のセルを作成（その月の日数まで）
+                for (let day = 1; day <= DAYS_TO_DISPLAY && day <= daysInMonth; day++) {
                     const shift = staffShifts[day.toString()] || { code: 'NONE', home: '' };
                     const shiftInfo = window.SHIFT_CODES?.[shift.code] || { class: '', label: '' };
                     
                     const homeClass = shift.home ? `home-${shift.home.toLowerCase()}` : '';
                     
-                    html += `<td 
-                                class="${homeClass}"
-                                data-staff-id="${staff.id}"
-                                data-staff-name="${staff.name}"
-                                data-date="${day}">`;
+                    // 編集不可にするためにdata属性を削除
+                    html += `<td class="${homeClass}" style="pointer-events: none;">`;
                     
                     if (shift.code !== 'NONE') {
                         html += `<div class="shift-code ${shiftInfo.class}">${shift.code}</div>`;
+                        if (!['N', 'L', 'SP'].includes(shift.code)) {
+                            workDays++;
+                        }
                     }
                     html += '</td>';
                 }
                 
-                // 月合計（仮）
-                html += `<td>-</td>`;
+                // 月合計（勤務日数）
+                html += `<td><strong>${workDays}日</strong></td>`;
                 html += '</tr>';
             });
             
-            // 20人に満たない場合は空行を追加
+            // 10人に満たない場合は空行を追加
             const currentRowCount = staffList.length;
             const emptyRowsNeeded = Math.max(0, MIN_STAFF_ROWS - currentRowCount);
             
             for (let i = 0; i < emptyRowsNeeded; i++) {
                 html += '<tr class="empty-row"><td></td>';
-                for (let day = 1; day <= DAYS_TO_DISPLAY; day++) {
+                for (let day = 1; day <= DAYS_TO_DISPLAY && day <= daysInMonth; day++) {
                     html += '<td></td>';
                 }
                 html += '<td></td></tr>';
             }
             
             tbody.innerHTML = html;
+        }
+        
+        // 集計を更新
+        function updateSummaries() {
+            const year = window.appState?.currentYear || new Date().getFullYear();
+            const month = window.appState?.currentMonth || (new Date().getMonth() + 1);
+            const daysInMonth = new Date(year, month, 0).getDate();
+            
+            // 月間集計
+            const monthlySummary = document.getElementById('monthly-summary');
+            let totalWorkDays = 0;
+            let totalStaff = 0;
+            
+            // ホーム別集計
+            const homeSummary = document.getElementById('home-summary');
+            const homeStats = { A: 0, B: 0, C: 0, D: 0, E: 0 };
+            
+            if (window.appState?.shifts) {
+                Object.values(window.appState.shifts).forEach(staffShifts => {
+                    totalStaff++;
+                    Object.entries(staffShifts).forEach(([day, shift]) => {
+                        if (!['N', 'L', 'SP'].includes(shift.code)) {
+                            totalWorkDays++;
+                            if (shift.home && homeStats[shift.home] !== undefined) {
+                                homeStats[shift.home]++;
+                            }
+                        }
+                    });
+                });
+            }
+            
+            // 月間集計を表示
+            monthlySummary.innerHTML = `
+                <li class="summary-list-item">
+                    <span class="summary-label">総スタッフ数</span>
+                    <span class="summary-value">${totalStaff}名</span>
+                </li>
+                <li class="summary-list-item">
+                    <span class="summary-label">総勤務日数</span>
+                    <span class="summary-value">${totalWorkDays}日</span>
+                </li>
+                <li class="summary-list-item">
+                    <span class="summary-label">平均勤務日数</span>
+                    <span class="summary-value">${totalStaff > 0 ? (totalWorkDays / totalStaff).toFixed(1) : 0}日</span>
+                </li>
+            `;
+            
+            // ホーム別集計を表示
+            homeSummary.innerHTML = Object.entries(homeStats)
+                .map(([home, count]) => `
+                    <li class="summary-list-item">
+                        <span class="summary-label">${home}ホーム</span>
+                        <span class="summary-value">${count}日</span>
+                    </li>
+                `).join('');
         }
         
         // ページ読み込み時の認証チェック
@@ -425,6 +544,31 @@
             if (user) {
                 console.log('👤 ログインユーザー:', user.name, `(${user.role})`);
             }
+            
+            // 現在の月を初期表示に設定
+            const now = new Date();
+            const yearSelect = document.getElementById('year-select');
+            const monthSelect = document.getElementById('month-select');
+            
+            if (yearSelect && monthSelect) {
+                yearSelect.value = now.getFullYear().toString();
+                monthSelect.value = (now.getMonth() + 1).toString();
+                
+                // appStateを初期化
+                if (window.appState) {
+                    window.appState.currentYear = now.getFullYear();
+                    window.appState.currentMonth = now.getMonth() + 1;
+                }
+            }
+            
+            // セル編集を無効化
+            document.addEventListener('click', (e) => {
+                const cell = e.target.closest('.shift-table tbody td');
+                if (cell && !cell.classList.contains('empty-row')) {
+                    e.stopPropagation();
+                    e.preventDefault();
+                }
+            }, true);
         });
         
         // 戻るボタンの動作を設定
