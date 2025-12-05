@@ -192,6 +192,12 @@
             
             isSubmitting = true;
             console.log('🎬 フォーム送信イベント発火');
+            
+            // 送信ボタンを無効化
+            const submitButton = loginForm.querySelector('button[type="submit"]');
+            const originalButtonText = submitButton.textContent;
+            submitButton.disabled = true;
+            submitButton.textContent = 'ログイン中...';
 
             const username = document.getElementById('user-id').value.trim();
             const password = document.getElementById('password').value;
@@ -202,6 +208,8 @@
             if (!username || !password) {
                 showError('ユーザーIDとパスワードを入力してください');
                 isSubmitting = false;
+                submitButton.disabled = false;
+                submitButton.textContent = originalButtonText;
                 return;
             }
 
@@ -227,33 +235,41 @@
                 
                 let response;
                 try {
-                    // タイムアウト設定（30秒）
-                    const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 30000);
+                    console.log('🚀 fetchリクエスト送信:', {
+                        url: loginUrl,
+                        method: 'POST',
+                        body: { username }
+                    });
                     
+                    // シンプルなfetch（タイムアウトなし）
                     response = await fetch(loginUrl, {
                         method: 'POST',
                         headers: {
-                            'Content-Type': 'application/json'
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
                         },
                         body: JSON.stringify({
                             username: username,
                             password: password
                         }),
-                        signal: controller.signal
+                        mode: 'cors',
+                        credentials: 'omit'
                     });
                     
-                    clearTimeout(timeoutId);
                     console.log('✅ fetch完了');
                 } catch (fetchError) {
                     console.error('❌ fetchエラー:', fetchError);
                     console.error('❌ エラー詳細:', fetchError.message);
                     console.error('❌ エラータイプ:', fetchError.name);
+                    console.error('❌ エラースタック:', fetchError.stack);
                     
-                    if (fetchError.name === 'AbortError') {
-                        throw new Error('リクエストがタイムアウトしました。サーバーの応答がありません。');
+                    if (fetchError.message.includes('Failed to fetch') || fetchError.message.includes('NetworkError')) {
+                        throw new Error('サーバーに接続できません。\n' +
+                                      '1. ネットワーク接続を確認してください\n' +
+                                      '2. サーバーが起動しているか確認してください\n' +
+                                      '3. CORS設定を確認してください');
                     }
-                    throw fetchError;
+                    throw new Error('ログインリクエストに失敗しました: ' + fetchError.message);
                 }
 
                 console.log('📥 レスポンスステータス:', response.status);
@@ -296,8 +312,12 @@
                 console.error('❌ スタックトレース:', error.stack);
                 showError('ログインに失敗しました。ネットワーク接続を確認してください。');
             } finally {
-                // 送信完了後、フラグをリセット
+                // 送信完了後、フラグとボタンをリセット
                 isSubmitting = false;
+                if (submitButton) {
+                    submitButton.disabled = false;
+                    submitButton.textContent = originalButtonText;
+                }
             }
         });
 
