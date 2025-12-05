@@ -284,7 +284,7 @@
     <script src="script.js"></script>
     
     <script>
-        // シフト表のカスタム描画関数（status=0のみ、10人分固定、30日分表示）
+        // シフト表のカスタム描画関数（全スタッフ表示、10人分固定、30日分表示）
         const DAYS_TO_DISPLAY = 30;
         const MIN_STAFF_ROWS = 10;
         
@@ -293,7 +293,9 @@
         
         window.renderShiftTable = async function(staffList, daysCount) {
             try {
-                // status=0（承認待ち）のスタッフのみをフィルタリング
+                console.log('📊 シフト表を描画中...');
+                
+                // 認証トークンを取得
                 const token = localStorage.getItem('shift_auth_token');
                 if (!token) {
                     console.error('認証トークンがありません');
@@ -317,9 +319,9 @@
                     throw new Error(staffData.error || 'データ取得エラー');
                 }
                 
-                // status=0のスタッフのみフィルタ
-                const pendingStaff = staffData.staff.filter(s => s.status === 0);
-                console.log(`✅ status=0のスタッフ: ${pendingStaff.length}名`);
+                // 全スタッフを表示（status=0のフィルタを削除）
+                const allStaff = staffData.staff || [];
+                console.log(`✅ 全スタッフ: ${allStaff.length}名`);
                 
                 // シフト要望データを取得
                 await loadShiftRequests();
@@ -327,8 +329,8 @@
                 // ヘッダーを描画（30日分）
                 renderCustomHeader();
                 
-                // ボディを描画（10人分の枠）
-                renderCustomBody(pendingStaff);
+                // ボディを描画（全スタッフ）
+                renderCustomBody(allStaff);
                 
                 // 集計を更新
                 updateSummaries();
@@ -346,6 +348,8 @@
                 const year = window.appState?.currentYear || new Date().getFullYear();
                 const month = window.appState?.currentMonth || (new Date().getMonth() + 1);
                 
+                console.log(`📅 ${year}年${month}月のシフトデータを取得中...`);
+                
                 const response = await fetch(
                     `${API_BASE_URL}/api/shift-requests/get?year=${year}&month=${month}`,
                     {
@@ -362,11 +366,11 @@
                 
                 const data = await response.json();
                 
+                // シフト要望を appState.shifts に格納
+                if (!window.appState) window.appState = {};
+                window.appState.shifts = {};
+                
                 if (data.success && data.shifts) {
-                    // シフト要望を appState.shifts に格納
-                    if (!window.appState) window.appState = {};
-                    window.appState.shifts = {};
-                    
                     Object.entries(data.shifts).forEach(([dateStr, homes]) => {
                         const [y, m, day] = dateStr.split('-').map(Number);
                         
@@ -388,9 +392,14 @@
                     });
                     
                     console.log('✅ シフトデータを読み込みました:', window.appState.shifts);
+                } else {
+                    console.log('📭 この月のシフトデータはありません');
                 }
             } catch (error) {
                 console.error('❌ シフト要望取得エラー:', error);
+                // エラーでもshiftsを初期化
+                if (!window.appState) window.appState = {};
+                window.appState.shifts = {};
             }
         }
         
@@ -478,7 +487,8 @@
         function updateSummaries() {
             const year = window.appState?.currentYear || new Date().getFullYear();
             const month = window.appState?.currentMonth || (new Date().getMonth() + 1);
-            const daysInMonth = new Date(year, month, 0).getDate();
+            
+            console.log(`📊 ${year}年${month}月の集計を計算中...`);
             
             // シフトコード別の集計
             const shiftCodeCounts = {
@@ -549,6 +559,8 @@
                     </li>`;
             }
             homeSummary.innerHTML = homeHtml;
+            
+            console.log('✅ 集計完了:', { shiftCodeCounts, homeStats });
         }
         
         // ページ読み込み時の認証チェック
