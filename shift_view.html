@@ -288,10 +288,18 @@
         const DAYS_TO_DISPLAY = 30;
         const MIN_STAFF_ROWS = 10;
         
-        // 元のrenderShiftTable関数を上書き
-        const originalRenderShiftTable = window.renderShiftTable;
+        // script.jsのrenderShiftTableを完全に置き換える
+        let isCustomRenderActive = false;
         
-        window.renderShiftTable = async function(staffList, daysCount) {
+        // カスタムレンダリング関数
+        async function customRenderShiftView() {
+            if (isCustomRenderActive) {
+                console.log('⚠️ 既にレンダリング中です');
+                return;
+            }
+            
+            isCustomRenderActive = true;
+            
             try {
                 console.log('📊 シフト表を描画中...');
                 
@@ -299,6 +307,7 @@
                 const token = localStorage.getItem('shift_auth_token');
                 if (!token) {
                     console.error('認証トークンがありません');
+                    isCustomRenderActive = false;
                     return;
                 }
                 
@@ -319,7 +328,7 @@
                     throw new Error(staffData.error || 'データ取得エラー');
                 }
                 
-                // 全スタッフを表示（status=0のフィルタを削除）
+                // 全スタッフを表示
                 const allStaff = staffData.staff || [];
                 console.log(`✅ 全スタッフ: ${allStaff.length}名`);
                 
@@ -338,8 +347,10 @@
             } catch (error) {
                 console.error('❌ シフト表描画エラー:', error);
                 alert('シフト表の表示に失敗しました: ' + error.message);
+            } finally {
+                isCustomRenderActive = false;
             }
-        };
+        }
         
         // シフト要望データを読み込み
         async function loadShiftRequests() {
@@ -589,10 +600,24 @@
                 monthSelect.value = (now.getMonth() + 1).toString();
                 
                 // appStateを初期化
-                if (window.appState) {
-                    window.appState.currentYear = now.getFullYear();
-                    window.appState.currentMonth = now.getMonth() + 1;
-                }
+                if (!window.appState) window.appState = {};
+                window.appState.currentYear = now.getFullYear();
+                window.appState.currentMonth = now.getMonth() + 1;
+                
+                // 年月変更イベントをカスタム関数にバインド
+                yearSelect.addEventListener('change', async () => {
+                    window.appState.currentYear = parseInt(yearSelect.value, 10);
+                    window.appState.currentMonth = parseInt(monthSelect.value, 10);
+                    console.log('📅 年月変更:', window.appState.currentYear, window.appState.currentMonth);
+                    await customRenderShiftView();
+                });
+                
+                monthSelect.addEventListener('change', async () => {
+                    window.appState.currentYear = parseInt(yearSelect.value, 10);
+                    window.appState.currentMonth = parseInt(monthSelect.value, 10);
+                    console.log('📅 年月変更:', window.appState.currentYear, window.appState.currentMonth);
+                    await customRenderShiftView();
+                });
             }
             
             // セル編集を無効化
@@ -603,6 +628,9 @@
                     e.preventDefault();
                 }
             }, true);
+            
+            // 初回レンダリング
+            await customRenderShiftView();
         });
         
         // 戻るボタンの動作を設定
