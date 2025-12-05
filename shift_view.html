@@ -29,7 +29,7 @@
         
         /* シフト表のスクロール対応 */
         .shift-table-container {
-            max-height: calc(20 * 50px + 60px); /* 20人分の高さ + ヘッダー */
+            max-height: calc(10 * 50px + 60px); /* 10人分の高さ + ヘッダー */
             overflow-y: auto;
             overflow-x: auto;
             border: 1px solid #ddd;
@@ -284,9 +284,9 @@
     <script src="script.js"></script>
     
     <script>
-        // シフト表のカスタム描画関数（status=0のみ、20人分固定、10日分表示）
-        const DAYS_TO_DISPLAY = 10;
-        const MIN_STAFF_ROWS = 20;
+        // シフト表のカスタム描画関数（status=0のみ、10人分固定、30日分表示）
+        const DAYS_TO_DISPLAY = 30;
+        const MIN_STAFF_ROWS = 10;
         
         // 元のrenderShiftTable関数を上書き
         const originalRenderShiftTable = window.renderShiftTable;
