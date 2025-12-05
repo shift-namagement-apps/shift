@@ -506,25 +506,25 @@
             // 月間集計を表示
             monthlySummary.innerHTML = `
                 <li class="summary-list-item">
-                    <span class="summary-label">総スタッフ数</span>
-                    <span class="summary-value">${totalStaff}名</span>
+                    <span class="label">総スタッフ数</span>
+                    <span class="value">${totalStaff}名</span>
                 </li>
                 <li class="summary-list-item">
-                    <span class="summary-label">総勤務日数</span>
-                    <span class="summary-value">${totalWorkDays}日</span>
+                    <span class="label">総勤務日数</span>
+                    <span class="value">${totalWorkDays}日</span>
                 </li>
                 <li class="summary-list-item">
-                    <span class="summary-label">平均勤務日数</span>
-                    <span class="summary-value">${totalStaff > 0 ? (totalWorkDays / totalStaff).toFixed(1) : 0}日</span>
+                    <span class="label">平均勤務日数</span>
+                    <span class="value">${totalStaff > 0 ? (totalWorkDays / totalStaff).toFixed(1) : 0}日</span>
                 </li>
             `;
             
             // ホーム別集計を表示
             homeSummary.innerHTML = Object.entries(homeStats)
                 .map(([home, count]) => `
-                    <li class="summary-list-item">
-                        <span class="summary-label">${home}ホーム</span>
-                        <span class="summary-value">${count}日</span>
+                    <li class="summary-list-item home-summary-${home.toLowerCase()}">
+                        <span class="label">${home}ホーム</span>
+                        <span class="value">${count}日</span>
                     </li>
                 `).join('');
         }
