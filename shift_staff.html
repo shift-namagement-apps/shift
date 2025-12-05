@@ -933,7 +933,33 @@
                     throw new Error(data.error || 'データ取得失敗');
                 }
                 
-                // 自分のシフトのみをフィルタリング（status=1 承認済み）
+                // スタッフ情報を取得して従業員のみフィルタリング
+                const staffResponse = await fetch(`${API_BASE_URL}/api/staff`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (!staffResponse.ok) {
+                    throw new Error('スタッフ情報の取得に失敗しました');
+                }
+                
+                const staffData = await staffResponse.json();
+                if (!staffData.success) {
+                    throw new Error(staffData.error || 'スタッフデータ取得エラー');
+                }
+                
+                // role='staff'（従業員）のユーザーIDを抽出
+                const staffUserIds = new Set(
+                    staffData.staff
+                        .filter(s => s.role === 'staff')
+                        .map(s => s.id)
+                );
+                
+                console.log(`👥 従業員: ${staffUserIds.size}名`);
+                
+                // 自分のシフトのみをフィルタリング（status=1 承認済み、かつ従業員のみ）
                 const myShifts = {};
                 
                 Object.entries(data.shifts || {}).forEach(([date, dateData]) => {
@@ -941,7 +967,9 @@
                         Object.entries(homeData).forEach(([shiftCode, users]) => {
                             // usersは配列
                             const myShift = users.find(u => 
-                                u.user_id === currentUser.id && u.status === 1
+                                u.user_id === currentUser.id && 
+                                u.status === 1 &&
+                                staffUserIds.has(u.user_id)
                             );
                             
                             if (myShift) {
@@ -953,7 +981,7 @@
                     });
                 });
                 
-                console.log('✅ 自分の承認済みシフト:', myShifts);
+                console.log('✅ 自分の承認済みシフト（従業員のみ）:', myShifts);
                 
                 // カレンダーを描画
                 renderCalendar(myShifts);
