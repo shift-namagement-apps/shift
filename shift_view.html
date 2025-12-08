@@ -515,22 +515,30 @@
             // ホーム別集計
             const homeStats = { A: 0, B: 0, C: 0, D: 0, E: 0 };
             
+            // window.appState.shifts の構造: { user_id: { day: { code, home } } }
             if (window.appState?.shifts) {
-                Object.values(window.appState.shifts).forEach(staffShifts => {
+                console.log('🔍 集計対象データ:', window.appState.shifts);
+                
+                // 各ユーザーのシフトを集計
+                Object.entries(window.appState.shifts).forEach(([userId, staffShifts]) => {
                     Object.entries(staffShifts).forEach(([day, shift]) => {
                         // シフトコード別カウント
                         if (shift.code && shiftCodeCounts[shift.code] !== undefined) {
                             shiftCodeCounts[shift.code]++;
+                            console.log(`📊 ${userId} - ${day}日: ${shift.code}`);
                         }
                         
                         // ホーム別カウント（公休系以外）
                         if (shift.home && !['N', 'L', 'SP'].includes(shift.code)) {
                             if (homeStats[shift.home] !== undefined) {
                                 homeStats[shift.home]++;
+                                console.log(`🏠 ${userId} - ${day}日: ${shift.home}ホーム`);
                             }
                         }
                     });
                 });
+            } else {
+                console.warn('⚠️ window.appState.shifts が未定義です');
             }
             
             // 月間集計を表示（シフトコード別）
