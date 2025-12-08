@@ -359,8 +359,10 @@ function displayBikouTemplates(templates) {
     // 備考テンプレートを表示
     templates.forEach((template, index) => {
         const row = document.createElement('tr');
+        // 備考番号を表示（bikou1 → 備考1）
+        const bikouNumber = template.id.replace('bikou', '備考');
         row.innerHTML = `
-            <th title="${template.text}">${truncateText(template.text, 15)}</th>
+            <th>${bikouNumber}</th>
             <td class="td">
                 <input class="bikou-edit" type="button" value="編集" data-id="${template.id}" data-text="${template.text}">
                 <input class="bikou-delete" type="button" value="削除" data-id="${template.id}" data-text="${template.text}">
