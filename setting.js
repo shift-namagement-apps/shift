@@ -360,28 +360,14 @@ function displayBikouTemplates(templates) {
     templates.forEach((template, index) => {
         const row = document.createElement('tr');
         row.innerHTML = `
-            <th>
-                <textarea class="bikou-text-input" data-id="${template.id}" style="width: 100%; min-width: 200px; height: 60px; padding: 8px; font-size: 16px; background-color: #757575; color: white; border: 1px solid #666; border-radius: 4px; resize: vertical;">${template.text}</textarea>
-            </th>
+            <th title="${template.text}">${truncateText(template.text, 15)}</th>
             <td class="td">
-                <input class="bikou-update" type="button" value="編集" data-id="${template.id}">
-                <input class="bikou-delete" type="button" value="削除" data-id="${template.id}">
+                <input class="bikou-edit" type="button" value="編集" data-id="${template.id}" data-text="${template.text}">
+                <input class="bikou-delete" type="button" value="削除" data-id="${template.id}" data-text="${template.text}">
             </td>
         `;
         bikouTable.appendChild(row);
     });
-    
-    // 新規追加用の行を追加
-    const newRow = document.createElement('tr');
-    newRow.innerHTML = `
-        <th>
-            <textarea id="new-bikou-input" placeholder="新しい備考テンプレートを入力..." style="width: 100%; min-width: 200px; height: 60px; padding: 8px; font-size: 16px; border: 1px solid #666; border-radius: 4px; resize: vertical;"></textarea>
-        </th>
-        <td class="td">
-            <input id="add-new-bikou-btn" type="button" value="追加">
-        </td>
-    `;
-    bikouTable.appendChild(newRow);
     
     // ボタンにイベントリスナーを追加
     attachBikouButtonListeners();
@@ -391,20 +377,25 @@ function displayBikouTemplates(templates) {
  * 備考テンプレートのボタンにイベントリスナーを設定
  */
 function attachBikouButtonListeners() {
-    // 編集ボタン（更新）
-    document.querySelectorAll('.bikou-update').forEach(btn => {
+    // 編集ボタン
+    document.querySelectorAll('.bikou-edit').forEach(btn => {
         btn.addEventListener('click', async (e) => {
             e.preventDefault();
             const templateId = e.target.dataset.id;
-            const textarea = e.target.closest('tr').querySelector('.bikou-text-input');
-            const newText = textarea.value.trim();
+            const currentText = e.target.dataset.text;
             
-            if (!newText) {
+            const newText = prompt('備考テンプレートの内容を編集してください', currentText);
+            
+            if (newText === null) {
+                return; // キャンセル
+            }
+            
+            if (!newText.trim()) {
                 alert('備考テンプレートの内容を入力してください');
                 return;
             }
             
-            await updateBikouTemplate(templateId, newText);
+            await updateBikouTemplate(templateId, newText.trim());
         });
     });
     
@@ -413,43 +404,13 @@ function attachBikouButtonListeners() {
         btn.addEventListener('click', async (e) => {
             e.preventDefault();
             const templateId = e.target.dataset.id;
-            const textarea = e.target.closest('tr').querySelector('.bikou-text-input');
-            const templateText = textarea.value;
+            const templateText = e.target.dataset.text;
             
             if (confirm(`備考テンプレート「${templateText}」を削除しますか？\nこの操作は取り消せません。`)) {
                 await deleteBikouTemplate(templateId);
             }
         });
     });
-    
-    // 新規追加ボタン
-    const addBtn = document.getElementById('add-new-bikou-btn');
-    if (addBtn) {
-        addBtn.addEventListener('click', async (e) => {
-            e.preventDefault();
-            const textarea = document.getElementById('new-bikou-input');
-            const templateText = textarea.value.trim();
-            
-            if (!templateText) {
-                alert('備考テンプレートの内容を入力してください');
-                return;
-            }
-            
-            await addBikouTemplate(templateText);
-            textarea.value = ''; // 入力をクリア
-        });
-    }
-    
-    // 入力フィールドのEnterキー対応（Shift+Enterで改行）
-    const newBikouInput = document.getElementById('new-bikou-input');
-    if (newBikouInput) {
-        newBikouInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                document.getElementById('add-new-bikou-btn').click();
-            }
-        });
-    }
 }
 
 /**
@@ -462,6 +423,15 @@ function setupEventListeners() {
         homeAddBtn.addEventListener('click', async (e) => {
             e.preventDefault();
             await showAddHomeDialog();
+        });
+    }
+    
+    // 備考テンプレート追加ボタン
+    const bikouAddBtn = document.querySelector('.bikou-tuika');
+    if (bikouAddBtn) {
+        bikouAddBtn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            await showAddBikouTemplateDialog();
         });
     }
 }
