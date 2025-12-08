@@ -1,8 +1,9 @@
 // シフト表アプリケーション - image.png 再現度向上版
 
+const now = new Date();
 const appState = {
-    currentYear: 2025,
-    currentMonth: 10,
+    currentYear: now.getFullYear(),
+    currentMonth: now.getMonth() + 1,
     selectedHome: 'A', // 画像に合わせて 'A' をデフォルトに
     shifts: {},
     shiftRequests: [],
@@ -759,6 +760,8 @@ async function renderShiftRequests() {
  */
 function renderSummaries(daysCount) { // daysCount は 10
     
+    console.log(`📊 ${appState.currentYear}年${appState.currentMonth}月の集計を計算中...`);
+    
     // 1. 月間集計 (右パネル) - appState.shiftsから動的に計算
     const shiftCodeCounts = {
         'A': 0,  // 日勤
@@ -771,14 +774,18 @@ function renderSummaries(daysCount) { // daysCount は 10
     };
     
     // 全スタッフの全シフトをカウント
-    appState.staff.forEach(staff => {
-        const staffShifts = appState.shifts[staff.id] || {};
-        Object.values(staffShifts).forEach(shift => {
-            if (shift.code && shift.code !== 'NONE' && shiftCodeCounts[shift.code] !== undefined) {
-                shiftCodeCounts[shift.code]++;
-            }
+    if (appState.staff && appState.staff.length > 0) {
+        appState.staff.forEach(staff => {
+            const staffShifts = appState.shifts[staff.id] || {};
+            Object.values(staffShifts).forEach(shift => {
+                if (shift.code && shift.code !== 'NONE' && shiftCodeCounts[shift.code] !== undefined) {
+                    shiftCodeCounts[shift.code]++;
+                }
+            });
         });
-    });
+    } else {
+        console.log('⚠️ スタッフデータがありません、集計は0で表示します');
+    }
     
     let monthlyHtml = '';
     const shiftCodeLabels = {
@@ -805,14 +812,16 @@ function renderSummaries(daysCount) { // daysCount は 10
     const homeCounts = { A: 0, B: 0, C: 0, D: 0, E: 0 };
     
     // 全スタッフの全シフトをカウント（公休系以外）
-    appState.staff.forEach(staff => {
-        const staffShifts = appState.shifts[staff.id] || {};
-        Object.values(staffShifts).forEach(shift => {
-            if (shift.home && shift.code !== 'NONE' && !['N', 'L', 'SP'].includes(shift.code)) {
-                homeCounts[shift.home] = (homeCounts[shift.home] || 0) + 1;
-            }
+    if (appState.staff && appState.staff.length > 0) {
+        appState.staff.forEach(staff => {
+            const staffShifts = appState.shifts[staff.id] || {};
+            Object.values(staffShifts).forEach(shift => {
+                if (shift.home && shift.code !== 'NONE' && !['N', 'L', 'SP'].includes(shift.code)) {
+                    homeCounts[shift.home] = (homeCounts[shift.home] || 0) + 1;
+                }
+            });
         });
-    });
+    }
     
     let homeHtml = '';
     const homeLabels = { A: 'Aホーム', B: 'Bホーム', C: 'Cホーム', D: 'Dホーム', E: 'Eホーム' };
