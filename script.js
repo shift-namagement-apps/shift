@@ -759,17 +759,44 @@ async function renderShiftRequests() {
  */
 function renderSummaries(daysCount) { // daysCount は 10
     
-    // 1. 月間集計 (右パネル) - 固定データ
-    const monthlySummaryData = {
-        '日勤 (A)': 199, '夜勤 (B)': 231, '遅番 (C)': 248, '早朝 (EL)': 236,
-        '有休 (L)': 225, '公休 (N)': 210, '特休 (SP)': 0
+    // 1. 月間集計 (右パネル) - appState.shiftsから動的に計算
+    const shiftCodeCounts = {
+        'A': 0,  // 日勤
+        'B': 0,  // 夜勤
+        'C': 0,  // 遅番
+        'EL': 0, // 早朝
+        'N': 0,  // 公休
+        'L': 0,  // 有休
+        'SP': 0  // 特休
     };
+    
+    // 全スタッフの全シフトをカウント
+    appState.staff.forEach(staff => {
+        const staffShifts = appState.shifts[staff.id] || {};
+        Object.values(staffShifts).forEach(shift => {
+            if (shift.code && shift.code !== 'NONE' && shiftCodeCounts[shift.code] !== undefined) {
+                shiftCodeCounts[shift.code]++;
+            }
+        });
+    });
+    
     let monthlyHtml = '';
-    for (const [label, value] of Object.entries(monthlySummaryData)) {
+    const shiftCodeLabels = {
+        'A': '日勤 (A)',
+        'B': '夜勤 (B)',
+        'C': '遅番 (C)',
+        'EL': '早朝 (EL)',
+        'L': '有休 (L)',
+        'N': '公休 (N)',
+        'SP': '特休 (SP)'
+    };
+    
+    for (const [code, label] of Object.entries(shiftCodeLabels)) {
+        const count = shiftCodeCounts[code] || 0;
         monthlyHtml += `
             <li class="summary-list-item">
                 <span class="label">${label}</span>
-                <span class="value">${value}</span>
+                <span class="value">${count}</span>
             </li>`;
     }
     dom.monthlySummary.innerHTML = monthlyHtml;
@@ -777,11 +804,11 @@ function renderSummaries(daysCount) { // daysCount は 10
     // 2. ホーム別月間合計 (右パネル) - 動的計算
     const homeCounts = { A: 0, B: 0, C: 0, D: 0, E: 0 };
     
-    // 全スタッフの全シフトをカウント
+    // 全スタッフの全シフトをカウント（公休系以外）
     appState.staff.forEach(staff => {
         const staffShifts = appState.shifts[staff.id] || {};
         Object.values(staffShifts).forEach(shift => {
-            if (shift.home && shift.code !== 'NONE') {
+            if (shift.home && shift.code !== 'NONE' && !['N', 'L', 'SP'].includes(shift.code)) {
                 homeCounts[shift.home] = (homeCounts[shift.home] || 0) + 1;
             }
         });
