@@ -574,6 +574,25 @@
             console.log('✅ 集計完了:', { shiftCodeCounts, homeStats });
         }
         
+        // イベントリスナーのクリーンアップ関数
+        let yearChangeHandler = null;
+        let monthChangeHandler = null;
+        
+        // ページアンロード時のクリーンアップ
+        window.addEventListener('beforeunload', () => {
+            const yearSelect = document.getElementById('year-select');
+            const monthSelect = document.getElementById('month-select');
+            
+            if (yearSelect && yearChangeHandler) {
+                yearSelect.removeEventListener('change', yearChangeHandler);
+            }
+            if (monthSelect && monthChangeHandler) {
+                monthSelect.removeEventListener('change', monthChangeHandler);
+            }
+            
+            console.log('🧹 イベントリスナーをクリーンアップしました');
+        });
+        
         // ページ読み込み時の認証チェック
         document.addEventListener('DOMContentLoaded', async () => {
             // 認証チェック
@@ -604,20 +623,26 @@
                 window.appState.currentYear = now.getFullYear();
                 window.appState.currentMonth = now.getMonth() + 1;
                 
-                // 年月変更イベントをカスタム関数にバインド
-                yearSelect.addEventListener('change', async () => {
+                // 年月変更イベントハンドラーを定義
+                yearChangeHandler = async () => {
                     window.appState.currentYear = parseInt(yearSelect.value, 10);
                     window.appState.currentMonth = parseInt(monthSelect.value, 10);
-                    console.log('📅 年月変更:', window.appState.currentYear, window.appState.currentMonth);
+                    console.log('📅 年変更:', window.appState.currentYear, window.appState.currentMonth);
                     await customRenderShiftView();
-                });
+                };
                 
-                monthSelect.addEventListener('change', async () => {
+                monthChangeHandler = async () => {
                     window.appState.currentYear = parseInt(yearSelect.value, 10);
                     window.appState.currentMonth = parseInt(monthSelect.value, 10);
-                    console.log('📅 年月変更:', window.appState.currentYear, window.appState.currentMonth);
+                    console.log('📅 月変更:', window.appState.currentYear, window.appState.currentMonth);
                     await customRenderShiftView();
-                });
+                };
+                
+                // イベントリスナーを登録
+                yearSelect.addEventListener('change', yearChangeHandler);
+                monthSelect.addEventListener('change', monthChangeHandler);
+                
+                console.log('✅ shift_view.html: 独自イベントリスナー登録完了');
             }
             
             // セル編集を無効化
