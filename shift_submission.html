@@ -644,17 +644,6 @@
                 return;
             }
 
-            // ホームが指定されていないシフトをチェック
-            const invalidShifts = Object.entries(appState.myShifts).filter(([day, shift]) => {
-                return shift.code !== 'NONE' && !shift.home;
-            });
-
-            if (invalidShifts.length > 0) {
-                const days = invalidShifts.map(([day]) => day).join(', ');
-                alert(`以下の日付でホームが指定されていません: ${days}日\n\nホームを指定してください。`);
-                return;
-            }
-
             if (confirm(`${appState.currentYear}年${appState.currentMonth}月のシフト希望を提出しますか？\n入力済み: ${shiftCount}日分`)) {
                 try {
                     const token = localStorage.getItem('shift_auth_token');
