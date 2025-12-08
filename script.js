@@ -539,6 +539,17 @@ function setupEventListeners() {
     
     if (dom.homeSelect) dom.homeSelect.addEventListener('change', handleHomeFilterChange);
 
+    // ホーム別日次集計のホーム選択
+    const dailySummaryHomeSelect = document.getElementById('daily-summary-home-select');
+    if (dailySummaryHomeSelect) {
+        dailySummaryHomeSelect.addEventListener('change', () => {
+            const year = appState.currentYear;
+            const month = appState.currentMonth;
+            const daysToRender = new Date(year, month, 0).getDate();
+            renderDailySummary(daysToRender);
+        });
+    }
+
     // シフト表のセルクリック(イベント委任)
     if (dom.shiftTableBody) dom.shiftTableBody.addEventListener('click', handleCellClick);
     
@@ -778,7 +789,7 @@ async function renderShiftRequests() {
  * 右パネルと下部の集計を描画
  * (注: 画像の値の固定表示で再現)
  */
-function renderSummaries(daysCount) { // daysCount は 10
+function renderSummaries(daysCount) {
     
     console.log(`📊 ${appState.currentYear}年${appState.currentMonth}月の集計を計算中...`);
     
@@ -855,44 +866,84 @@ function renderSummaries(daysCount) { // daysCount は 10
     }
     dom.homeSummary.innerHTML = homeHtml;
 
-    // 3. ホーム別日次集計 (下部) - 固定データ
-    // 画像の10日分データ
-    const dailySummaryData = {
-        'Aホーム': [
-            { C: 1, EL: 1, N: 2, L: 4 }, // 1日
-            { A: 2, B: 1, C: 2, L: 4 }, // 2日 (画像準拠)
-            { A: 1, B: 2, C: 2, N: 2, L: 2 }, // 3日 (画像準拠)
-            { A: 1, C: 2, N: 1 }, // 4日
-            { A: 2, B: 2, C: 1, EL: 2, L: 1 }, // 5日 (画像準拠)
-            { B: 2, C: 4, EL: 1, N: 1 }, // 6日
-            { A: 4, B: 2, C: 2, L: 1 }, // 7日 (画像準拠)
-            { B: 1, C: 2, EL: 2, L: 3 }, // 8日 (画像準拠)
-            { C: 2, EL: 1, N: 2, L: 3 }, // 9日
-            { A: 2, C: 1, EL: 2, N: 1, L: 2 }  // 10日
-        ]
-    };
+    console.log('✅ 集計完了:', { shiftCodeCounts, homeCounts });
+    
+    // 3. ホーム別日次集計 (下部) - 動的計算
+    renderDailySummary(daysCount);
+}
 
-    let dailyHtml = '';
-    // Aホームまたは全体表示の時のみ描画 (画像準拠)
-    if (appState.selectedHome === 'A' || appState.selectedHome === 'all') {
-        const homeData = dailySummaryData['Aホーム'];
-        dailyHtml += '<tr><th>Aホーム</th>';
+/**
+ * ホーム別日次集計を描画（動的計算版）
+ */
+function renderDailySummary(daysCount) {
+    const summarySelect = document.getElementById('daily-summary-home-select');
+    const selectedHome = summarySelect ? summarySelect.value : 'A';
+    
+    console.log(`📊 ${selectedHome}ホームの日次集計を計算中...`);
+    
+    // 各日のシフトコード別カウントを計算
+    const dailyData = [];
+    let monthTotal = 0;
+    
+    for (let day = 1; day <= daysCount; day++) {
+        const dayCounts = {
+            'A': 0,
+            'B': 0,
+            'C': 0,
+            'EL': 0,
+            'N': 0,
+            'L': 0,
+            'SP': 0
+        };
         
-        // 10日分だけ描画 (daysCount = 10)
-        for (let i = 0; i < daysCount; i++) {
-            const dayData = homeData[i] || {};
-            dailyHtml += '<td><ul class="summary-list">';
-            for (const [code, count] of Object.entries(dayData)) {
-                dailyHtml += `<li>${code}:${count}</li>`;
-            }
-            dailyHtml += '</ul></td>';
+        // 全スタッフのこの日のシフトをカウント
+        if (appState.staff && appState.staff.length > 0) {
+            appState.staff.forEach(staff => {
+                const staffShifts = appState.shifts[staff.id] || {};
+                const shift = staffShifts[day.toString()];
+                
+                // 選択されたホームのシフトのみカウント
+                if (shift && shift.home === selectedHome && shift.code !== 'NONE') {
+                    if (dayCounts[shift.code] !== undefined) {
+                        dayCounts[shift.code]++;
+                        
+                        // 公休系以外を月合計に加算
+                        if (!['N', 'L', 'SP'].includes(shift.code)) {
+                            monthTotal++;
+                        }
+                    }
+                }
+            });
         }
         
-        dailyHtml += '<td>341</td>'; // 合計 (固定)
-        dailyHtml += '</tr>';
+        dailyData.push(dayCounts);
     }
     
+    // HTML生成
+    let dailyHtml = `<tr><th>${selectedHome}ホーム</th>`;
+    
+    // 各日のデータを表示
+    for (let i = 0; i < daysCount; i++) {
+        const dayData = dailyData[i];
+        dailyHtml += '<td><ul class="summary-list">';
+        
+        // カウントが0より大きいシフトコードのみ表示
+        for (const [code, count] of Object.entries(dayData)) {
+            if (count > 0) {
+                dailyHtml += `<li>${code}:${count}</li>`;
+            }
+        }
+        
+        dailyHtml += '</ul></td>';
+    }
+    
+    // 月合計を表示
+    dailyHtml += `<td><strong>${monthTotal}</strong></td>`;
+    dailyHtml += '</tr>';
+    
     dom.dailySummaryBody.innerHTML = dailyHtml;
+    
+    console.log(`✅ ${selectedHome}ホームの日次集計完了 (月合計: ${monthTotal})`);
 }
 
 
