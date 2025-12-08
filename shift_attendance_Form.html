@@ -283,8 +283,8 @@
                     
                     data.templates.forEach(template => {
                         const option = document.createElement('option');
-                        option.value = template.text;
-                        option.textContent = template.text;
+                        option.value = JSON.stringify({ id: template.id, text: template.text });
+                        option.textContent = template.id; // 備考1, 備考2...を表示
                         select.appendChild(option);
                     });
                 }
@@ -338,12 +338,16 @@
         document.getElementById('add').addEventListener('change', function() {
             const textarea = document.getElementById('textarea');
             if (this.value) {
-                // 既存の内容がある場合は改行して追加
-                if (textarea.value) {
-                    textarea.value += '\\n' + this.value;
-                } else {
-                    textarea.value = this.value;
+                try {
+                    const selected = JSON.parse(this.value);
+                    // 選択した備考の文章内容だけを表示（追加ではなく置き換え）
+                    textarea.value = selected.text;
+                } catch (error) {
+                    console.error('備考テンプレート解析エラー:', error);
                 }
+            } else {
+                // 選択が解除された場合はクリア
+                textarea.value = '';
             }
         });
         
