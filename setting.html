@@ -307,7 +307,7 @@ input[type="reset"] {
 </head>
 <body>
  <header>
-    <a href="#" class="back" onclick="goBack(); return false;">←戻る</a>
+    <a href="#" class="back" id="back-btn">←戻る</a>
     <div class="title">設定画面</div>
  </header>
     <form action="" class="option">
@@ -315,87 +315,26 @@ input[type="reset"] {
             <div class="home-div">
             <h2 class="home">ホーム管理</h2>
             <table class="home-table">
-                <th class="th1">ホームの追加</th>
-                <td class="td">
-                    <input class="tuika" type="submit" value="追加">
-                </td>
-            </tr>
-            <tr>
-                <th>Aホーム</th>
-                <td class="td">
-                    <input class="A-eturan" type="submit" value="閲覧">
-                    <input class="A-syoukyo" type="submit" value="消去">
-                </td>
-            </tr>
-            <tr>
-                <th>Bホーム</th>
-                <td class="td">
-                    <input class="B-eturan" type="submit" value="閲覧">
-                    <input class="B-syoukyo" type="submit" value="消去">
-                </td>
-            </tr>
-            <tr>
-                <th>Cホーム</th>
-                <td class="td">
-                    <input class="C-eturan" type="submit" value="閲覧">
-                    <input class="C-syoukyo" type="submit" value="消去">
-                </td>
-            </tr>
-            <tr>
-                <th>Dホーム</th>
-                <td class="td">
-                    <input class="D-eturan" type="submit" value="閲覧">
-                    <input class="D-syoukyo" type="submit" value="消去">
-                </td>
-            </tr>
-            <tr>
-                <th>Eホーム</th>
-                <td class="td">
-                    <input class="E-eturan" type="submit" value="閲覧">
-                    <input class="E-syoukyo" type="submit" value="消去">
-                </td>
-            </tr>
+                <tr>
+                    <th class="th1">ホームの追加</th>
+                    <td class="td">
+                        <input class="tuika" type="button" value="追加">
+                    </td>
+                </tr>
+                <!-- 以下のホームはJavaScriptで動的に追加されます -->
             </table>
         </div>
             <div class="bikou-div">
                     <h2 class="bikou">備考欄テンプレート管理</h2> 
             <table class="bikou-table">
-                <th>備考欄に文章を追加</th>
-                <td class="td">
-                    <input class="bikou-tuika" type="submit" value="文章を追加">
-                </td>
-            </tr>
-            <tr>
-                <th>備考1</th>
-                <td class="td">
-                    <input class="bikou1-syoukyo" type="submit" value="消去">
-                </td>
-            </tr>
-            <tr>
-                <th>備考2</th>
-                <td class="td">
-                    <input class="bikou2-syoukyo" type="submit" value="消去">
-                </td>
-            </tr>
-            <tr>
-                <th>備考3</th>
-                <td class="td">
-                    <input class="bikou3-syoukyo" type="submit" value="消去">
-                </td>
-            </tr>
-            <tr>
-                <th>備考4</th>
-                <td class="td">
-                    <input class="bikou4-syoukyo" type="submit" value="消去">
-                </td>
-            </tr>
-            <tr>
-                <th>備考5</th>
-                <td class="td">
-                    <input class="bikou5-syoukyo" type="submit" value="消去">
-                </td>
-            </tr>
-        </table>
+                <tr>
+                    <th>備考欄に文章を追加</th>
+                    <td class="td">
+                        <input class="bikou-tuika" type="button" value="文章を追加">
+                    </td>
+                </tr>
+                <!-- 以下のテンプレートはJavaScriptで動的に追加されます -->
+            </table>
         </div>
         </div>
     </form>
@@ -422,6 +361,15 @@ input[type="reset"] {
             const user = AUTH ? AUTH.getUser() : null;
             if (user) {
                 console.log('👤 ログインユーザー:', user.name, `(${user.role})`);
+            }
+            
+            // 戻るボタンのイベントリスナーを追加
+            const backBtn = document.getElementById('back-btn');
+            if (backBtn) {
+                backBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    goBack();
+                });
             }
         });
     </script>
