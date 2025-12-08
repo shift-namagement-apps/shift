@@ -709,6 +709,29 @@
             if (user) {
                 console.log('👤 ログインユーザー:', user.name, `(${user.role})`);
             }
+            
+            // 戻るボタンの実装
+            const backLink = document.querySelector('.back-link');
+            if (backLink) {
+                backLink.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    if (typeof PageRouter !== 'undefined') {
+                        // PageRouterを使用してホーム画面に戻る
+                        const user = AUTH ? AUTH.getUser() : null;
+                        if (user) {
+                            if (user.role === 'admin') {
+                                PageRouter.navigateTo('shift_home_admin.html');
+                            } else {
+                                PageRouter.navigateTo('shift_home_staff.html');
+                            }
+                        } else {
+                            window.history.back();
+                        }
+                    } else {
+                        window.history.back();
+                    }
+                });
+            }
         });
     </script>
 </body>
