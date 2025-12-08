@@ -4,7 +4,7 @@ const now = new Date();
 const appState = {
     currentYear: now.getFullYear(),
     currentMonth: now.getMonth() + 1,
-    selectedHome: 'A', // 画像に合わせて 'A' をデフォルトに
+    selectedHome: 'all', // 初期表示は全体表示
     shifts: {},
     shiftRequests: [],
     staff: [],
@@ -975,7 +975,7 @@ async function handleModalSave() {
 function handleHomeFilterChange() {
     appState.selectedHome = dom.homeSelect.value;
     console.log('表示ホーム変更:', appState.selectedHome);
-    // ホームを切り替えても、10日分の固定データで再描画される
+    // ホームを切り替えても、テーブルと集計を再描画
     render();
 }
 
