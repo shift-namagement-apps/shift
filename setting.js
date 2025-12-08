@@ -17,11 +17,11 @@ const CACHE_KEYS = {
 // 初期データ
 const INITIAL_HOMES = ['A', 'B', 'C', 'D', 'E'];
 const INITIAL_BIKOU_TEMPLATES = [
-    '備考1',
-    '備考2',
-    '備考3',
-    '備考4',
-    '備考5'
+    { id: '備考1', text: '備考テンプレート1' },
+    { id: '備考2', text: '備考テンプレート2' },
+    { id: '備考3', text: '備考テンプレート3' },
+    { id: '備考4', text: '備考テンプレート4' },
+    { id: '備考5', text: '備考テンプレート5' }
 ];
 
 /**
@@ -80,19 +80,19 @@ async function ensureInitialData() {
         if (bikouResponse.ok) {
             const bikouData = await bikouResponse.json();
             if (bikouData.success) {
-                const existingTemplateTexts = bikouData.templates.map(t => t.text);
+                const existingTemplateIds = bikouData.templates.map(t => t.id);
                 
                 // 不足している備考テンプレートを追加
-                for (const templateText of INITIAL_BIKOU_TEMPLATES) {
-                    if (!existingTemplateTexts.includes(templateText)) {
-                        console.log(`➕ 備考テンプレート「${templateText}」を作成中...`);
+                for (const template of INITIAL_BIKOU_TEMPLATES) {
+                    if (!existingTemplateIds.includes(template.id)) {
+                        console.log(`➕ 備考テンプレート「${template.id}」を作成中...`);
                         await fetch(`${API_BASE_URL}/api/bikou-templates`, {
                             method: 'POST',
                             headers: {
                                 'Authorization': `Bearer ${token}`,
                                 'Content-Type': 'application/json'
                             },
-                            body: JSON.stringify({ text: templateText })
+                            body: JSON.stringify({ text: template.text, id: template.id })
                         });
                     }
                 }
@@ -359,10 +359,9 @@ function displayBikouTemplates(templates) {
     // 備考テンプレートを表示
     templates.forEach((template, index) => {
         const row = document.createElement('tr');
-        // 備考番号を表示（bikou1 → 備考1）
-        const bikouNumber = template.id.replace('bikou', '備考');
+        // 備考IDをそのまま表示（備考1, 備考2...）
         row.innerHTML = `
-            <th>${bikouNumber}</th>
+            <th>${template.id}</th>
             <td class="td">
                 <input class="bikou-edit" type="button" value="編集" data-id="${template.id}" data-text="${template.text}">
                 <input class="bikou-delete" type="button" value="削除" data-id="${template.id}" data-text="${template.text}">
