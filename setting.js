@@ -206,7 +206,7 @@ function displayHomes(homes) {
     homes.forEach(home => {
         const row = document.createElement('tr');
         row.innerHTML = `
-            <th>${home.name}ホーム</th>
+            <th>ホーム${home.name}</th>
             <td class="td">
                 <input class="home-view" type="button" value="閲覧" data-id="${home.id}" data-name="${home.name}">
                 <input class="home-delete" type="button" value="消去" data-id="${home.id}" data-name="${home.name}">
@@ -323,6 +323,7 @@ function displayBikouTemplates(templates) {
         row.innerHTML = `
             <th title="${template.text}">${truncateText(template.text, 15)}</th>
             <td class="td">
+                <input class="bikou-add" type="button" value="追加" data-id="${template.id}" data-text="${template.text}">
                 <input class="bikou-delete" type="button" value="消去" data-id="${template.id}" data-text="${template.text}">
             </td>
         `;
@@ -337,7 +338,23 @@ function displayBikouTemplates(templates) {
  * 備考テンプレートのボタンにイベントリスナーを設定
  */
 function attachBikouButtonListeners() {
-    // 削除ボタン
+    // 追加ボタン
+    document.querySelectorAll('.bikou-add').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            const templateText = e.target.dataset.text;
+            
+            // クリップボードにコピー
+            try {
+                await navigator.clipboard.writeText(templateText);
+                alert(`「${templateText}」をクリップボードにコピーしました`);
+            } catch (err) {
+                alert(`テンプレート: ${templateText}`);
+            }
+        });
+    });
+    
+    // 消去ボタン
     document.querySelectorAll('.bikou-delete').forEach(btn => {
         btn.addEventListener('click', async (e) => {
             e.preventDefault();
