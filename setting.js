@@ -203,7 +203,7 @@ function displayHomes(homes) {
         const row = document.createElement('tr');
         row.innerHTML = `
             <th>
-                <input type="text" class="home-name-input" value="${home.name}" data-id="${home.id}" maxlength="1" style="width: 50px; text-align: center; font-size: 20px; padding: 5px;">
+                <input type="text" class="home-name-input" value="${home.name}" data-id="${home.id}" maxlength="1" style="width: 50px; text-align: center; font-size: 20px; padding: 5px; background-color: #757575; color: white; border: none; border-radius: 4px;" readonly>
             </th>
             <td class="td">
                 <input class="home-delete" type="button" value="削除" data-id="${home.id}" data-name="${home.name}">
@@ -360,14 +360,28 @@ function displayBikouTemplates(templates) {
     templates.forEach((template, index) => {
         const row = document.createElement('tr');
         row.innerHTML = `
-            <th title="${template.text}">${truncateText(template.text, 15)}</th>
+            <th>
+                <textarea class="bikou-text-input" data-id="${template.id}" style="width: 100%; min-width: 200px; height: 60px; padding: 8px; font-size: 16px; background-color: #757575; color: white; border: 1px solid #666; border-radius: 4px; resize: vertical;">${template.text}</textarea>
+            </th>
             <td class="td">
-                <input class="bikou-add" type="button" value="追加" data-id="${template.id}" data-text="${template.text}">
-                <input class="bikou-delete" type="button" value="消去" data-id="${template.id}" data-text="${template.text}">
+                <input class="bikou-update" type="button" value="編集" data-id="${template.id}">
+                <input class="bikou-delete" type="button" value="削除" data-id="${template.id}">
             </td>
         `;
         bikouTable.appendChild(row);
     });
+    
+    // 新規追加用の行を追加
+    const newRow = document.createElement('tr');
+    newRow.innerHTML = `
+        <th>
+            <textarea id="new-bikou-input" placeholder="新しい備考テンプレートを入力..." style="width: 100%; min-width: 200px; height: 60px; padding: 8px; font-size: 16px; border: 1px solid #666; border-radius: 4px; resize: vertical;"></textarea>
+        </th>
+        <td class="td">
+            <input id="add-new-bikou-btn" type="button" value="追加">
+        </td>
+    `;
+    bikouTable.appendChild(newRow);
     
     // ボタンにイベントリスナーを追加
     attachBikouButtonListeners();
@@ -377,55 +391,77 @@ function displayBikouTemplates(templates) {
  * 備考テンプレートのボタンにイベントリスナーを設定
  */
 function attachBikouButtonListeners() {
-    // 追加ボタン
-    document.querySelectorAll('.bikou-add').forEach(btn => {
+    // 編集ボタン（更新）
+    document.querySelectorAll('.bikou-update').forEach(btn => {
         btn.addEventListener('click', async (e) => {
             e.preventDefault();
-            const templateText = e.target.dataset.text;
+            const templateId = e.target.dataset.id;
+            const textarea = e.target.closest('tr').querySelector('.bikou-text-input');
+            const newText = textarea.value.trim();
             
-            // クリップボードにコピー
-            try {
-                await navigator.clipboard.writeText(templateText);
-                alert(`「${templateText}」をクリップボードにコピーしました`);
-            } catch (err) {
-                alert(`テンプレート: ${templateText}`);
+            if (!newText) {
+                alert('備考テンプレートの内容を入力してください');
+                return;
             }
+            
+            await updateBikouTemplate(templateId, newText);
         });
     });
     
-    // 消去ボタン
+    // 削除ボタン
     document.querySelectorAll('.bikou-delete').forEach(btn => {
         btn.addEventListener('click', async (e) => {
             e.preventDefault();
             const templateId = e.target.dataset.id;
-            const templateText = e.target.dataset.text;
+            const textarea = e.target.closest('tr').querySelector('.bikou-text-input');
+            const templateText = textarea.value;
             
             if (confirm(`備考テンプレート「${templateText}」を削除しますか？\nこの操作は取り消せません。`)) {
                 await deleteBikouTemplate(templateId);
             }
         });
     });
+    
+    // 新規追加ボタン
+    const addBtn = document.getElementById('add-new-bikou-btn');
+    if (addBtn) {
+        addBtn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            const textarea = document.getElementById('new-bikou-input');
+            const templateText = textarea.value.trim();
+            
+            if (!templateText) {
+                alert('備考テンプレートの内容を入力してください');
+                return;
+            }
+            
+            await addBikouTemplate(templateText);
+            textarea.value = ''; // 入力をクリア
+        });
+    }
+    
+    // 入力フィールドのEnterキー対応（Shift+Enterで改行）
+    const newBikouInput = document.getElementById('new-bikou-input');
+    if (newBikouInput) {
+        newBikouInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                document.getElementById('add-new-bikou-btn').click();
+            }
+        });
+    }
 }
 
 /**
  * イベントリスナーを設定
  */
 function setupEventListeners() {
-    // ホーム追加ボタン
+    // ホーム追加ボタン（現在は使用していない）
     const homeAddBtn = document.querySelector('.tuika');
     if (homeAddBtn) {
         homeAddBtn.addEventListener('click', async (e) => {
             e.preventDefault();
             await showAddHomeDialog();
-        });
-    }
-    
-    // 備考テンプレート追加ボタン
-    const bikouAddBtn = document.querySelector('.bikou-tuika');
-    if (bikouAddBtn) {
-        bikouAddBtn.addEventListener('click', async (e) => {
-            e.preventDefault();
-            await showAddBikouTemplateDialog();
         });
     }
 }
@@ -621,6 +657,46 @@ async function deleteBikouTemplate(templateId) {
     } catch (error) {
         console.error('❌ 備考テンプレート削除エラー:', error);
         alert('備考テンプレートの削除中にエラーが発生しました');
+    }
+}
+
+/**
+ * 備考テンプレートを更新
+ */
+async function updateBikouTemplate(templateId, newText) {
+    console.log(`📝 備考テンプレート更新: ${templateId} -> ${newText}`);
+    
+    try {
+        const token = localStorage.getItem('shift_auth_token');
+        if (!token) {
+            alert('認証トークンがありません。再ログインしてください。');
+            return;
+        }
+        
+        const response = await fetch(`${API_BASE_URL}/api/bikou-templates/${templateId}`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ text: newText })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            console.log('✅ 備考テンプレート更新成功');
+            alert('備考テンプレートを更新しました');
+            // キャッシュをクリアして再読み込み
+            clearCache(CACHE_KEYS.BIKOU, CACHE_KEYS.BIKOU_TIMESTAMP);
+            await loadBikouTemplates(true); // 強制再読み込み
+        } else {
+            console.error('❌ 備考テンプレート更新失敗:', data.error);
+            alert('備考テンプレートの更新に失敗しました: ' + data.error);
+        }
+    } catch (error) {
+        console.error('❌ 備考テンプレート更新エラー:', error);
+        alert('備考テンプレートの更新中にエラーが発生しました');
     }
 }
 
