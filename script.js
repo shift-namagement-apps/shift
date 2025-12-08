@@ -326,30 +326,46 @@ async function loadDataFromFirebase() {
             const requestsList = [];
             const shiftsData = requestsResponse.shifts;
             
+            console.log('📦 APIから受信したシフトデータ:', shiftsData);
+            
+            // 承認済み(status=1)のシフトをappState.shiftsに反映
             for (const [dateStr, homeData] of Object.entries(shiftsData)) {
                 const [year, month, day] = dateStr.split('-').map(Number);
                 
                 for (const [home, shiftCodes] of Object.entries(homeData)) {
                     for (const [shiftCode, users] of Object.entries(shiftCodes)) {
                         users.forEach(user => {
+                            // シフト要望リストに追加
                             requestsList.push({
                                 id: `${dateStr}-${home}-${shiftCode}-${user.user_id}`,
                                 date: dateStr,
                                 day: day,
                                 home: home,
-                                shiftCode: shiftCode,
-                                userId: user.user_id,
-                                staffName: user.user_name,
+                                shift_code: shiftCode,
+                                user_id: user.user_id,
+                                user_name: user.user_name,
                                 status: user.status || 0,
-                                submittedAt: user.submitted_at
+                                submitted_at: user.submitted_at
                             });
+                            
+                            // 承認済み(status=1)の場合はappState.shiftsに反映
+                            if (user.status === 1) {
+                                if (!appState.shifts[user.user_id]) {
+                                    appState.shifts[user.user_id] = {};
+                                }
+                                appState.shifts[user.user_id][day.toString()] = {
+                                    code: shiftCode,
+                                    home: home
+                                };
+                            }
                         });
                     }
                 }
             }
             
+            console.log('✅ appState.shiftsに反映:', appState.shifts);
             appState.shiftRequests = requestsList;
-            console.log(`✅ ${requestsList.length}件の要望を読み込みました`);
+            console.log(`✅ ${requestsList.length}件の要望を読み込みました（うち承認済み: ${requestsList.filter(r => r.status === 1).length}件）`);
         } else {
             appState.shiftRequests = [];
             console.log('ℹ️ シフト要望はありません');
@@ -580,8 +596,12 @@ function setupEventListeners() {
  * すべての表示を更新する
  */
 function render() {
-    // *** 変更点：image.pngに合わせて10日間のみ描画 ***
-    const daysToRender = 10;
+    // *** 変更点：その月の日数に応じて描画（最大31日） ***
+    const year = appState.currentYear;
+    const month = appState.currentMonth;
+    const daysToRender = new Date(year, month, 0).getDate(); // その月の日数を取得
+    
+    console.log(`📅 ${year}年${month}月: ${daysToRender}日分を描画`);
     
     // フィルタリングされたスタッフリストを取得
     const filteredStaff = getFilteredStaff();
@@ -1996,8 +2016,13 @@ async function approveShiftRequest(date, home, shiftCode, userId) {
             throw new Error(data.error || '承認に失敗しました');
         }
         
+        console.log('✅ シフト承認成功:', data);
         showToast('シフト要望を承認しました', 'success');
-        await renderShiftRequests();  // リストを再描画
+        
+        // データを再読み込みしてテーブルを更新
+        await loadDataFromFirebase();
+        render();
+        
     } catch (error) {
         console.error('❌ 承認エラー:', error);
         alert('承認に失敗しました: ' + error.message);
@@ -2056,8 +2081,13 @@ async function bulkApproveShiftRequests() {
             throw new Error(data.error || '一括承認に失敗しました');
         }
         
+        console.log('✅ 一括承認成功:', data);
         showToast(`${data.approved_count}件のシフト要望を承認しました`, 'success');
-        await renderShiftRequests();  // リストを再描画
+        
+        // データを再読み込みしてテーブルを更新
+        await loadDataFromFirebase();
+        render();
+        
     } catch (error) {
         console.error('❌ 一括承認エラー:', error);
         alert('一括承認に失敗しました: ' + error.message);
