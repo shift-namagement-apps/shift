@@ -194,26 +194,35 @@ function displayHomes(homes) {
         return;
     }
     
-    // 既存の行をクリア（追加ボタン以外）
+    // 既存の行をすべてクリア
     const rows = homeTable.querySelectorAll('tr');
-    rows.forEach((row, index) => {
-        if (index > 0) { // 最初の行（追加ボタン）は残す
-            row.remove();
-        }
-    });
+    rows.forEach(row => row.remove());
     
     // ホームを表示
     homes.forEach(home => {
         const row = document.createElement('tr');
         row.innerHTML = `
-            <th>ホーム${home.name}</th>
+            <th>
+                <input type="text" class="home-name-input" value="${home.name}" data-id="${home.id}" maxlength="1" style="width: 50px; text-align: center; font-size: 20px; padding: 5px;">
+            </th>
             <td class="td">
-                <input class="home-view" type="button" value="閲覧" data-id="${home.id}" data-name="${home.name}">
-                <input class="home-delete" type="button" value="消去" data-id="${home.id}" data-name="${home.name}">
+                <input class="home-delete" type="button" value="削除" data-id="${home.id}" data-name="${home.name}">
             </td>
         `;
         homeTable.appendChild(row);
     });
+    
+    // 新規追加用の行を追加
+    const newRow = document.createElement('tr');
+    newRow.innerHTML = `
+        <th>
+            <input type="text" id="new-home-input" placeholder="例: F" maxlength="1" style="width: 50px; text-align: center; font-size: 20px; padding: 5px;">
+        </th>
+        <td class="td">
+            <input id="add-new-home-btn" type="button" value="追加">
+        </td>
+    `;
+    homeTable.appendChild(newRow);
     
     // ボタンにイベントリスナーを追加
     attachHomeButtonListeners();
@@ -223,15 +232,6 @@ function displayHomes(homes) {
  * ホームのボタンにイベントリスナーを設定
  */
 function attachHomeButtonListeners() {
-    // 閲覧ボタン
-    document.querySelectorAll('.home-view').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.preventDefault();
-            const homeName = e.target.dataset.name;
-            alert(`${homeName}ホームの詳細表示機能は今後実装予定です`);
-        });
-    });
-    
     // 削除ボタン
     document.querySelectorAll('.home-delete').forEach(btn => {
         btn.addEventListener('click', async (e) => {
@@ -239,11 +239,50 @@ function attachHomeButtonListeners() {
             const homeId = e.target.dataset.id;
             const homeName = e.target.dataset.name;
             
-            if (confirm(`${homeName}ホームを削除しますか？\nこの操作は取り消せません。`)) {
+            if (confirm(`ホーム${homeName}を削除しますか？\nこの操作は取り消せません。`)) {
                 await deleteHome(homeId);
             }
         });
     });
+    
+    // 追加ボタン
+    const addBtn = document.getElementById('add-new-home-btn');
+    if (addBtn) {
+        addBtn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            const input = document.getElementById('new-home-input');
+            const homeName = input.value.trim().toUpperCase();
+            
+            if (!homeName) {
+                alert('ホーム名を入力してください');
+                return;
+            }
+            
+            if (homeName.length !== 1) {
+                alert('ホーム名は1文字で入力してください');
+                return;
+            }
+            
+            await addHome(homeName);
+            input.value = ''; // 入力をクリア
+        });
+    }
+    
+    // 入力フィールドのEnterキー対応
+    const newHomeInput = document.getElementById('new-home-input');
+    if (newHomeInput) {
+        newHomeInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                document.getElementById('add-new-home-btn').click();
+            }
+        });
+        
+        // 大文字化
+        newHomeInput.addEventListener('input', (e) => {
+            e.target.value = e.target.value.toUpperCase();
+        });
+    }
 }
 
 /**
