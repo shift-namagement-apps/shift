@@ -76,6 +76,7 @@
 </head>
 <body>
  <h1 class="title">出勤簿登録</h1>
+    <button onclick="window.history.back()" style="position: absolute; top: 20px; left: 20px; padding: 10px 20px; font-size: 16px; cursor: pointer;">← 戻る</button>
     <form action="" class="form">
         <table>
             <tr>
@@ -185,7 +186,7 @@
         </tr>           
         </table>
 
-        <input class="submit" type="submit" value="送信">
+        <input class="submit" type="submit" value="送信" id="submit-btn">
         
     </form>
     
@@ -321,6 +322,14 @@
         document.querySelector('form').addEventListener('submit', async function(e) {
             e.preventDefault();
             
+            // 二重送信防止
+            const submitBtn = document.getElementById('submit-btn');
+            if (submitBtn.disabled) {
+                return; // 既に送信中の場合は処理しない
+            }
+            submitBtn.disabled = true;
+            submitBtn.value = '送信中...';
+            
             // 入力値を取得
             const date = document.getElementById('date').value;
             const startTime = document.getElementById('start').value;
@@ -333,6 +342,8 @@
             // バリデーション
             if (!date || !startTime || !endTime) {
                 alert('日付、始業時刻、終業時刻は必須です');
+                submitBtn.disabled = false;
+                submitBtn.value = '送信';
                 return;
             }
             
@@ -356,6 +367,8 @@
                 
                 if (!token) {
                     alert('認証トークンがありません。再ログインしてください。');
+                    submitBtn.disabled = false;
+                    submitBtn.value = '送信';
                     window.location.href = window.BASE_PATH || '/shift/';
                     return;
                 }
@@ -385,6 +398,8 @@
                     console.error('❌ JSONパースエラー:', parseError);
                     console.error('レスポンステキスト:', responseText);
                     alert('サーバーからの応答が不正です。コンソールを確認してください。');
+                    submitBtn.disabled = false;
+                    submitBtn.value = '送信';
                     return;
                 }
                 
@@ -394,25 +409,22 @@
                     const sheetsStatus = result.sheets_result?.success ? '✅ 書き込み成功' : '❌ 書き込み失敗';
                     const sheetsMessage = result.sheets_result?.message || result.sheets_result?.error || '';
                     
-                    alert(`出勤簿を登録しました\n\n✅ Firestore: 保存成功\n${sheetsStatus}\n${sheetsMessage}`);
+                    alert(`出勤簿を登録しました\n\n${sheetsStatus}\n${sheetsMessage}`);
                     
-                    // フォームをリセット
-                    this.reset();
-                    
-                    // 今日の日付を再設定
-                    const today = new Date().toISOString().split('T')[0];
-                    document.getElementById('date').value = today;
-                    
-                    // 前のページに戻るか、ホームに戻る
-                    // window.history.back();
+                    // 前のページに自動的に戻る
+                    window.history.back();
                 } else {
                     console.error('❌ サーバーエラー:', result.error);
                     alert('エラー: ' + result.error);
+                    submitBtn.disabled = false;
+                    submitBtn.value = '送信';
                 }
             } catch (error) {
                 console.error('❌ 送信エラー:', error);
                 console.error('エラー詳細:', error.stack);
                 alert('送信中にエラーが発生しました: ' + error.message);
+                submitBtn.disabled = false;
+                submitBtn.value = '送信';
             }
         });
     </script>
