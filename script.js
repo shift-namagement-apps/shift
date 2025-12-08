@@ -954,11 +954,8 @@ function handleDateChange() {
     // Firebaseから新しい年月のデータを再読み込み
     loadDataFromFirebase().then(() => {
         render();
-        // メインカレンダーを再描画
-        const currentPage = PageRouter.getCurrentPage();
-        if (currentPage === 'shift_create.html') {
-            renderMainCalendarView();
-        }
+        // shift_create.htmlではテーブル形式で表示
+        // カレンダービューは削除済み
     });
 }
 
@@ -1212,8 +1209,8 @@ function initStaffHomePage() {
 function initShiftCreatePage() {
     console.log('📝 シフト作成ページ初期化');
     
-    // メインカレンダーを描画
-    renderMainCalendarView();
+    // テーブル形式で描画（カレンダービューは削除済み）
+    // render()は既にloadDataFromFirebase()後に呼ばれているため、ここでは何もしない
 }
 
 /**
