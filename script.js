@@ -507,12 +507,22 @@ function loadDummyData() {
  * イベントリスナーをまとめて設定
  */
 function setupEventListeners() {
-    // 日付・ホーム変更
-    if (dom.yearSelect) dom.yearSelect.addEventListener('change', handleDateChange);
-    if (dom.monthSelect) dom.monthSelect.addEventListener('change', handleDateChange);
+    // 🔥 shift_view.html では独自のイベントリスナーを使用するため、
+    // ここでの年月選択リスナーは無効化
+    const currentPage = window.location.pathname.split('/').pop();
+    const isShiftViewPage = currentPage === 'shift_view.html';
+    
+    // 日付・ホーム変更（shift_view.html以外）
+    if (!isShiftViewPage) {
+        if (dom.yearSelect) dom.yearSelect.addEventListener('change', handleDateChange);
+        if (dom.monthSelect) dom.monthSelect.addEventListener('change', handleDateChange);
+    } else {
+        console.log('ℹ️ shift_view.html: script.jsの年月リスナーを無効化');
+    }
+    
     if (dom.homeSelect) dom.homeSelect.addEventListener('change', handleHomeFilterChange);
 
-    // シフト表のセルクリック（イベント委任）
+    // シフト表のセルクリック(イベント委任)
     if (dom.shiftTableBody) dom.shiftTableBody.addEventListener('click', handleCellClick);
     
     // モーダル関連
