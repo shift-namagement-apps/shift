@@ -81,65 +81,6 @@
             border-color: #357abd;
         }
         
-        /* プロフィールアイコン */
-        .profile-menu {
-            position: relative;
-        }
-        
-        .profile-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background-color: #e0e0e0;
-            border: 1px solid #ddd;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            transition: all 0.2s ease;
-        }
-        
-        .profile-icon:hover {
-            background-color: #d0d0d0;
-            border-color: #999;
-        }
-        
-        /* ドロップダウンメニュー */
-        .dropdown-menu {
-            display: none;
-            position: absolute;
-            top: 50px;
-            right: 0;
-            background-color: white;
-            border: 1px solid #e0e0e0;
-            border-radius: 4px;
-            min-width: 160px;
-            z-index: 1000;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-        
-        .dropdown-menu.show {
-            display: block;
-        }
-        
-        .dropdown-item {
-            padding: 12px 16px;
-            cursor: pointer;
-            border-bottom: 1px solid #f5f5f5;
-            transition: background-color 0.2s ease;
-            font-size: 14px;
-            color: #333;
-        }
-        
-        .dropdown-item:last-child {
-            border-bottom: none;
-        }
-        
-        .dropdown-item:hover {
-            background-color: #f5f5f5;
-        }
-        
         /* メインコンテンツ */
         main {
             padding: 20px 40px;
@@ -580,13 +521,6 @@
         </div>
         <div class="header-right">
             <button class="attendance-btn" onclick="goToAttendance()">出勤入力</button>
-            <div class="profile-menu">
-                <div class="profile-icon" onclick="toggleDropdown()">👤</div>
-                <div class="dropdown-menu" id="dropdownMenu">
-                    <div class="dropdown-item" onclick="viewProfile()">プロフィール確認</div>
-                    <div class="dropdown-item" onclick="logout()">ログアウト</div>
-                </div>
-            </div>
         </div>
     </header>
     
@@ -635,40 +569,6 @@
             'L': { name: '遅勤', color: 'afternoon' },
             'SP': { name: '専従', color: 'morning' }
         };
-        
-        // ドロップダウンメニューの表示切替
-        function toggleDropdown() {
-            const menu = document.getElementById('dropdownMenu');
-            menu.classList.toggle('show');
-        }
-        
-        // メニュー外をクリックしたら閉じる
-        window.onclick = function(event) {
-            if (!event.target.matches('.profile-icon')) {
-                const dropdowns = document.getElementsByClassName('dropdown-menu');
-                for (let i = 0; i < dropdowns.length; i++) {
-                    const openDropdown = dropdowns[i];
-                    if (openDropdown.classList.contains('show')) {
-                        openDropdown.classList.remove('show');
-                    }
-                }
-            }
-        }
-        
-        // プロフィール確認
-        function viewProfile() {
-            alert('プロフィール画面に移動します');
-            // 実際の実装では、プロフィールページへ遷移
-        }
-        
-        // ログアウト
-        function logout() {
-            if (confirm('ログアウトしますか?')) {
-                localStorage.removeItem('shift_auth_token');
-                sessionStorage.clear();
-                window.location.href = window.BASE_PATH || '/shift/';
-            }
-        }
         
         // 出勤入力画面へ
         function goToAttendance() {
