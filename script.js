@@ -592,13 +592,8 @@ function setupEventListeners() {
         });
     }
     
-    const reflectAllBtn = document.getElementById('reflect-all-btn');
-    if (reflectAllBtn) {
-        reflectAllBtn.addEventListener('click', () => {
-            console.log('すべて一括反映ボタンがクリックされました。');
-            alert('一括反映機能は未実装です。');
-        });
-    }
+    // 一括承認ボタンのイベントは shift_create.html で直接 bulkApproveShiftRequests() を呼び出し
+    // ここでの重複イベントリスナーは不要
 }
 
 // --- レンダリング関数 ---------------------------------------
