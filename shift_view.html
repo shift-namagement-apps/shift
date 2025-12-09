@@ -244,6 +244,16 @@
 
                 <h3 class="daily-summary-title">ホーム別日次集計</h3>
                 <div class="summary-table-container">
+                    <div class="daily-summary-header">
+                        <label for="daily-summary-home-select">集計対象：</label>
+                        <select id="daily-summary-home-select">
+                            <option value="A">Aホーム</option>
+                            <option value="B">Bホーム</option>
+                            <option value="C">Cホーム</option>
+                            <option value="D">Dホーム</option>
+                            <option value="E">Eホーム</option>
+                        </select>
+                    </div>
                     <table class="summary-table" id="daily-summary-table">
                         <tbody id="daily-summary-body">
                             </tbody>
@@ -343,6 +353,9 @@
                 
                 // 集計を更新
                 updateSummaries();
+                
+                // 日次集計を更新
+                updateDailySummary();
                 
             } catch (error) {
                 console.error('❌ シフト表描画エラー:', error);
@@ -582,6 +595,48 @@
             console.log('✅ 集計完了:', { shiftCodeCounts, homeStats });
         }
         
+        // ホーム別日次集計を更新
+        function updateDailySummary() {
+            const selectedHome = document.getElementById('daily-summary-home-select')?.value || 'A';
+            const dailySummaryBody = document.getElementById('daily-summary-body');
+            
+            if (!dailySummaryBody) return;
+            
+            const year = window.appState?.currentYear || new Date().getFullYear();
+            const month = window.appState?.currentMonth || (new Date().getMonth() + 1);
+            const daysInMonth = new Date(year, month, 0).getDate();
+            
+            let html = '<tr><th>日付</th><th>A</th><th>B</th><th>C</th><th>EL</th><th>N</th><th>L</th><th>SP</th></tr>';
+            
+            // 各日のシフトコード別集計
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dayCounts = { A: 0, B: 0, C: 0, EL: 0, N: 0, L: 0, SP: 0 };
+                
+                // 該当日・該当ホームのシフトをカウント
+                if (window.appState?.shifts) {
+                    Object.entries(window.appState.shifts).forEach(([userId, staffShifts]) => {
+                        const shift = staffShifts[day.toString()];
+                        if (shift && shift.home === selectedHome && dayCounts[shift.code] !== undefined) {
+                            dayCounts[shift.code]++;
+                        }
+                    });
+                }
+                
+                html += `<tr>
+                    <td>${day}日</td>
+                    <td>${dayCounts.A}</td>
+                    <td>${dayCounts.B}</td>
+                    <td>${dayCounts.C}</td>
+                    <td>${dayCounts.EL}</td>
+                    <td>${dayCounts.N}</td>
+                    <td>${dayCounts.L}</td>
+                    <td>${dayCounts.SP}</td>
+                </tr>`;
+            }
+            
+            dailySummaryBody.innerHTML = html;
+        }
+        
         // イベントリスナーのクリーンアップ関数
         let yearChangeHandler = null;
         let monthChangeHandler = null;
@@ -651,6 +706,14 @@
                 monthSelect.addEventListener('change', monthChangeHandler);
                 
                 console.log('✅ shift_view.html: 独自イベントリスナー登録完了');
+            }
+            
+            // ホーム選択の変更イベント
+            const homeSelect = document.getElementById('daily-summary-home-select');
+            if (homeSelect) {
+                homeSelect.addEventListener('change', () => {
+                    updateDailySummary();
+                });
             }
             
             // セル編集を無効化
