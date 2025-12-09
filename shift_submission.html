@@ -493,7 +493,8 @@
             currentYear: 2025,
             currentMonth: 11,
             myShifts: {},
-            editingDate: null
+            editingDate: null,
+            isSubmitted: false  // 提出済みフラグ
         };
 
         const SHIFT_CODES = {
@@ -523,12 +524,80 @@
                 modalHome: document.getElementById('modal-home'),
             };
 
+            // 初期表示を翌月に設定
+            const now = new Date();
+            const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+            appState.currentYear = nextMonth.getFullYear();
+            appState.currentMonth = nextMonth.getMonth() + 1;
+
             setupEventListeners();
             render();
 
             dom.yearSelect.value = appState.currentYear;
             dom.monthSelect.value = appState.currentMonth;
+            
+            // 提出済みデータを確認
+            checkSubmittedData();
         });
+
+        async function checkSubmittedData() {
+            try {
+                const token = localStorage.getItem('shift_auth_token');
+                if (!token) return;
+
+                const response = await fetch(
+                    `${API_BASE_URL}/api/shift-requests/get?year=${appState.currentYear}&month=${appState.currentMonth}`,
+                    {
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    }
+                );
+
+                if (!response.ok) return;
+
+                const data = await response.json();
+                if (!data.success || !data.shifts) return;
+
+                // 自分のuser_idを取得
+                const user = AUTH ? AUTH.getUser() : null;
+                if (!user) return;
+
+                const myUserId = user.user_id;
+
+                // 自分の提出済みシフトを抽出
+                let hasSubmitted = false;
+                Object.entries(data.shifts).forEach(([dateStr, homes]) => {
+                    const [y, m, day] = dateStr.split('-').map(Number);
+                    
+                    Object.entries(homes).forEach(([home, shiftCodes]) => {
+                        Object.entries(shiftCodes).forEach(([shiftCode, users]) => {
+                            users.forEach(userShift => {
+                                // status: 0（未承認）または 1（承認済み）どちらも提出済み扱い
+                                if (userShift.user_id === myUserId) {
+                                    hasSubmitted = true;
+                                    appState.myShifts[day] = {
+                                        code: shiftCode,
+                                        home: home === '未定' ? '' : home
+                                    };
+                                }
+                            });
+                        });
+                    });
+                });
+
+                if (hasSubmitted) {
+                    appState.isSubmitted = true;
+                    render();
+                    updateSubmitButtonState();
+                    alert('この月のシフト希望は既に提出済みです。編集はできません。');
+                }
+
+            } catch (error) {
+                console.error('提出済みデータ確認エラー:', error);
+            }
+        }
 
         function setupEventListeners() {
             dom.yearSelect.addEventListener('change', handleDateChange);
@@ -539,10 +608,31 @@
             dom.modalSaveBtn.addEventListener('click', handleModalSave);
         }
 
-        function handleDateChange() {
+        async function handleDateChange() {
             appState.currentYear = parseInt(dom.yearSelect.value, 10);
             appState.currentMonth = parseInt(dom.monthSelect.value, 10);
+            appState.myShifts = {};
+            appState.isSubmitted = false;
             render();
+            updateSubmitButtonState();
+            await checkSubmittedData();
+        }
+
+        function updateSubmitButtonState() {
+            const submitBtn = document.querySelector('.submit-button');
+            if (submitBtn) {
+                if (appState.isSubmitted) {
+                    submitBtn.disabled = true;
+                    submitBtn.style.opacity = '0.5';
+                    submitBtn.style.cursor = 'not-allowed';
+                    submitBtn.textContent = '提出済み';
+                } else {
+                    submitBtn.disabled = false;
+                    submitBtn.style.opacity = '1';
+                    submitBtn.style.cursor = 'pointer';
+                    submitBtn.textContent = 'シフト希望を提出';
+                }
+            }
         }
 
         function getDaysInMonth(year, month) {
@@ -600,6 +690,12 @@
         }
 
         function handleCellClick(event) {
+            // 提出済みの場合は編集不可
+            if (appState.isSubmitted) {
+                alert('提出済みのため編集できません');
+                return;
+            }
+            
             const cell = event.target.closest('.calendar-day');
             if (!cell || cell.classList.contains('empty')) return;
             
@@ -638,6 +734,12 @@
         }
 
         async function submitShift() {
+            // 提出済みチェック
+            if (appState.isSubmitted) {
+                alert('既に提出済みです');
+                return;
+            }
+            
             const shiftCount = Object.keys(appState.myShifts).length;
             if (shiftCount === 0) {
                 alert('シフト希望が入力されていません。');
@@ -677,9 +779,9 @@
                     console.log('✅ 提出成功:', data);
                     alert(`シフト希望を提出しました！\n保存件数: ${data.saved_count}件`);
                     
-                    // 提出後はクリア
-                    appState.myShifts = {};
-                    render();
+                    // 提出後は編集不可に
+                    appState.isSubmitted = true;
+                    updateSubmitButtonState();
                 } catch (error) {
                     console.error('❌ 提出エラー:', error);
                     alert('シフト希望の提出に失敗しました: ' + error.message);
