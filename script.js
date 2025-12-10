@@ -206,6 +206,195 @@ const PageRouter = {
     }
 };
 
+// --- ホーム管理用ヘルパー関数 -------------------------------
+
+/**
+ * ホーム一覧をAPIから取得（キャッシュ対応）
+ */
+async function loadHomesList() {
+    const CACHE_KEY = 'shift_homes_cache';
+    const CACHE_TIMESTAMP_KEY = 'shift_homes_cache_timestamp';
+    const CACHE_DURATION = 5 * 60 * 1000; // 5分間キャッシュ
+    
+    // キャッシュチェック
+    const timestamp = localStorage.getItem(CACHE_TIMESTAMP_KEY);
+    if (timestamp) {
+        const age = Date.now() - parseInt(timestamp);
+        if (age < CACHE_DURATION) {
+            const cached = localStorage.getItem(CACHE_KEY);
+            if (cached) {
+                try {
+                    const homes = JSON.parse(cached);
+                    console.log('📦 ホーム一覧をキャッシュから取得:', homes);
+                    return homes;
+                } catch (e) {
+                    console.error('キャッシュ解析エラー:', e);
+                }
+            }
+        }
+    }
+    
+    // APIから取得
+    try {
+        const token = localStorage.getItem('shift_auth_token');
+        if (!token) {
+            console.warn('⚠️ トークンなし: デフォルトホーム使用');
+            return ['A', 'B', 'C', 'D', 'E'];
+        }
+        
+        console.log('🌐 APIからホーム一覧取得中...');
+        const response = await fetch(`${API_BASE_URL}/api/homes`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error('ホーム取得失敗');
+        }
+        
+        const data = await response.json();
+        
+        if (data.success && data.homes && data.homes.length > 0) {
+            const homes = data.homes.map(h => h.name);
+            
+            // キャッシュに保存
+            localStorage.setItem(CACHE_KEY, JSON.stringify(homes));
+            localStorage.setItem(CACHE_TIMESTAMP_KEY, Date.now().toString());
+            
+            console.log('✅ ホーム一覧取得成功:', homes);
+            return homes;
+        } else {
+            console.warn('⚠️ ホームデータが空: デフォルト使用');
+            return ['A', 'B', 'C', 'D', 'E'];
+        }
+    } catch (error) {
+        console.error('❌ ホーム取得エラー:', error);
+        return ['A', 'B', 'C', 'D', 'E']; // フォールバック
+    }
+}
+
+/**
+ * ホームの色を動的に生成
+ */
+function getHomeColor(homeName, index = 0) {
+    const predefinedColors = {
+        'A': '#ffebee',
+        'B': '#e3f2fd',
+        'C': '#e8f5e9',
+        'D': '#fff9c4',
+        'E': '#f3e5f5',
+        '未定': '#f5f5f5'
+    };
+    
+    // 既定義の色がある場合はそれを返す
+    if (predefinedColors[homeName]) {
+        return predefinedColors[homeName];
+    }
+    
+    // 動的に色を生成（パステルカラー）
+    const hue = (index * 137) % 360; // ゴールデンアングルで色相を分散
+    return `hsl(${hue}, 70%, 90%)`;
+}
+
+/**
+ * セレクトボックスにホーム選択肢を追加
+ */
+async function populateHomeSelect(selectElement, options = {}) {
+    if (!selectElement) {
+        console.warn('⚠️ セレクト要素が見つかりません');
+        return;
+    }
+    
+    const {
+        includeAll = false,
+        includeUndecided = false,
+        defaultValue = null
+    } = options;
+    
+    const homes = await loadHomesList();
+    
+    // 既存のオプションをクリア（最初のオプション以外）
+    const firstOption = selectElement.querySelector('option');
+    selectElement.innerHTML = '';
+    
+    // "全体表示"オプション
+    if (includeAll) {
+        const option = document.createElement('option');
+        option.value = 'all';
+        option.textContent = '全体表示';
+        selectElement.appendChild(option);
+    }
+    
+    // ホームオプション
+    homes.forEach((home, index) => {
+        if (home === '未定' && !includeUndecided) {
+            return; // 未定を除外
+        }
+        const option = document.createElement('option');
+        option.value = home;
+        option.textContent = `${home}ホーム`;
+        selectElement.appendChild(option);
+    });
+    
+    // 未定オプション（明示的に追加する場合）
+    if (includeUndecided && !homes.includes('未定')) {
+        const option = document.createElement('option');
+        option.value = '未定';
+        option.textContent = '未定';
+        selectElement.appendChild(option);
+    }
+    
+    // デフォルト値を設定
+    if (defaultValue && selectElement.querySelector(`option[value="${defaultValue}"]`)) {
+        selectElement.value = defaultValue;
+    }
+    
+    console.log('✅ ホーム選択肢を生成:', homes);
+}
+
+/**
+ * ホーム別の背景色をCSSに動的追加
+ */
+async function injectHomeDynamicStyles() {
+    const homes = await loadHomesList();
+    
+    // 既存のスタイルを削除
+    const existingStyle = document.getElementById('dynamic-home-styles');
+    if (existingStyle) {
+        existingStyle.remove();
+    }
+    
+    // 新しいスタイルを作成
+    const styleElement = document.createElement('style');
+    styleElement.id = 'dynamic-home-styles';
+    
+    let css = '/* 動的に生成されたホーム別スタイル */\n';
+    
+    homes.forEach((home, index) => {
+        if (home === '未定') return; // 未定はスキップ
+        
+        const color = getHomeColor(home, index);
+        const homeKey = home.toLowerCase();
+        
+        // シフト表の背景色
+        css += `.shift-table .home-${homeKey} { background-color: ${color}; }\n`;
+        
+        // カレンダーの背景色（shift_submission.html用）
+        css += `.calendar-day.home-${homeKey} { background-color: ${color}; }\n`;
+        
+        // サマリーリストの色
+        css += `.home-summary-${homeKey}::before { background-color: ${color}; }\n`;
+    });
+    
+    styleElement.textContent = css;
+    document.head.appendChild(styleElement);
+    
+    console.log('✅ ホーム別スタイルを注入:', homes);
+}
+
 // --- DOM要素 -------------------------------------------------
 let dom = {}; // DOM要素をキャッシュするオブジェクト
 
@@ -246,6 +435,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         backBtn: document.getElementById('back-btn')
     };
 
+    // ホーム別の動的スタイルを注入
+    await injectHomeDynamicStyles();
+
     // Firebaseからデータをロード（失敗時はダミーデータ）
     await loadDataFromFirebase();
 
@@ -253,7 +445,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     setupEventListeners();
 
     // 初期描画
-    render();
+    await render();
     
     // ページ固有の初期化（render後に実行）
     const currentPage = PageRouter.getCurrentPage();
@@ -601,7 +793,7 @@ function setupEventListeners() {
 /**
  * すべての表示を更新する
  */
-function render() {
+async function render() {
     // *** 変更点：その月の日数に応じて描画（最大31日） ***
     const year = appState.currentYear;
     const month = appState.currentMonth;
@@ -622,7 +814,7 @@ function render() {
     renderShiftRequests();
     
     // 4. 集計（日次・月間）
-    renderSummaries(daysToRender);
+    await renderSummaries(daysToRender);
 }
 
 /**
@@ -784,7 +976,7 @@ async function renderShiftRequests() {
  * 右パネルと下部の集計を描画
  * (注: 画像の値の固定表示で再現)
  */
-function renderSummaries(daysCount) {
+async function renderSummaries(daysCount) {
     
     console.log(`📊 ${appState.currentYear}年${appState.currentMonth}月の集計を計算中...`);
     
@@ -835,7 +1027,11 @@ function renderSummaries(daysCount) {
     dom.monthlySummary.innerHTML = monthlyHtml;
 
     // 2. ホーム別月間合計 (右パネル) - 動的計算
-    const homeCounts = { A: 0, B: 0, C: 0, D: 0, E: 0 };
+    const homes = await loadHomesList();
+    const homeCounts = {};
+    homes.forEach(home => {
+        if (home !== '未定') homeCounts[home] = 0;
+    });
     
     // 全スタッフの全シフトをカウント（公休系以外）
     if (appState.staff && appState.staff.length > 0) {
@@ -843,22 +1039,24 @@ function renderSummaries(daysCount) {
             const staffShifts = appState.shifts[staff.id] || {};
             Object.values(staffShifts).forEach(shift => {
                 if (shift.home && shift.code !== 'NONE' && !['N', 'L', 'SP'].includes(shift.code)) {
-                    homeCounts[shift.home] = (homeCounts[shift.home] || 0) + 1;
+                    if (homeCounts[shift.home] !== undefined) {
+                        homeCounts[shift.home]++;
+                    }
                 }
             });
         });
     }
     
     let homeHtml = '';
-    const homeLabels = { A: 'Aホーム', B: 'Bホーム', C: 'Cホーム', D: 'Dホーム', E: 'Eホーム' };
-    for (const [homeKey, label] of Object.entries(homeLabels)) {
-        const count = homeCounts[homeKey] || 0;
+    homes.forEach(home => {
+        if (home === '未定') return; // 未定は集計から除外
+        const count = homeCounts[home] || 0;
         homeHtml += `
-            <li class="summary-list-item home-summary-${homeKey.toLowerCase()}">
-                <span class="label">${label}</span>
+            <li class="summary-list-item home-summary-${home.toLowerCase()}">
+                <span class="label">${home}ホーム</span>
                 <span class="value">${count}日</span>
             </li>`;
-    }
+    });
     dom.homeSummary.innerHTML = homeHtml;
 
     console.log('✅ 集計完了:', { shiftCodeCounts, homeCounts });
@@ -1038,27 +1236,26 @@ async function handleModalSave() {
 /**
  * ホームフィルタ変更処理
  */
-function handleHomeFilterChange() {
+async function handleHomeFilterChange() {
     appState.selectedHome = dom.homeSelect.value;
     console.log('表示ホーム変更:', appState.selectedHome);
     // ホームを切り替えても、テーブルと集計を再描画
-    render();
+    await render();
 }
 
 /**
  * 年月変更処理
  */
-function handleDateChange() {
+async function handleDateChange() {
     appState.currentYear = parseInt(dom.yearSelect.value, 10);
     appState.currentMonth = parseInt(dom.monthSelect.value, 10);
     console.log('日付変更:', appState.currentYear, appState.currentMonth);
     
     // Firebaseから新しい年月のデータを再読み込み
-    loadDataFromFirebase().then(() => {
-        render();
-        // shift_create.htmlではテーブル形式で表示
-        // カレンダービューは削除済み
-    });
+    await loadDataFromFirebase();
+    await render();
+    // shift_create.htmlではテーブル形式で表示
+    // カレンダービューは削除済み
 }
 
 // --- ヘルパー関数 -----------------------------------------
