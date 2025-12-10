@@ -982,19 +982,19 @@
             if (backLink) {
                 backLink.addEventListener('click', (e) => {
                     e.preventDefault();
-                    if (typeof PageRouter !== 'undefined') {
-                        // PageRouterを使用してホーム画面に戻る
-                        const user = AUTH ? AUTH.getUser() : null;
-                        if (user) {
-                            if (user.role === 'admin') {
-                                PageRouter.navigateTo('shift_home_admin.html');
-                            } else {
-                                PageRouter.navigateTo('shift_home_staff.html');
-                            }
+                    
+                    // ユーザー情報を取得
+                    const user = AUTH ? AUTH.getUser() : null;
+                    
+                    if (user) {
+                        // ロールに応じてホーム画面へ遷移
+                        if (user.role === 'admin') {
+                            window.location.href = 'shift_home_admin.html';
                         } else {
-                            window.history.back();
+                            window.location.href = 'shift_home_staff.html';
                         }
                     } else {
+                        // ログインしていない場合はブラウザバック
                         window.history.back();
                     }
                 });
