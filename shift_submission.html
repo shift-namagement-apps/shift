@@ -785,10 +785,92 @@
     
     <!-- API設定を先に読み込む -->
     <script src="config.js"></script>
-    <!-- メインスクリプト（SHIFT_CODES、populateHomeSelect関数を含む） -->
-    <script src="script.js"></script>
     <!-- 認証スクリプト -->
     <script src="auth.js"></script>
+    
+    <script>
+        // script.jsから必要な関数のみを読み込むための準備
+        // SHIFT_CODESの定義をここに追加
+        if (typeof SHIFT_CODES === 'undefined') {
+            window.SHIFT_CODES = {
+                A: { name: '日勤', time: '10時～19時', class: 'shift-a' },
+                B: { name: '夜勤', time: '22時～7時', class: 'shift-b' },
+                C: { name: '遅番', time: '13時～22時', class: 'shift-c' },
+                EL: { name: '早朝', time: '7時～10時', class: 'shift-el' },
+                N: { name: '公休', time: '', class: 'shift-n' },
+                L: { name: '有休', time: '', class: 'shift-l' },
+                SP: { name: '特休', time: '', class: 'shift-sp' },
+                NONE: { name: '未定', time: '', class: 'shift-none' }
+            };
+        }
+        
+        // loadHomesListとpopulateHomeSelectをインポート
+        async function loadHomesList() {
+            const CACHE_KEY = 'shift_homes_cache';
+            const CACHE_TIMESTAMP_KEY = 'shift_homes_cache_timestamp';
+            const CACHE_DURATION = 5 * 60 * 1000;
+            
+            const timestamp = localStorage.getItem(CACHE_TIMESTAMP_KEY);
+            if (timestamp) {
+                const age = Date.now() - parseInt(timestamp);
+                if (age < CACHE_DURATION) {
+                    const cached = localStorage.getItem(CACHE_KEY);
+                    if (cached) {
+                        try {
+                            return JSON.parse(cached);
+                        } catch (e) {
+                            console.error('キャッシュ解析エラー:', e);
+                        }
+                    }
+                }
+            }
+            
+            try {
+                const token = localStorage.getItem('shift_auth_token');
+                if (!token) return ['A', 'B', 'C', 'D', 'E'];
+                
+                const response = await fetch(`${API_BASE_URL}/api/homes`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (!response.ok) throw new Error('ホーム取得失敗');
+                
+                const data = await response.json();
+                
+                if (data.success && data.homes && data.homes.length > 0) {
+                    const homes = data.homes.map(h => h.name);
+                    localStorage.setItem(CACHE_KEY, JSON.stringify(homes));
+                    localStorage.setItem(CACHE_TIMESTAMP_KEY, Date.now().toString());
+                    return homes;
+                }
+                return ['A', 'B', 'C', 'D', 'E'];
+            } catch (error) {
+                console.error('❌ ホーム取得エラー:', error);
+                return ['A', 'B', 'C', 'D', 'E'];
+            }
+        }
+        
+        async function populateHomeSelect(selectElement, options = {}) {
+            if (!selectElement) return;
+            
+            const { includeUndecided = false } = options;
+            const homes = await loadHomesList();
+            
+            selectElement.innerHTML = '';
+            
+            homes.forEach((home) => {
+                if (home === '未定' && !includeUndecided) return;
+                const option = document.createElement('option');
+                option.value = home;
+                option.textContent = `${home}ホーム`;
+                selectElement.appendChild(option);
+            });
+        }
+    </script>
     
     <script>
         // ページ読み込み時の認証チェック
