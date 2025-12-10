@@ -138,11 +138,7 @@
                 <div class="form-group">
                     <label>ホーム</label>
                     <select id="modal-home" class="form-control">
-                        <option value="A">Aホーム</option>
-                        <option value="B">Bホーム</option>
-                        <option value="C">Cホーム</option>
-                        <option value="D">Dホーム</option>
-                        <option value="E">Eホーム</option>
+                        <!-- ホーム選択肢は動的に生成されます -->
                     </select>
                 </div>
             </div>
@@ -159,12 +155,7 @@
             <div class="form-group">
                 <label for="home-select">表示ホーム</label>
                 <select id="home-select">
-                    <option value="all">全体表示</option>
-                    <option value="A">Aホーム</option>
-                    <option value="B">Bホーム</option>
-                    <option value="C">Cホーム</option>
-                    <option value="D">Dホーム</option>
-                    <option value="E">Eホーム</option>
+                    <!-- ホーム選択肢は動的に生成されます -->
                 </select>
             </div>
 
@@ -218,6 +209,7 @@
                     <div class="daily-summary-header">
                         <label for="daily-summary-home-select">集計対象：</label>
                         <select id="daily-summary-home-select">
+                            <!-- ホーム選択肢は動的に生成されます -->
                             <option value="A">Aホーム</option>
                             <option value="B">Bホーム</option>
                             <option value="C">Cホーム</option>
@@ -267,6 +259,11 @@
     <script>
         // ページ読み込み時の認証チェック
         document.addEventListener('DOMContentLoaded', async () => {
+            // ホーム選択肢を動的生成
+            await populateHomeSelect(document.getElementById('home-select'), { includeAll: true });
+            await populateHomeSelect(document.getElementById('modal-home'), { includeUndecided: true });
+            await populateHomeSelect(document.getElementById('daily-summary-home-select'), { defaultValue: 'A' });
+            
             // 認証チェック
             if (typeof PageRouter !== 'undefined') {
                 const hasAccess = await PageRouter.checkPageAccess();
