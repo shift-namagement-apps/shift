@@ -494,16 +494,7 @@
             isSubmitted: false  // 提出済みフラグ
         };
 
-        const SHIFT_CODES = {
-            A: { name: '日勤', time: '10時～19時', class: 'shift-a' },
-            B: { name: '夜勤', time: '22時～7時', class: 'shift-b' },
-            C: { name: '遅番', time: '13時～22時', class: 'shift-c' },
-            EL: { name: '早朝', time: '7時～10時', class: 'shift-el' },
-            N: { name: '公休', time: '', class: 'shift-n' },
-            L: { name: '有休', time: '', class: 'shift-l' },
-            SP: { name: '特休', time: '', class: 'shift-sp' },
-            NONE: { name: '未定', time: '', class: 'shift-none' }
-        };
+        // SHIFT_CODESはscript.jsから読み込まれます
 
         let dom = {};
 
