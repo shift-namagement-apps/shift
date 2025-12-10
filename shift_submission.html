@@ -538,6 +538,19 @@
                 const token = localStorage.getItem('shift_auth_token');
                 if (!token) return;
 
+                // 自分のuser_idを取得
+                const user = AUTH ? AUTH.getUser() : null;
+                if (!user) return;
+
+                const myUserId = user.user_id;
+                
+                // 現在の年月
+                const now = new Date();
+                const selectedDate = new Date(submissionAppState.currentYear, submissionAppState.currentMonth - 1, 1);
+                const currentMonthDate = new Date(now.getFullYear(), now.getMonth(), 1);
+                const isPastMonth = selectedDate < currentMonthDate;
+
+                // APIから提出済みデータを取得
                 const response = await fetch(
                     `${API_BASE_URL}/api/shift-requests/get?year=${submissionAppState.currentYear}&month=${submissionAppState.currentMonth}`,
                     {
@@ -548,16 +561,24 @@
                     }
                 );
 
-                if (!response.ok) return;
+                if (!response.ok) {
+                    // データがない場合、過去の月なら編集不可
+                    if (isPastMonth) {
+                        submissionAppState.isSubmitted = true;
+                        updateSubmitButtonState();
+                    }
+                    return;
+                }
 
                 const data = await response.json();
-                if (!data.success || !data.shifts) return;
-
-                // 自分のuser_idを取得
-                const user = AUTH ? AUTH.getUser() : null;
-                if (!user) return;
-
-                const myUserId = user.user_id;
+                if (!data.success || !data.shifts) {
+                    // データがない場合、過去の月なら編集不可
+                    if (isPastMonth) {
+                        submissionAppState.isSubmitted = true;
+                        updateSubmitButtonState();
+                    }
+                    return;
+                }
 
                 // 自分の提出済みシフトを抽出
                 let hasSubmitted = false;
@@ -567,7 +588,7 @@
                     Object.entries(homes).forEach(([home, shiftCodes]) => {
                         Object.entries(shiftCodes).forEach(([shiftCode, users]) => {
                             users.forEach(userShift => {
-                                // status: 0（未承認）または 1（承認済み）どちらも提出済み扱い
+                                // 自分のデータのみ抽出
                                 if (userShift.user_id === myUserId) {
                                     hasSubmitted = true;
                                     submissionAppState.myShifts[day] = {
@@ -581,32 +602,40 @@
                 });
 
                 if (hasSubmitted) {
+                    // 提出済みの場合は編集不可
                     submissionAppState.isSubmitted = true;
                     submissionRender();
                     updateSubmitButtonState();
                     
-                    // 過去の月の場合はアラートを表示しない
-                    const now = new Date();
-                    const selectedDate = new Date(submissionAppState.currentYear, submissionAppState.currentMonth - 1, 1);
-                    const currentMonthDate = new Date(now.getFullYear(), now.getMonth(), 1);
-                    
-                    if (selectedDate >= currentMonthDate) {
+                    // 今月または来月の場合のみアラートを表示
+                    if (!isPastMonth) {
                         alert('この月のシフト希望は既に提出済みです。編集はできません。');
                     }
                 } else {
-                    // 提出データがない場合、過去の月なら編集不可
-                    const now = new Date();
-                    const selectedDate = new Date(submissionAppState.currentYear, submissionAppState.currentMonth - 1, 1);
-                    const currentMonthDate = new Date(now.getFullYear(), now.getMonth(), 1);
-                    
-                    if (selectedDate < currentMonthDate) {
+                    // 提出データがない場合
+                    if (isPastMonth) {
+                        // 過去の月で未提出の場合は編集不可（閲覧のみ）
                         submissionAppState.isSubmitted = true;
+                        updateSubmitButtonState();
+                    } else {
+                        // 今月または来月で未提出の場合は編集可能
+                        submissionAppState.isSubmitted = false;
                         updateSubmitButtonState();
                     }
                 }
 
             } catch (error) {
                 console.error('提出済みデータ確認エラー:', error);
+                
+                // エラーが発生した場合、過去の月なら編集不可
+                const now = new Date();
+                const selectedDate = new Date(submissionAppState.currentYear, submissionAppState.currentMonth - 1, 1);
+                const currentMonthDate = new Date(now.getFullYear(), now.getMonth(), 1);
+                
+                if (selectedDate < currentMonthDate) {
+                    submissionAppState.isSubmitted = true;
+                    updateSubmitButtonState();
+                }
             }
         }
 
@@ -625,18 +654,10 @@
             submissionAppState.myShifts = {};
             submissionAppState.isSubmitted = false;
             
-            // 過去の月かチェック
-            const now = new Date();
-            const selectedDate = new Date(submissionAppState.currentYear, submissionAppState.currentMonth - 1, 1);
-            const currentMonthDate = new Date(now.getFullYear(), now.getMonth(), 1);
-            
-            if (selectedDate < currentMonthDate) {
-                // 過去の月の場合、編集不可
-                submissionAppState.isSubmitted = true;
-            }
-            
             submissionRender();
             updateSubmitButtonState();
+            
+            // データベースから提出済みデータをチェック
             await checkSubmittedData();
         }
 
@@ -723,14 +744,14 @@
         }
 
         function handleCellClick(event) {
-            // 過去の月かチェック
-            const now = new Date();
-            const selectedDate = new Date(submissionAppState.currentYear, submissionAppState.currentMonth - 1, 1);
-            const currentMonthDate = new Date(now.getFullYear(), now.getMonth(), 1);
-            const isPastMonth = selectedDate < currentMonthDate;
-            
-            // 提出済みまたは過去の月の場合は編集不可
-            if (submissionAppState.isSubmitted || isPastMonth) {
+            // 提出済みの場合は編集不可
+            if (submissionAppState.isSubmitted) {
+                // 過去の月かチェック
+                const now = new Date();
+                const selectedDate = new Date(submissionAppState.currentYear, submissionAppState.currentMonth - 1, 1);
+                const currentMonthDate = new Date(now.getFullYear(), now.getMonth(), 1);
+                const isPastMonth = selectedDate < currentMonthDate;
+                
                 if (isPastMonth) {
                     alert('過去の月は編集できません（閲覧のみ）');
                 } else {
