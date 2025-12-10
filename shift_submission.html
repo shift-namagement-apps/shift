@@ -496,10 +496,10 @@
 
         // SHIFT_CODESはscript.jsから読み込まれます
 
-        let dom = {};
+        let submissionDom = {};
 
         document.addEventListener('DOMContentLoaded', () => {
-            dom = {
+            submissionDom = {
                 yearSelect: document.getElementById('year-select'),
                 monthSelect: document.getElementById('month-select'),
                 calendar: document.getElementById('calendar'),
@@ -521,8 +521,8 @@
             setupEventListeners();
             render();
 
-            dom.yearSelect.value = submissionAppState.currentYear;
-            dom.monthSelect.value = submissionAppState.currentMonth;
+            submissionDom.yearSelect.value = submissionAppState.currentYear;
+            submissionDom.monthSelect.value = submissionAppState.currentMonth;
             
             // 提出済みデータを確認
             checkSubmittedData();
@@ -588,17 +588,17 @@
         }
 
         function setupEventListeners() {
-            dom.yearSelect.addEventListener('change', handleDateChange);
-            dom.monthSelect.addEventListener('change', handleDateChange);
-            dom.calendar.addEventListener('click', handleCellClick);
-            dom.modalCloseBtn.addEventListener('click', closeModal);
-            dom.modalCancelBtn.addEventListener('click', closeModal);
-            dom.modalSaveBtn.addEventListener('click', handleModalSave);
+            submissionDom.yearSelect.addEventListener('change', handleDateChange);
+            submissionDom.monthSelect.addEventListener('change', handleDateChange);
+            submissionDom.calendar.addEventListener('click', handleCellClick);
+            submissionDom.modalCloseBtn.addEventListener('click', closeModal);
+            submissionDom.modalCancelBtn.addEventListener('click', closeModal);
+            submissionDom.modalSaveBtn.addEventListener('click', handleModalSave);
         }
 
         async function handleDateChange() {
-            submissionAppState.currentYear = parseInt(dom.yearSelect.value, 10);
-            submissionAppState.currentMonth = parseInt(dom.monthSelect.value, 10);
+            submissionAppState.currentYear = parseInt(submissionDom.yearSelect.value, 10);
+            submissionAppState.currentMonth = parseInt(submissionDom.monthSelect.value, 10);
             submissionAppState.myShifts = {};
             submissionAppState.isSubmitted = false;
             render();
@@ -674,7 +674,7 @@
                 calendarHtml += '</div>';
             }
             
-            dom.calendar.innerHTML = calendarHtml;
+            submissionDom.calendar.innerHTML = calendarHtml;
         }
 
         function handleCellClick(event) {
@@ -697,23 +697,23 @@
         }
 
         function openModal(date, currentShift) {
-            dom.modalDate.textContent = `${submissionAppState.currentYear}年${submissionAppState.currentMonth}月${date}日`;
-            dom.modalShiftCode.value = currentShift.code;
-            dom.modalHome.value = currentShift.home || '';
+            submissionDom.modalDate.textContent = `${submissionAppState.currentYear}年${submissionAppState.currentMonth}月${date}日`;
+            submissionDom.modalShiftCode.value = currentShift.code;
+            submissionDom.modalHome.value = currentShift.home || '';
             
-            dom.modal.classList.add('show');
+            submissionDom.modal.classList.add('show');
         }
 
         function closeModal() {
-            dom.modal.classList.remove('show');
+            submissionDom.modal.classList.remove('show');
             submissionAppState.editingDate = null;
         }
 
         function handleModalSave() {
             if (!submissionAppState.editingDate) return;
             
-            const newCode = dom.modalShiftCode.value;
-            const newHome = dom.modalHome.value;
+            const newCode = submissionDom.modalShiftCode.value;
+            const newHome = submissionDom.modalHome.value;
 
             submissionAppState.myShifts[submissionAppState.editingDate] = { code: newCode, home: newHome };
             
@@ -780,10 +780,10 @@
     
     <!-- API設定を先に読み込む -->
     <script src="config.js"></script>
+    <!-- メインスクリプト（SHIFT_CODES、populateHomeSelect関数を含む） -->
+    <script src="script.js"></script>
     <!-- 認証スクリプト -->
     <script src="auth.js"></script>
-    <!-- メインスクリプト（populateHomeSelect関数を含む） -->
-    <script src="script.js"></script>
     
     <script>
         // ページ読み込み時の認証チェック
