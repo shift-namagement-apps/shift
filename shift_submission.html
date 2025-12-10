@@ -790,6 +790,8 @@
     <script src="config.js"></script>
     <!-- 認証スクリプト -->
     <script src="auth.js"></script>
+    <!-- メインスクリプト（populateHomeSelect関数を含む） -->
+    <script src="script.js"></script>
     
     <script>
         // ページ読み込み時の認証チェック
@@ -798,10 +800,11 @@
             const modalHome = document.getElementById('modal-home');
             if (modalHome && typeof populateHomeSelect === 'function') {
                 // "指定なし"オプションを保持
-                const firstOption = modalHome.querySelector('option');
+                const firstOption = modalHome.querySelector('option[value=""]');
                 await populateHomeSelect(modalHome, { includeUndecided: false });
                 // "指定なし"を先頭に移動
-                if (firstOption && firstOption.value === "") {
+                if (firstOption) {
+                    modalHome.removeChild(firstOption);
                     modalHome.insertBefore(firstOption, modalHome.firstChild);
                 }
             }
