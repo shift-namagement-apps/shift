@@ -485,7 +485,8 @@
     </div>
 
     <script>
-        const appState = {
+        // シフト提出画面専用のアプリケーションステート
+        const submissionAppState = {
             currentYear: 2025,
             currentMonth: 11,
             myShifts: {},
@@ -523,14 +524,14 @@
             // 初期表示を翌月に設定
             const now = new Date();
             const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-            appState.currentYear = nextMonth.getFullYear();
-            appState.currentMonth = nextMonth.getMonth() + 1;
+            submissionAppState.currentYear = nextMonth.getFullYear();
+            submissionAppState.currentMonth = nextMonth.getMonth() + 1;
 
             setupEventListeners();
             render();
 
-            dom.yearSelect.value = appState.currentYear;
-            dom.monthSelect.value = appState.currentMonth;
+            dom.yearSelect.value = submissionAppState.currentYear;
+            dom.monthSelect.value = submissionAppState.currentMonth;
             
             // 提出済みデータを確認
             checkSubmittedData();
