@@ -497,8 +497,13 @@
         // SHIFT_CODESはscript.jsから読み込まれます
 
         let submissionDom = {};
+        let submissionInitialized = false; // 初期化フラグ
 
         document.addEventListener('DOMContentLoaded', () => {
+            // script.jsの初期化を待つ
+            if (submissionInitialized) return;
+            submissionInitialized = true;
+            
             submissionDom = {
                 yearSelect: document.getElementById('year-select'),
                 monthSelect: document.getElementById('month-select'),
@@ -519,7 +524,7 @@
             submissionAppState.currentMonth = nextMonth.getMonth() + 1;
 
             setupEventListeners();
-            render();
+            submissionRender(); // script.jsのrender()と区別
 
             submissionDom.yearSelect.value = submissionAppState.currentYear;
             submissionDom.monthSelect.value = submissionAppState.currentMonth;
@@ -577,7 +582,7 @@
 
                 if (hasSubmitted) {
                     submissionAppState.isSubmitted = true;
-                    render();
+                    submissionRender();
                     updateSubmitButtonState();
                     alert('この月のシフト希望は既に提出済みです。編集はできません。');
                 }
@@ -601,7 +606,7 @@
             submissionAppState.currentMonth = parseInt(submissionDom.monthSelect.value, 10);
             submissionAppState.myShifts = {};
             submissionAppState.isSubmitted = false;
-            render();
+            submissionRender();
             updateSubmitButtonState();
             await checkSubmittedData();
         }
@@ -635,7 +640,7 @@
             return new Date(year, month - 1, day).getDay();
         }
 
-        function render() {
+        function submissionRender() {
             const daysInMonth = getDaysInMonth(submissionAppState.currentYear, submissionAppState.currentMonth);
             const firstDay = getFirstDayOfMonth(submissionAppState.currentYear, submissionAppState.currentMonth);
             
@@ -718,7 +723,7 @@
             submissionAppState.myShifts[submissionAppState.editingDate] = { code: newCode, home: newHome };
             
             closeModal();
-            render();
+            submissionRender();
         }
 
         async function submitShift() {
@@ -791,14 +796,18 @@
             // ホーム選択肢を動的生成
             const modalHome = document.getElementById('modal-home');
             if (modalHome && typeof populateHomeSelect === 'function') {
-                // "指定なし"オプションを保持
-                const firstOption = modalHome.querySelector('option[value=""]');
                 await populateHomeSelect(modalHome, { includeUndecided: false });
-                // "指定なし"を先頭に移動
-                if (firstOption) {
-                    modalHome.removeChild(firstOption);
-                    modalHome.insertBefore(firstOption, modalHome.firstChild);
+                
+                // "指定なし"オプションを先頭に追加（既存のものを削除して再作成）
+                const existingEmpty = modalHome.querySelector('option[value=""]');
+                if (existingEmpty) {
+                    existingEmpty.remove();
                 }
+                
+                const emptyOption = document.createElement('option');
+                emptyOption.value = '';
+                emptyOption.textContent = '指定なし';
+                modalHome.insertBefore(emptyOption, modalHome.firstChild);
             }
             
             // 認証チェック
