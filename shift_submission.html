@@ -430,11 +430,7 @@
                     <label>ホーム</label>
                     <select id="modal-home" class="form-control">
                         <option value="">指定なし</option>
-                        <option value="A">Aホーム</option>
-                        <option value="B">Bホーム</option>
-                        <option value="C">Cホーム</option>
-                        <option value="D">Dホーム</option>
-                        <option value="E">Eホーム</option>
+                        <!-- ホーム選択肢は動的に生成されます -->
                     </select>
                 </div>
             </div>
@@ -798,6 +794,18 @@
     <script>
         // ページ読み込み時の認証チェック
         document.addEventListener('DOMContentLoaded', async () => {
+            // ホーム選択肢を動的生成
+            const modalHome = document.getElementById('modal-home');
+            if (modalHome && typeof populateHomeSelect === 'function') {
+                // "指定なし"オプションを保持
+                const firstOption = modalHome.querySelector('option');
+                await populateHomeSelect(modalHome, { includeUndecided: false });
+                // "指定なし"を先頭に移動
+                if (firstOption && firstOption.value === "") {
+                    modalHome.insertBefore(firstOption, modalHome.firstChild);
+                }
+            }
+            
             // 認証チェック
             if (typeof PageRouter !== 'undefined') {
                 const hasAccess = await PageRouter.checkPageAccess();
