@@ -566,8 +566,10 @@
                     // データがない場合、過去の月なら編集不可
                     if (isPastMonth) {
                         submissionAppState.isSubmitted = true;
-                        updateSubmitButtonState();
                     }
+                    // レンダリングとボタン状態を更新
+                    submissionRender();
+                    updateSubmitButtonState();
                     return;
                 }
 
@@ -576,8 +578,10 @@
                     // データがない場合、過去の月なら編集不可
                     if (isPastMonth) {
                         submissionAppState.isSubmitted = true;
-                        updateSubmitButtonState();
                     }
+                    // レンダリングとボタン状態を更新
+                    submissionRender();
+                    updateSubmitButtonState();
                     return;
                 }
 
@@ -619,8 +623,6 @@
                 if (hasSubmitted) {
                     // 提出済みの場合は編集不可
                     submissionAppState.isSubmitted = true;
-                    submissionRender();
-                    updateSubmitButtonState();
                     
                     // 今月または来月の場合のみメッセージを表示
                     const shiftCount = Object.keys(submissionAppState.myShifts).length;
@@ -632,13 +634,15 @@
                     if (isPastMonth) {
                         // 過去の月で未提出の場合は編集不可（閲覧のみ）
                         submissionAppState.isSubmitted = true;
-                        updateSubmitButtonState();
                     } else {
                         // 今月または来月で未提出の場合は編集可能
                         submissionAppState.isSubmitted = false;
-                        updateSubmitButtonState();
                     }
                 }
+                
+                // データ取得後にレンダリングとボタン状態を更新
+                submissionRender();
+                updateSubmitButtonState();
 
             } catch (error) {
                 console.error('提出済みデータ確認エラー:', error);
@@ -670,13 +674,10 @@
             submissionAppState.myShifts = {}; // データをクリア
             submissionAppState.isSubmitted = false;
             
-            // まず空のカレンダーを表示
-            submissionRender();
-            updateSubmitButtonState();
-            
             console.log(`📅 月切り替え: ${submissionAppState.currentYear}年${submissionAppState.currentMonth}月`);
             
             // データベースから提出済みデータをチェック（非同期）
+            // checkSubmittedData内でrender()とupdateSubmitButtonState()が呼ばれる
             await checkSubmittedData();
         }
 
