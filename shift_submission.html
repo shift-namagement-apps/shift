@@ -582,6 +582,8 @@
 
                 // 自分の提出済みシフトを抽出
                 let hasSubmitted = false;
+                submissionAppState.myShifts = {}; // 既存データをクリア
+                
                 Object.entries(data.shifts).forEach(([dateStr, homes]) => {
                     const [y, m, day] = dateStr.split('-').map(Number);
                     
@@ -600,6 +602,13 @@
                         });
                     });
                 });
+                
+                console.log('📊 提出済みシフト取得:', {
+                    年月: `${submissionAppState.currentYear}年${submissionAppState.currentMonth}月`,
+                    提出済み: hasSubmitted,
+                    シフト日数: Object.keys(submissionAppState.myShifts).length,
+                    データ: submissionAppState.myShifts
+                });
 
                 if (hasSubmitted) {
                     // 提出済みの場合は編集不可
@@ -607,9 +616,10 @@
                     submissionRender();
                     updateSubmitButtonState();
                     
-                    // 今月または来月の場合のみアラートを表示
+                    // 今月または来月の場合のみメッセージを表示
+                    const shiftCount = Object.keys(submissionAppState.myShifts).length;
                     if (!isPastMonth) {
-                        alert('この月のシフト希望は既に提出済みです。編集はできません。');
+                        console.log(`✅ この月のシフト希望は既に提出済みです（${shiftCount}日分）`);
                     }
                 } else {
                     // 提出データがない場合
@@ -651,13 +661,16 @@
         async function handleDateChange() {
             submissionAppState.currentYear = parseInt(submissionDom.yearSelect.value, 10);
             submissionAppState.currentMonth = parseInt(submissionDom.monthSelect.value, 10);
-            submissionAppState.myShifts = {};
+            submissionAppState.myShifts = {}; // データをクリア
             submissionAppState.isSubmitted = false;
             
+            // まず空のカレンダーを表示
             submissionRender();
             updateSubmitButtonState();
             
-            // データベースから提出済みデータをチェック
+            console.log(`📅 月切り替え: ${submissionAppState.currentYear}年${submissionAppState.currentMonth}月`);
+            
+            // データベースから提出済みデータをチェック（非同期）
             await checkSubmittedData();
         }
 
@@ -669,6 +682,7 @@
                 const selectedDate = new Date(submissionAppState.currentYear, submissionAppState.currentMonth - 1, 1);
                 const currentMonthDate = new Date(now.getFullYear(), now.getMonth(), 1);
                 const isPastMonth = selectedDate < currentMonthDate;
+                const shiftCount = Object.keys(submissionAppState.myShifts).length;
                 
                 if (submissionAppState.isSubmitted || isPastMonth) {
                     submitBtn.disabled = true;
@@ -676,15 +690,24 @@
                     submitBtn.style.cursor = 'not-allowed';
                     
                     if (isPastMonth) {
-                        submitBtn.textContent = '過去の月（閲覧のみ）';
+                        if (shiftCount > 0) {
+                            submitBtn.textContent = `過去の月（提出済み: ${shiftCount}日分）`;
+                        } else {
+                            submitBtn.textContent = '過去の月（閲覧のみ）';
+                        }
                     } else {
-                        submitBtn.textContent = '提出済み';
+                        submitBtn.textContent = `提出済み（${shiftCount}日分）`;
                     }
                 } else {
                     submitBtn.disabled = false;
                     submitBtn.style.opacity = '1';
                     submitBtn.style.cursor = 'pointer';
-                    submitBtn.textContent = 'シフト希望を提出';
+                    
+                    if (shiftCount > 0) {
+                        submitBtn.textContent = `シフト希望を提出（${shiftCount}日分入力済み）`;
+                    } else {
+                        submitBtn.textContent = 'シフト希望を提出';
+                    }
                 }
             }
         }
@@ -795,6 +818,7 @@
             
             closeModal();
             submissionRender();
+            updateSubmitButtonState(); // ボタン表示を更新
         }
 
         async function submitShift() {
