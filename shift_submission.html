@@ -542,7 +542,8 @@
                 const user = AUTH ? AUTH.getUser() : null;
                 if (!user) return;
 
-                const myUserId = user.user_id;
+                const myUserId = user.id || user.username || user.user_id;
+                console.log('👤 現在のユーザー:', user, 'user_id:', myUserId);
                 
                 // 現在の年月
                 const now = new Date();
