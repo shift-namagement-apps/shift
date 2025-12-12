@@ -235,13 +235,21 @@
                 
                 let response;
                 try {
+                    const fetchStartTime = performance.now();
                     console.log('🚀 fetchリクエスト送信:', {
                         url: loginUrl,
                         method: 'POST',
-                        body: { username }
+                        body: { username },
+                        timestamp: new Date().toISOString()
                     });
                     
-                    // シンプルなfetch（タイムアウトなし）
+                    // タイムアウト付きfetch（30秒）
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => {
+                        console.warn('⏰ 30秒タイムアウト発生');
+                        controller.abort();
+                    }, 30000);
+                    
                     response = await fetch(loginUrl, {
                         method: 'POST',
                         headers: {
@@ -253,23 +261,43 @@
                             password: password
                         }),
                         mode: 'cors',
-                        credentials: 'omit'
+                        credentials: 'omit',
+                        signal: controller.signal
                     });
                     
-                    console.log('✅ fetch完了');
+                    clearTimeout(timeoutId);
+                    const fetchEndTime = performance.now();
+                    const fetchDuration = (fetchEndTime - fetchStartTime) / 1000;
+                    
+                    console.log(`✅ fetch完了 (所要時間: ${fetchDuration.toFixed(2)}秒)`);
+                    
+                    if (fetchDuration > 5) {
+                        console.warn(`⚠️ ログイン処理が遅い: ${fetchDuration.toFixed(2)}秒`);
+                        console.warn('原因候補: Cloud Runコールドスタート、Firestoreクォータ、ネットワーク遅延');
+                    }
                 } catch (fetchError) {
                     console.error('❌ fetchエラー:', fetchError);
                     console.error('❌ エラー詳細:', fetchError.message);
                     console.error('❌ エラータイプ:', fetchError.name);
-                    console.error('❌ エラースタック:', fetchError.stack);
+                    
+                    if (fetchError.name === 'AbortError') {
+                        throw new Error('ログインがタイムアウトしました（30秒超過）\n' +
+                                      '原因:\n' +
+                                      '1. Cloud Runのコールドスタート（初回起動に時間がかかる）\n' +
+                                      '2. Firestoreのクォータ超過\n' +
+                                      '3. サーバーの過負荷\n\n' +
+                                      '対処法: 数秒待ってから再度お試しください');
+                    }
                     
                     if (fetchError.message.includes('Failed to fetch') || fetchError.message.includes('NetworkError')) {
-                        throw new Error('サーバーに接続できません。\n' +
-                                      '1. ネットワーク接続を確認してください\n' +
-                                      '2. サーバーが起動しているか確認してください\n' +
-                                      '3. CORS設定を確認してください');
+                        throw new Error('サーバーに接続できません\n' +
+                                      '原因:\n' +
+                                      '1. ネットワーク接続の問題\n' +
+                                      '2. Cloud Runサービスが停止中\n' +
+                                      '3. CORS設定の問題\n\n' +
+                                      '対処法: ネットワーク接続を確認してください');
                     }
-                    throw new Error('ログインリクエストに失敗しました: ' + fetchError.message);
+                    throw new Error('ログインリクエストに失敗: ' + fetchError.message);
                 }
 
                 console.log('📥 レスポンスステータス:', response.status);
