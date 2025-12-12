@@ -584,18 +584,23 @@
                 let hasSubmitted = false;
                 submissionAppState.myShifts = {}; // 既存データをクリア
                 
+                console.log('🔍 APIレスポンス全体:', data);
+                
                 Object.entries(data.shifts).forEach(([dateStr, homes]) => {
                     const [y, m, day] = dateStr.split('-').map(Number);
                     
                     Object.entries(homes).forEach(([home, shiftCodes]) => {
                         Object.entries(shiftCodes).forEach(([shiftCode, users]) => {
                             users.forEach(userShift => {
-                                // 自分のデータのみ抽出
+                                console.log(`  日付${day}: user_id=${userShift.user_id}, status=${userShift.status}, 自分=${myUserId}`);
+                                
+                                // 自分のデータのみ抽出（statusに関わらず全て取得）
                                 if (userShift.user_id === myUserId) {
                                     hasSubmitted = true;
                                     submissionAppState.myShifts[day] = {
                                         code: shiftCode,
-                                        home: home === '未定' ? '' : home
+                                        home: home === '未定' ? '' : home,
+                                        status: userShift.status // statusも保存
                                     };
                                 }
                             });
