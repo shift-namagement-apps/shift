@@ -560,13 +560,13 @@
             // 今月
             const currentOption = document.createElement('option');
             currentOption.value = currentMonth;
-            currentOption.textContent = `${currentMonth}月（今月）`;
+            currentOption.textContent = currentMonth;
             submissionDom.monthSelect.appendChild(currentOption);
             
             // 来月
             const nextOption = document.createElement('option');
             nextOption.value = nextMonthNum;
-            nextOption.textContent = `${nextMonthNum}月（来月）`;
+            nextOption.textContent = nextMonthNum;
             submissionDom.monthSelect.appendChild(nextOption);
         }
 
