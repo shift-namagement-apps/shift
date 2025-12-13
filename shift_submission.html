@@ -534,13 +534,21 @@
         });
 
         async function checkSubmittedData() {
+            console.log('🔄 checkSubmittedData() 開始');
+            
             try {
                 const token = localStorage.getItem('shift_auth_token');
-                if (!token) return;
+                if (!token) {
+                    console.warn('⚠️ トークンがありません');
+                    return;
+                }
 
                 // 自分のuser_idを取得
                 const user = AUTH ? AUTH.getUser() : null;
-                if (!user) return;
+                if (!user) {
+                    console.warn('⚠️ ユーザー情報がありません');
+                    return;
+                }
 
                 const myUserId = user.id || user.username || user.user_id;
                 console.log('👤 現在のユーザー:', user, 'user_id:', myUserId);
@@ -552,6 +560,8 @@
                 const isPastMonth = selectedDate < currentMonthDate;
 
                 // APIから提出済みデータを取得
+                console.log(`🔍 データ取得開始: ${API_BASE_URL}/api/shift-requests/get?year=${submissionAppState.currentYear}&month=${submissionAppState.currentMonth}`);
+                
                 const response = await fetch(
                     `${API_BASE_URL}/api/shift-requests/get?year=${submissionAppState.currentYear}&month=${submissionAppState.currentMonth}`,
                     {
@@ -562,7 +572,18 @@
                     }
                 );
 
+                console.log(`📡 レスポンス: status=${response.status}, ok=${response.ok}`);
+
                 if (!response.ok) {
+                    console.error(`❌ データ取得失敗: ${response.status} ${response.statusText}`);
+                    try {
+                        const errorData = await response.json();
+                        console.error('エラー詳細:', errorData);
+                    } catch (e) {
+                        const errorText = await response.text();
+                        console.error('エラーテキスト:', errorText);
+                    }
+                    
                     // データがない場合、過去の月なら編集不可
                     if (isPastMonth) {
                         submissionAppState.isSubmitted = true;
@@ -574,7 +595,10 @@
                 }
 
                 const data = await response.json();
+                console.log('📦 取得データ:', data);
+                
                 if (!data.success || !data.shifts) {
+                    console.warn('⚠️ データなし、または不正なレスポンス');
                     // データがない場合、過去の月なら編集不可
                     if (isPastMonth) {
                         submissionAppState.isSubmitted = true;
@@ -645,7 +669,8 @@
                 updateSubmitButtonState();
 
             } catch (error) {
-                console.error('提出済みデータ確認エラー:', error);
+                console.error('❌❌❌ 提出済みデータ確認エラー:', error);
+                console.error('スタックトレース:', error.stack);
                 
                 // エラーが発生した場合、過去の月なら編集不可
                 const now = new Date();
