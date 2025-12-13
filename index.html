@@ -243,12 +243,12 @@
                         timestamp: new Date().toISOString()
                     });
                     
-                    // タイムアウト付きfetch（30秒）
+                    // タイムアウト付きfetch（60秒に延長）
                     const controller = new AbortController();
                     const timeoutId = setTimeout(() => {
-                        console.warn('⏰ 30秒タイムアウト発生');
+                        console.warn('⏰ 60秒タイムアウト発生');
                         controller.abort();
-                    }, 30000);
+                    }, 60000);
                     
                     response = await fetch(loginUrl, {
                         method: 'POST',
@@ -281,12 +281,12 @@
                     console.error('❌ エラータイプ:', fetchError.name);
                     
                     if (fetchError.name === 'AbortError') {
-                        throw new Error('ログインがタイムアウトしました（30秒超過）\n' +
+                        throw new Error('ログインがタイムアウトしました（60秒超過）\n' +
                                       '原因:\n' +
-                                      '1. Cloud Runのコールドスタート（初回起動に時間がかかる）\n' +
-                                      '2. Firestoreのクォータ超過\n' +
-                                      '3. サーバーの過負荷\n\n' +
-                                      '対処法: 数秒待ってから再度お試しください');
+                                      '1. Cloud Runが応答していない\n' +
+                                      '2. Firestoreのクォータ超過またはハング\n' +
+                                      '3. サーバーで無限ループ発生中\n\n' +
+                                      '対処法: システム管理者に連絡してください');
                     }
                     
                     if (fetchError.message.includes('Failed to fetch') || fetchError.message.includes('NetworkError')) {
