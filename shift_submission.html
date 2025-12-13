@@ -444,7 +444,7 @@
     <div class="main-content">
         <!-- ヘッダー -->
         <header class="app-header">
-            <a href="#" class="back-link">← 戻る</a>
+            <a href="shift_home_staff.html" class="back-link">← 戻る</a>
             <div class="date-selector">
                 <select id="year-select">
                     <option value="2024">2024</option>
@@ -523,6 +523,9 @@
             submissionAppState.currentYear = nextMonth.getFullYear();
             submissionAppState.currentMonth = nextMonth.getMonth() + 1;
 
+            // 選択肢を今月と来月のみに制限
+            populateMonthYearSelectors();
+
             setupEventListeners();
             submissionRender(); // script.jsのrender()と区別
 
@@ -532,6 +535,40 @@
             // 提出済みデータを確認（過去の月でも表示）
             checkSubmittedData();
         });
+
+        function populateMonthYearSelectors() {
+            const now = new Date();
+            const currentYear = now.getFullYear();
+            const currentMonth = now.getMonth() + 1; // 1-12
+            const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+            const nextYear = nextMonth.getFullYear();
+            const nextMonthNum = nextMonth.getMonth() + 1;
+
+            // 年選択肢をクリア
+            submissionDom.yearSelect.innerHTML = '';
+            const years = new Set([currentYear, nextYear]);
+            years.forEach(year => {
+                const option = document.createElement('option');
+                option.value = year;
+                option.textContent = year;
+                submissionDom.yearSelect.appendChild(option);
+            });
+
+            // 月選択肢をクリア
+            submissionDom.monthSelect.innerHTML = '';
+            
+            // 今月
+            const currentOption = document.createElement('option');
+            currentOption.value = currentMonth;
+            currentOption.textContent = `${currentMonth}月（今月）`;
+            submissionDom.monthSelect.appendChild(currentOption);
+            
+            // 来月
+            const nextOption = document.createElement('option');
+            nextOption.value = nextMonthNum;
+            nextOption.textContent = `${nextMonthNum}月（来月）`;
+            submissionDom.monthSelect.appendChild(nextOption);
+        }
 
         async function checkSubmittedData() {
             console.log('🔄 checkSubmittedData() 開始');
@@ -694,12 +731,26 @@
         }
 
         async function handleDateChange() {
-            submissionAppState.currentYear = parseInt(submissionDom.yearSelect.value, 10);
-            submissionAppState.currentMonth = parseInt(submissionDom.monthSelect.value, 10);
+            // 選択された月に応じて年を自動調整
+            const selectedMonth = parseInt(submissionDom.monthSelect.value, 10);
+            const now = new Date();
+            const currentMonth = now.getMonth() + 1;
+            
+            // 選択された月が今月より小さい場合は来年
+            if (selectedMonth < currentMonth) {
+                submissionAppState.currentYear = now.getFullYear() + 1;
+            } else {
+                submissionAppState.currentYear = now.getFullYear();
+            }
+            
+            submissionAppState.currentMonth = selectedMonth;
             submissionAppState.myShifts = {}; // データをクリア
             submissionAppState.isSubmitted = false;
             
             console.log(`📅 月切り替え: ${submissionAppState.currentYear}年${submissionAppState.currentMonth}月`);
+            
+            // 年選択肢を更新
+            submissionDom.yearSelect.value = submissionAppState.currentYear;
             
             // データベースから提出済みデータをチェック（非同期）
             // checkSubmittedData内でrender()とupdateSubmitButtonState()が呼ばれる
@@ -721,14 +772,12 @@
                     submitBtn.style.opacity = '0.5';
                     submitBtn.style.cursor = 'not-allowed';
                     
-                    if (isPastMonth) {
-                        if (shiftCount > 0) {
-                            submitBtn.textContent = `過去の月（提出済み: ${shiftCount}日分）`;
-                        } else {
-                            submitBtn.textContent = '過去の月（閲覧のみ）';
-                        }
+                    if (shiftCount > 0) {
+                        submitBtn.textContent = `✓ 提出済み（${shiftCount}日分）`;
+                    } else if (isPastMonth) {
+                        submitBtn.textContent = '過去の月（閲覧のみ）';
                     } else {
-                        submitBtn.textContent = `提出済み（${shiftCount}日分）`;
+                        submitBtn.textContent = '提出済み';
                     }
                 } else {
                     submitBtn.disabled = false;
