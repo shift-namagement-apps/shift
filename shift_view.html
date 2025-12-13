@@ -247,11 +247,7 @@
                     <div class="daily-summary-header">
                         <label for="daily-summary-home-select">集計対象：</label>
                         <select id="daily-summary-home-select">
-                            <option value="A">Aホーム</option>
-                            <option value="B">Bホーム</option>
-                            <option value="C">Cホーム</option>
-                            <option value="D">Dホーム</option>
-                            <option value="E">Eホーム</option>
+                            <!-- ホーム選択肢は動的に生成されます -->
                         </select>
                     </div>
                     <table class="summary-table" id="daily-summary-table">
@@ -294,9 +290,14 @@
     <script src="script.js"></script>
     
     <script>
-        // シフト表のカスタム描画関数（全スタッフ表示、10人分固定、30日分表示）
+        // シフト表のカスタム描画関数（全スタッフ表示、30人分固定、30日分表示）
         const DAYS_TO_DISPLAY = 30;
         const MIN_STAFF_ROWS = 10;
+        
+        // ホーム選択肢を動的生成
+        document.addEventListener('DOMContentLoaded', async () => {
+            await populateHomeSelect(document.getElementById('daily-summary-home-select'), { defaultValue: 'A' });
+        });
         
         // script.jsのrenderShiftTableを完全に置き換える
         let isCustomRenderActive = false;
@@ -322,6 +323,7 @@
                 }
                 
                 // 全スタッフ情報を取得
+                console.log('👥 スタッフ情報取得開始');
                 const staffResponse = await fetch(`${API_BASE_URL}/api/staff`, {
                     headers: {
                         'Authorization': `Bearer ${token}`,
@@ -329,7 +331,11 @@
                     }
                 });
                 
+                console.log(`📡 スタッフAPI: status=${staffResponse.status}, ok=${staffResponse.ok}`);
+                
                 if (!staffResponse.ok) {
+                    const errorText = await staffResponse.text();
+                    console.error(`❌ スタッフ取得エラー: ${errorText}`);
                     throw new Error('スタッフ情報の取得に失敗しました');
                 }
                 
@@ -367,12 +373,16 @@
         
         // シフト要望データを読み込み
         async function loadShiftRequests() {
+            console.log('🔄 loadShiftRequests() 開始');
+            
             try {
                 const token = localStorage.getItem('shift_auth_token');
                 const year = window.appState?.currentYear || new Date().getFullYear();
                 const month = window.appState?.currentMonth || (new Date().getMonth() + 1);
                 
                 console.log(`📅 ${year}年${month}月のシフトデータを取得中...`);
+                console.log(`🔍 URL: ${API_BASE_URL}/api/shift-requests/get?year=${year}&month=${month}`);
+                console.log(`🔑 トークン: ${token ? 'あり' : 'なし'}`);
                 
                 const response = await fetch(
                     `${API_BASE_URL}/api/shift-requests/get?year=${year}&month=${month}`,
@@ -384,11 +394,16 @@
                     }
                 );
                 
+                console.log(`📡 レスポンス: status=${response.status}, ok=${response.ok}`);
+                
                 if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error(`❌ エラーレスポンス: ${errorText}`);
                     throw new Error('シフト要望の取得に失敗しました');
                 }
                 
                 const data = await response.json();
+                console.log('📦 取得データ:', data);
                 
                 // シフト要望を appState.shifts に格納
                 if (!window.appState) window.appState = {};
@@ -420,7 +435,8 @@
                     console.log('📭 この月のシフトデータはありません');
                 }
             } catch (error) {
-                console.error('❌ シフト要望取得エラー:', error);
+                console.error('❌❌❌ シフト要望取得エラー:', error);
+                console.error('スタックトレース:', error.stack);
                 // エラーでもshiftsを初期化
                 if (!window.appState) window.appState = {};
                 window.appState.shifts = {};
