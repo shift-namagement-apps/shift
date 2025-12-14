@@ -536,7 +536,7 @@ async function addHome(homeName) {
  * ホーム名を変更
  */
 async function renameHome(homeId, oldName, newName) {
-    console.log(`🏠 ホーム名変更: ${oldName} -> ${newName}`);
+    console.log(`🏠 ホーム名変更: ${oldName} -> ${newName} (ID: ${homeId})`);
     
     try {
         const token = localStorage.getItem('shift_auth_token');
@@ -545,9 +545,9 @@ async function renameHome(homeId, oldName, newName) {
             return;
         }
         
-        // 1. 新しい名前でホームを作成
-        const addResponse = await fetch(`${API_BASE_URL}/api/homes`, {
-            method: 'POST',
+        // ホーム名を更新（PUTリクエスト）
+        const response = await fetch(`${API_BASE_URL}/api/homes/${homeId}`, {
+            method: 'PUT',
             headers: {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
@@ -555,30 +555,18 @@ async function renameHome(homeId, oldName, newName) {
             body: JSON.stringify({ name: newName })
         });
         
-        const addData = await addResponse.json();
-        if (!addData.success) {
-            throw new Error('新しい名前での作成に失敗しました: ' + addData.error);
+        const data = await response.json();
+        
+        if (data.success) {
+            console.log('✅ ホーム名変更成功');
+            alert('ホーム名を変更しました');
+            // キャッシュをクリアして再読み込み（全ページで反映させるため）
+            clearAllCache();
+            await loadHomes(true);
+        } else {
+            console.error('❌ ホーム名変更失敗:', data.error);
+            alert('ホーム名の変更に失敗しました: ' + data.error);
         }
-        
-        // 2. 古いホームを削除
-        const deleteResponse = await fetch(`${API_BASE_URL}/api/homes/${homeId}`, {
-            method: 'DELETE',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            }
-        });
-        
-        const deleteData = await deleteResponse.json();
-        if (!deleteData.success) {
-            console.warn('⚠️ 古いホームの削除に失敗:', deleteData.error);
-        }
-        
-        console.log('✅ ホーム名変更成功');
-        alert('ホーム名を変更しました');
-        // キャッシュをクリアして再読み込み
-        clearAllCache();
-        await loadHomes(true);
         
     } catch (error) {
         console.error('❌ ホーム名変更エラー:', error);
