@@ -206,6 +206,7 @@ function displayHomes(homes) {
                 <input type="text" class="home-name-input" value="${home.name}" data-id="${home.id}" style="width: 50px; text-align: center; font-size: 20px; padding: 5px; background-color: #757575; color: white; border: none; border-radius: 4px;" readonly>
             </th>
             <td class="td">
+                <input class="home-edit" type="button" value="編集" data-id="${home.id}" data-name="${home.name}">
                 <input class="home-delete" type="button" value="削除" data-id="${home.id}" data-name="${home.name}">
             </td>
         `;
@@ -232,6 +233,28 @@ function displayHomes(homes) {
  * ホームのボタンにイベントリスナーを設定
  */
 function attachHomeButtonListeners() {
+    // 編集ボタン
+    document.querySelectorAll('.home-edit').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            const homeId = e.target.dataset.id;
+            const currentName = e.target.dataset.name;
+            
+            const newName = prompt('ホーム名を変更してください', currentName);
+            
+            if (newName === null) {
+                return; // キャンセル
+            }
+            
+            if (!newName.trim()) {
+                alert('ホーム名を入力してください');
+                return;
+            }
+            
+            await renameHome(homeId, currentName, newName.trim());
+        });
+    });
+    
     // 削除ボタン
     document.querySelectorAll('.home-delete').forEach(btn => {
         btn.addEventListener('click', async (e) => {
@@ -520,6 +543,60 @@ async function addHome(homeName) {
 }
 
 /**
+ * ホーム名を変更
+ */
+async function renameHome(homeId, oldName, newName) {
+    console.log(`🏠 ホーム名変更: ${oldName} -> ${newName}`);
+    
+    try {
+        const token = localStorage.getItem('shift_auth_token');
+        if (!token) {
+            alert('認証トークンがありません。再ログインしてください。');
+            return;
+        }
+        
+        // 1. 新しい名前でホームを作成
+        const addResponse = await fetch(`${API_BASE_URL}/api/homes`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ name: newName })
+        });
+        
+        const addData = await addResponse.json();
+        if (!addData.success) {
+            throw new Error('新しい名前での作成に失敗しました: ' + addData.error);
+        }
+        
+        // 2. 古いホームを削除
+        const deleteResponse = await fetch(`${API_BASE_URL}/api/homes/${homeId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        const deleteData = await deleteResponse.json();
+        if (!deleteData.success) {
+            console.warn('⚠️ 古いホームの削除に失敗:', deleteData.error);
+        }
+        
+        console.log('✅ ホーム名変更成功');
+        alert('ホーム名を変更しました');
+        // キャッシュをクリアして再読み込み
+        clearAllCache();
+        await loadHomes(true);
+        
+    } catch (error) {
+        console.error('❌ ホーム名変更エラー:', error);
+        alert('ホーム名の変更中にエラーが発生しました: ' + error.message);
+    }
+}
+
+/**
  * ホームを削除
  */
 async function deleteHome(homeId) {
@@ -718,8 +795,8 @@ async function renameBikouTemplate(oldId, newId) {
         
         console.log('✅ 備考テンプレート名前変更成功');
         alert('備考テンプレートの名前を変更しました');
-        // キャッシュをクリアして再読み込み
-        clearCache(CACHE_KEYS.BIKOU, CACHE_KEYS.BIKOU_TIMESTAMP);
+        // キャッシュをクリアして再読み込み（全キャッシュクリア）
+        clearAllCache();
         await loadBikouTemplates(true);
         
     } catch (error) {
