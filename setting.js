@@ -634,6 +634,27 @@ async function deleteBikouTemplate(templateId) {
             headers: {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            console.log('✅ 備考テンプレート削除成功');
+            alert('備考テンプレートを削除しました');
+            // キャッシュをクリアして再読み込み
+            clearCache(CACHE_KEYS.BIKOU, CACHE_KEYS.BIKOU_TIMESTAMP);
+            await loadBikouTemplates(true); // 強制再読み込み
+        } else {
+            console.error('❌ 備考テンプレート削除失敗:', data.error);
+            alert('備考テンプレートの削除に失敗しました: ' + data.error);
+        }
+    } catch (error) {
+        console.error('❌ 備考テンプレート削除エラー:', error);
+        alert('備考テンプレートの削除中にエラーが発生しました');
+    }
+}
+
 /**
  * 備考テンプレートの名前を変更
  */
@@ -725,27 +746,6 @@ async function updateBikouTemplate(templateId, newText) {
             headers: {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ text: newText })
-        });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            console.log('✅ 備考テンプレート更新成功');
-            alert('備考テンプレートを更新しました');
-            // キャッシュをクリアして再読み込み
-            clearCache(CACHE_KEYS.BIKOU, CACHE_KEYS.BIKOU_TIMESTAMP);
-            await loadBikouTemplates(true); // 強制再読み込み
-        } else {
-            console.error('❌ 備考テンプレート更新失敗:', data.error);
-            alert('備考テンプレートの更新に失敗しました: ' + data.error);
-        }
-    } catch (error) {
-        console.error('❌ 備考テンプレート更新エラー:', error);
-        alert('備考テンプレートの更新中にエラーが発生しました');
-    }
-}               'Content-Type': 'application/json'
             },
             body: JSON.stringify({ text: newText })
         });
