@@ -1,4 +1,3 @@
-
 /**
  * setting.js - 設定画面の機能実装
  * ホーム管理と備考テンプレート管理
@@ -622,25 +621,38 @@ async function deleteHome(homeId) {
  * 備考テンプレート追加ダイアログを表示
  */
 async function showAddBikouTemplateDialog() {
-    const templateText = prompt('追加する備考テンプレートの文章を入力してください');
+    // 1. まず名前を聞く
+    const templateId = prompt('備考テンプレートの名前を入力してください（例: 備考1、備考2）');
+    
+    if (!templateId) {
+        return; // キャンセル
+    }
+    
+    if (templateId.trim().length === 0) {
+        alert('備考テンプレートの名前を入力してください');
+        return;
+    }
+    
+    // 2. 次に中身を聞く
+    const templateText = prompt('備考テンプレートの内容を入力してください');
     
     if (!templateText) {
         return; // キャンセル
     }
     
     if (templateText.trim().length === 0) {
-        alert('テンプレート文章を入力してください');
+        alert('備考テンプレートの内容を入力してください');
         return;
     }
     
-    await addBikouTemplate(templateText.trim());
+    await addBikouTemplate(templateText.trim(), templateId.trim());
 }
 
 /**
  * 備考テンプレートを追加
  */
-async function addBikouTemplate(templateText) {
-    console.log(`📝 備考テンプレート追加: ${templateText}`);
+async function addBikouTemplate(templateText, templateId = null) {
+    console.log(`📝 備考テンプレート追加: ${templateId || '自動生成'} -> ${templateText}`);
     
     try {
         const token = localStorage.getItem('shift_auth_token');
@@ -649,13 +661,19 @@ async function addBikouTemplate(templateText) {
             return;
         }
         
+        const requestBody = { text: templateText };
+        // IDが指定されている場合は含める
+        if (templateId) {
+            requestBody.id = templateId;
+        }
+        
         const response = await fetch(`${API_BASE_URL}/api/bikou-templates`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ text: templateText })
+            body: JSON.stringify(requestBody)
         });
         
         const data = await response.json();
@@ -907,3 +925,4 @@ function goBack() {
         window.location.href = basePath + 'shift_home_admin.html';
     }
 }
+
