@@ -49,7 +49,9 @@
         margin-bottom: 10px; 
         }
 
-      input {
+      input[type="date"],
+      input[type="time"],
+      input[type="number"] {
          width: 130px;   
         padding: 7px;   
         font-size: 18px; 
@@ -371,28 +373,9 @@
             const workplace = document.getElementById('place').value;
             const transportationCost = document.getElementById('traffic').value || 0;
             
-            // 備考欄の処理：選択された備考ID（備考1, 備考2など）を取得
-            const bikouSelect = document.getElementById('add');
-            const bikouValue = bikouSelect.value;
-            let bikouLabel = '';
-            let bikouText = document.getElementById('textarea').value;
-            
-            if (bikouValue) {
-                try {
-                    const selected = JSON.parse(bikouValue);
-                    bikouLabel = selected.id; // 備考1, 備考2など
-                } catch (error) {
-                    console.error('備考選択値の解析エラー:', error);
-                }
-            }
-            
-            // 備考欄に「備考1: 文章内容」の形式で結合
-            let notes = '';
-            if (bikouLabel && bikouText) {
-                notes = `${bikouLabel}: ${bikouText}`;
-            } else if (bikouText) {
-                notes = bikouText;
-            }
+            // 備考欄の処理：テキストエリアの内容のみを使用
+            const bikouText = document.getElementById('textarea').value;
+            const notes = bikouText;
             
             // バリデーション
             if (!date || !startTime || !endTime) {
