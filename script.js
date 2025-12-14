@@ -826,43 +826,40 @@ function renderTableHeader(daysCount) {
  */
 function renderShiftTable(staffList, daysCount) {
     let html = '';
-    
-    // image.png に表示されている月合計の固定データ
-    const totalDaysImg = { 
-        's1': '29日', 's2': '28日', 's3': '30日', 's4': '26日', 
-        's5': '25日', 's6': '24日', 's7': '27日', 's8': '24日',
-        's9': '28日', 's10': '29日'
-    };
 
     staffList.forEach(staff => {
         html += `<tr><td>${staff.name}</td>`;
         
         const staffShifts = appState.shifts[staff.id] || {};
+        
+        // 月合計を計算（公休系以外をカウント）
+        let monthTotal = 0;
 
         for (let day = 1; day <= daysCount; day++) {
             const shift = staffShifts[day.toString()] || { code: 'NONE', home: '' };
             const shiftInfo = SHIFT_CODES[shift.code] || SHIFT_CODES['NONE'];
             
-            // 画像の5, 8, 10日のハイライトを再現
-            const isHighlight = (day === 5 || day === 8 || day === 10);
-            
             // ホーム別の背景色クラスを追加
             const homeClass = shift.home ? `home-${shift.home.toLowerCase()}` : '';
             
             html += `<td 
-                        class="${isHighlight ? 'cell-highlight' : ''} ${homeClass}"
+                        class="${homeClass}"
                         data-staff-id="${staff.id}"
                         data-staff-name="${staff.name}"
                         data-date="${day}">`;
                         
             if (shift.code !== 'NONE') {
                 html += `<div class="shift-code ${shiftInfo.class}">${shift.code}</div>`;
+                // 公休系以外をカウント
+                if (!['N', 'L', 'SP'].includes(shift.code)) {
+                    monthTotal++;
+                }
             }
             html += '</td>';
         }
         
-        // 月合計 (画像のダミーデータに合わせる)
-        html += `<td>${totalDaysImg[staff.id] || 'N/A'}</td>`;
+        // 月合計を表示
+        html += `<td><strong>${monthTotal}日</strong></td>`;
         html += '</tr>';
     });
     
@@ -971,6 +968,8 @@ async function renderShiftRequests() {
 async function renderSummaries(daysCount) {
     
     console.log(`📊 ${appState.currentYear}年${appState.currentMonth}月の集計を計算中...`);
+    console.log('📋 現在のappState.staff:', appState.staff);
+    console.log('📋 現在のappState.shifts:', appState.shifts);
     
     // 1. 月間集計 (右パネル) - appState.shiftsから動的に計算
     const shiftCodeCounts = {
@@ -985,6 +984,7 @@ async function renderSummaries(daysCount) {
     
     // 全スタッフの全シフトをカウント
     if (appState.staff && appState.staff.length > 0) {
+        console.log(`👥 ${appState.staff.length}人のスタッフを集計中...`);
         appState.staff.forEach(staff => {
             const staffShifts = appState.shifts[staff.id] || {};
             Object.values(staffShifts).forEach(shift => {
@@ -1016,10 +1016,17 @@ async function renderSummaries(daysCount) {
                 <span class="value">${count}</span>
             </li>`;
     }
-    dom.monthlySummary.innerHTML = monthlyHtml;
+    
+    if (dom.monthlySummary) {
+        dom.monthlySummary.innerHTML = monthlyHtml;
+        console.log('✅ 月間集計を表示:', shiftCodeCounts);
+    } else {
+        console.warn('⚠️ monthly-summary要素が見つかりません');
+    }
 
     // 2. ホーム別月間合計 (右パネル) - 動的計算
     const homes = await loadHomesList();
+    console.log('🏠 読み込まれたホームリスト:', homes);
     const homeCounts = {};
     homes.forEach(home => {
         if (home !== '未定') homeCounts[home] = 0;
@@ -1049,9 +1056,15 @@ async function renderSummaries(daysCount) {
                 <span class="value">${count}日</span>
             </li>`;
     });
-    dom.homeSummary.innerHTML = homeHtml;
+    
+    if (dom.homeSummary) {
+        dom.homeSummary.innerHTML = homeHtml;
+        console.log('✅ ホーム別月間合計を表示:', homeCounts);
+    } else {
+        console.warn('⚠️ home-summary要素が見つかりません');
+    }
 
-    console.log('✅ 集計完了:', { shiftCodeCounts, homeCounts });
+    console.log('✅ 月間集計完了:', { shiftCodeCounts, homeCounts });
     
     // 3. ホーム別日次集計 (下部) - 動的計算
     renderDailySummary(daysCount);
@@ -1065,6 +1078,8 @@ function renderDailySummary(daysCount) {
     const selectedHome = summarySelect ? summarySelect.value : 'A';
     
     console.log(`📊 ${selectedHome}ホームの日次集計を計算中...`);
+    console.log('👥 スタッフ数:', appState.staff ? appState.staff.length : 0);
+    console.log('📅 日数:', daysCount);
     
     // 各日のシフトコード別カウントを計算
     const dailyData = [];
@@ -1126,9 +1141,13 @@ function renderDailySummary(daysCount) {
     dailyHtml += `<td><strong>${monthTotal}</strong></td>`;
     dailyHtml += '</tr>';
     
-    dom.dailySummaryBody.innerHTML = dailyHtml;
-    
-    console.log(`✅ ${selectedHome}ホームの日次集計完了 (月合計: ${monthTotal})`);
+    if (dom.dailySummaryBody) {
+        dom.dailySummaryBody.innerHTML = dailyHtml;
+        console.log(`✅ ${selectedHome}ホームの日次集計完了 (月合計: ${monthTotal})`);
+    } else {
+        console.warn('⚠️ daily-summary-body要素が見つかりません');
+    }
+}
 }
 
 
