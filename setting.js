@@ -198,12 +198,12 @@ function displayHomes(homes) {
     const rows = homeTable.querySelectorAll('tr');
     rows.forEach(row => row.remove());
     
-    // ホームを表示
+    // ホームを表示（idはフィールド名、nameは値）
     homes.forEach(home => {
         const row = document.createElement('tr');
         row.innerHTML = `
             <th>
-                <input type="text" class="home-name-input" value="${home.name}" data-id="${home.id}" style="width: 50px; text-align: center; font-size: 20px; padding: 5px; background-color: #757575; color: white; border: none; border-radius: 4px;" readonly>
+                <input type="text" class="home-name-input" value="${home.name}" data-id="${home.id}" style="width: 120px; text-align: center; font-size: 20px; padding: 5px; background-color: #757575; color: white; border: none; border-radius: 4px;" readonly>
             </th>
             <td class="td">
                 <input class="home-edit" type="button" value="編集" data-id="${home.id}" data-name="${home.name}">
@@ -217,7 +217,7 @@ function displayHomes(homes) {
     const newRow = document.createElement('tr');
     newRow.innerHTML = `
         <th>
-            <input type="text" id="new-home-input" placeholder="例: F" style="width: 50px; text-align: center; font-size: 20px; padding: 5px;">
+            <input type="text" id="new-home-input" placeholder="例: F" style="width: 120px; text-align: center; font-size: 20px; padding: 5px;">
         </th>
         <td class="td">
             <input id="add-new-home-btn" type="button" value="追加">
@@ -274,15 +274,10 @@ function attachHomeButtonListeners() {
         addBtn.addEventListener('click', async (e) => {
             e.preventDefault();
             const input = document.getElementById('new-home-input');
-            const homeName = input.value.trim().toUpperCase();
+            const homeName = input.value.trim();
             
             if (!homeName) {
                 alert('ホーム名を入力してください');
-                return;
-            }
-            
-            if (homeName.length !== 1) {
-                alert('ホーム名は1文字で入力してください');
                 return;
             }
             
@@ -299,11 +294,6 @@ function attachHomeButtonListeners() {
                 e.preventDefault();
                 document.getElementById('add-new-home-btn').click();
             }
-        });
-        
-        // 大文字化
-        newHomeInput.addEventListener('input', (e) => {
-            e.target.value = e.target.value.toUpperCase();
         });
     }
 }
@@ -382,15 +372,15 @@ function displayBikouTemplates(templates) {
     // 備考テンプレートを表示
     templates.forEach((template, index) => {
         const row = document.createElement('tr');
-        // 備考IDを編集可能な入力フィールドで表示
+        // 備考IDを表示（データベースのフィールド名）
         row.innerHTML = `
             <th>
-                <input type="text" class="bikou-id-input" value="${template.id}" data-id="${template.id}" style="width: 80px; text-align: center; font-size: 20px; padding: 5px; background-color: #757575; color: white; border: none; border-radius: 4px;" readonly>
+                <input type="text" class="bikou-id-input" value="${template.id}" data-id="${template.id}" style="width: 120px; text-align: center; font-size: 20px; padding: 5px; background-color: #757575; color: white; border: none; border-radius: 4px;" readonly>
             </th>
             <td class="td">
                 <input class="bikou-edit-id" type="button" value="名前変更" data-id="${template.id}">
                 <input class="bikou-edit" type="button" value="内容編集" data-id="${template.id}" data-text="${template.text}">
-                <input class="bikou-delete" type="button" value="削除" data-id="${template.id}" data-text="${template.text}">
+                <input class="bikou-delete" type="button" value="削除" data-id="${template.id}" data-text="${template.id}">
             </td>
         `;
         bikouTable.appendChild(row);
@@ -454,7 +444,7 @@ function attachBikouButtonListeners() {
             const templateId = e.target.dataset.id;
             const templateText = e.target.dataset.text;
             
-            if (confirm(`備考テンプレート「${templateText}」を削除しますか？\nこの操作は取り消せません。`)) {
+            if (confirm(`備考テンプレート「${templateId}」を削除しますか？\nこの操作は取り消せません。`)) {
                 await deleteBikouTemplate(templateId);
             }
         });
