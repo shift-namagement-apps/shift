@@ -714,13 +714,15 @@
                 
                 // 自分のシフトのみをフィルタリング（status=1 承認済み）
                 const myShifts = {};
+                const myUserId = currentUser.id || currentUser.username || currentUser.user_id;
+                console.log('🔍 フィルタリング対象ユーザーID:', myUserId);
                 
                 Object.entries(data.shifts || {}).forEach(([date, dateData]) => {
                     Object.entries(dateData).forEach(([home, homeData]) => {
                         Object.entries(homeData).forEach(([shiftCode, users]) => {
                             // usersは配列 - 自分のIDとstatus=1のみ
                             const myShift = users.find(u => 
-                                u.user_id === currentUser.id && 
+                                u.user_id === myUserId && 
                                 u.status === 1
                             );
                             
@@ -780,7 +782,9 @@
                 const data = await response.json();
                 if (data.success && data.user) {
                     currentUser = data.user;
-                    console.log('👤 ログインユーザー:', currentUser.name, `(${currentUser.role})`);
+                    // ユーザーIDを取得（フォールバック処理）
+                    const myUserId = currentUser.id || currentUser.username || currentUser.user_id;
+                    console.log('👤 ログインユーザー:', currentUser.name, `(${currentUser.role})`, 'user_id:', myUserId);
                     
                     // シフトデータを読み込み
                     await loadShiftData();
