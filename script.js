@@ -774,15 +774,7 @@ function setupEventListeners() {
         });
     }
 
-    // 要望関連
-    if (dom.shiftRequestList) {
-        dom.shiftRequestList.addEventListener('click', (e) => {
-            if (e.target.classList.contains('btn-reflect')) {
-                console.log('個別反映ボタンがクリックされました。', e.target.closest('.shift-request-item'));
-                alert('個別反映機能は未実装です。');
-            }
-        });
-    }
+    // 要望関連のイベントリスナーは不要（個別承認はインラインonclickで実装済み）
     
     // 一括承認ボタンのイベントは shift_create.html で直接 bulkApproveShiftRequests() を呼び出し
     // ここでの重複イベントリスナーは不要
@@ -2421,18 +2413,18 @@ async function approveSingleRequest(date, home, shiftCode, userId) {
         });
         
         if (response.success) {
-            alert('承認しました');
+            alert('反映しました');
             // モーダルを閉じて再読み込み
             document.getElementById('day-detail-modal')?.remove();
             await loadDataFromFirebase();
             render();
             renderCalendarView();
         } else {
-            alert('承認に失敗しました: ' + response.error);
+            alert('反映に失敗しました: ' + response.error);
         }
     } catch (error) {
-        console.error('承認エラー:', error);
-        alert('承認中にエラーが発生しました');
+        console.error('反映エラー:', error);
+        alert('反映中にエラーが発生しました');
     }
 }
 
