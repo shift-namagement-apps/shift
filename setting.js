@@ -359,11 +359,12 @@ function displayBikouTemplates(templates) {
     // 備考テンプレートを表示
     templates.forEach((template, index) => {
         const row = document.createElement('tr');
-        // 備考IDをそのまま表示（備考1, 備考2...）
+        // 備考テンプレートのテキストを入力欄として表示（編集可能）
         row.innerHTML = `
-            <th>${template.id}</th>
+            <th>
+                <input type="text" class="bikou-text-input" value="${template.text}" data-id="${template.id}" style="width: 200px; text-align: left; font-size: 20px; padding: 5px; background-color: #757575; color: white; border: none; border-radius: 4px;" readonly>
+            </th>
             <td class="td">
-                <input class="bikou-edit" type="button" value="編集" data-id="${template.id}" data-text="${template.text}">
                 <input class="bikou-delete" type="button" value="削除" data-id="${template.id}" data-text="${template.text}">
             </td>
         `;
@@ -378,25 +379,44 @@ function displayBikouTemplates(templates) {
  * 備考テンプレートのボタンにイベントリスナーを設定
  */
 function attachBikouButtonListeners() {
-    // 編集ボタン
-    document.querySelectorAll('.bikou-edit').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
-            e.preventDefault();
-            const templateId = e.target.dataset.id;
-            const currentText = e.target.dataset.text;
+    // テキスト入力欄をクリックで編集可能にする
+    document.querySelectorAll('.bikou-text-input').forEach(input => {
+        input.addEventListener('click', function() {
+            this.removeAttribute('readonly');
+            this.focus();
+            this.select();
+        });
+        
+        // フォーカスが外れたら保存して読み取り専用に戻す
+        input.addEventListener('blur', async function() {
+            const templateId = this.dataset.id;
+            const newText = this.value.trim();
             
-            const newText = prompt('備考テンプレートの内容を編集してください', currentText);
-            
-            if (newText === null) {
-                return; // キャンセル
-            }
-            
-            if (!newText.trim()) {
+            if (!newText) {
                 alert('備考テンプレートの内容を入力してください');
+                await loadBikouTemplates(true); // 元に戻す
                 return;
             }
             
-            await updateBikouTemplate(templateId, newText.trim());
+            // 保存処理
+            await updateBikouTemplate(templateId, newText);
+            this.setAttribute('readonly', 'readonly');
+        });
+        
+        // Enterキーで保存
+        input.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                this.blur(); // フォーカスを外して保存処理を実行
+            }
+        });
+        
+        // Escapeキーでキャンセル
+        input.addEventListener('keydown', async function(e) {
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                await loadBikouTemplates(true); // 元に戻す
+            }
         });
     });
     
