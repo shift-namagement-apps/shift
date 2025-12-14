@@ -979,7 +979,8 @@ async function renderSummaries(daysCount) {
         'EL': 0, // 早朝
         'N': 0,  // 公休
         'L': 0,  // 有休
-        'SP': 0  // 特休
+        'SP': 0,  // 特休
+        'NONE': 0  // 未定
     };
     
     // 全スタッフの全シフトをカウント
@@ -988,7 +989,7 @@ async function renderSummaries(daysCount) {
         appState.staff.forEach(staff => {
             const staffShifts = appState.shifts[staff.id] || {};
             Object.values(staffShifts).forEach(shift => {
-                if (shift.code && shift.code !== 'NONE' && shiftCodeCounts[shift.code] !== undefined) {
+                if (shift.code && shiftCodeCounts[shift.code] !== undefined) {
                     shiftCodeCounts[shift.code]++;
                 }
             });
@@ -1005,7 +1006,8 @@ async function renderSummaries(daysCount) {
         'EL': '早朝 (EL)',
         'L': '有休 (L)',
         'N': '公休 (N)',
-        'SP': '特休 (SP)'
+        'SP': '特休 (SP)',
+        'NONE': '未定 (-)'
     };
     
     for (const [code, label] of Object.entries(shiftCodeLabels)) {
@@ -1037,7 +1039,7 @@ async function renderSummaries(daysCount) {
         appState.staff.forEach(staff => {
             const staffShifts = appState.shifts[staff.id] || {};
             Object.values(staffShifts).forEach(shift => {
-                if (shift.home && shift.code !== 'NONE' && !['N', 'L', 'SP'].includes(shift.code)) {
+                if (shift.home && shift.code && !['N', 'L', 'SP'].includes(shift.code)) {
                     if (homeCounts[shift.home] !== undefined) {
                         homeCounts[shift.home]++;
                     }
@@ -1093,7 +1095,8 @@ function renderDailySummary(daysCount) {
             'EL': 0,
             'N': 0,
             'L': 0,
-            'SP': 0
+            'SP': 0,
+            'NONE': 0
         };
         
         // 全スタッフのこの日のシフトをカウント
@@ -1103,12 +1106,12 @@ function renderDailySummary(daysCount) {
                 const shift = staffShifts[day.toString()];
                 
                 // 選択されたホームのシフトのみカウント
-                if (shift && shift.home === selectedHome && shift.code !== 'NONE') {
+                if (shift && shift.home === selectedHome && shift.code) {
                     if (dayCounts[shift.code] !== undefined) {
                         dayCounts[shift.code]++;
                         
-                        // 公休系以外を月合計に加算
-                        if (!['N', 'L', 'SP'].includes(shift.code)) {
+                        // 公休系とNONE以外を月合計に加算
+                        if (!['N', 'L', 'SP', 'NONE'].includes(shift.code)) {
                             monthTotal++;
                         }
                     }
