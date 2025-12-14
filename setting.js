@@ -203,7 +203,7 @@ function displayHomes(homes) {
         const row = document.createElement('tr');
         row.innerHTML = `
             <th>
-                <input type="text" class="home-name-input" value="${home.name}" data-id="${home.id}" maxlength="1" style="width: 50px; text-align: center; font-size: 20px; padding: 5px; background-color: #757575; color: white; border: none; border-radius: 4px;" readonly>
+                <input type="text" class="home-name-input" value="${home.name}" data-id="${home.id}" style="width: 50px; text-align: center; font-size: 20px; padding: 5px; background-color: #757575; color: white; border: none; border-radius: 4px;" readonly>
             </th>
             <td class="td">
                 <input class="home-delete" type="button" value="削除" data-id="${home.id}" data-name="${home.name}">
@@ -216,7 +216,7 @@ function displayHomes(homes) {
     const newRow = document.createElement('tr');
     newRow.innerHTML = `
         <th>
-            <input type="text" id="new-home-input" placeholder="例: F" maxlength="1" style="width: 50px; text-align: center; font-size: 20px; padding: 5px;">
+            <input type="text" id="new-home-input" placeholder="例: F" style="width: 50px; text-align: center; font-size: 20px; padding: 5px;">
         </th>
         <td class="td">
             <input id="add-new-home-btn" type="button" value="追加">
@@ -482,8 +482,8 @@ async function addHome(homeName) {
         if (data.success) {
             console.log('✅ ホーム追加成功:', data.home_id);
             alert('ホームを追加しました');
-            // キャッシュをクリアして再読み込み
-            clearCache(CACHE_KEYS.HOMES, CACHE_KEYS.HOMES_TIMESTAMP);
+            // キャッシュをクリアして再読み込み（全ページで反映させるため）
+            clearAllCache();
             await loadHomes(true); // 強制再読み込み
         } else {
             console.error('❌ ホーム追加失敗:', data.error);
@@ -521,8 +521,8 @@ async function deleteHome(homeId) {
         if (data.success) {
             console.log('✅ ホーム削除成功');
             alert('ホームを削除しました');
-            // キャッシュをクリアして再読み込み
-            clearCache(CACHE_KEYS.HOMES, CACHE_KEYS.HOMES_TIMESTAMP);
+            // キャッシュをクリアして再読み込み（全ページで反映させるため）
+            clearAllCache();
             await loadHomes(true); // 強制再読み込み
         } else {
             console.error('❌ ホーム削除失敗:', data.error);
