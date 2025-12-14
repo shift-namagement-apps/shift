@@ -359,12 +359,14 @@ function displayBikouTemplates(templates) {
     // 備考テンプレートを表示
     templates.forEach((template, index) => {
         const row = document.createElement('tr');
-        // 備考テンプレートのテキストを入力欄として表示（編集可能）
+        // 備考IDを編集可能な入力フィールドで表示
         row.innerHTML = `
             <th>
-                <input type="text" class="bikou-text-input" value="${template.text}" data-id="${template.id}" style="width: 200px; text-align: left; font-size: 20px; padding: 5px; background-color: #757575; color: white; border: none; border-radius: 4px;" readonly>
+                <input type="text" class="bikou-id-input" value="${template.id}" data-id="${template.id}" style="width: 80px; text-align: center; font-size: 20px; padding: 5px; background-color: #757575; color: white; border: none; border-radius: 4px;" readonly>
             </th>
             <td class="td">
+                <input class="bikou-edit-id" type="button" value="名前変更" data-id="${template.id}">
+                <input class="bikou-edit" type="button" value="内容編集" data-id="${template.id}" data-text="${template.text}">
                 <input class="bikou-delete" type="button" value="削除" data-id="${template.id}" data-text="${template.text}">
             </td>
         `;
@@ -379,44 +381,46 @@ function displayBikouTemplates(templates) {
  * 備考テンプレートのボタンにイベントリスナーを設定
  */
 function attachBikouButtonListeners() {
-    // テキスト入力欄をクリックで編集可能にする
-    document.querySelectorAll('.bikou-text-input').forEach(input => {
-        input.addEventListener('click', function() {
-            this.removeAttribute('readonly');
-            this.focus();
-            this.select();
-        });
-        
-        // フォーカスが外れたら保存して読み取り専用に戻す
-        input.addEventListener('blur', async function() {
-            const templateId = this.dataset.id;
-            const newText = this.value.trim();
+    // 名前変更ボタン
+    document.querySelectorAll('.bikou-edit-id').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            const oldId = e.target.dataset.id;
             
-            if (!newText) {
-                alert('備考テンプレートの内容を入力してください');
-                await loadBikouTemplates(true); // 元に戻す
+            const newId = prompt('備考の名前を変更してください（例: 備考1、備考2）', oldId);
+            
+            if (newId === null) {
+                return; // キャンセル
+            }
+            
+            if (!newId.trim()) {
+                alert('備考の名前を入力してください');
                 return;
             }
             
-            // 保存処理
-            await updateBikouTemplate(templateId, newText);
-            this.setAttribute('readonly', 'readonly');
+            await renameBikouTemplate(oldId, newId.trim());
         });
-        
-        // Enterキーで保存
-        input.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                this.blur(); // フォーカスを外して保存処理を実行
+    });
+    
+    // 内容編集ボタン
+    document.querySelectorAll('.bikou-edit').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            const templateId = e.target.dataset.id;
+            const currentText = e.target.dataset.text;
+            
+            const newText = prompt('備考テンプレートの内容を編集してください', currentText);
+            
+            if (newText === null) {
+                return; // キャンセル
             }
-        });
-        
-        // Escapeキーでキャンセル
-        input.addEventListener('keydown', async function(e) {
-            if (e.key === 'Escape') {
-                e.preventDefault();
-                await loadBikouTemplates(true); // 元に戻す
+            
+            if (!newText.trim()) {
+                alert('備考テンプレートの内容を入力してください');
+                return;
             }
+            
+            await updateBikouTemplate(templateId, newText.trim());
         });
     });
     
@@ -630,24 +634,76 @@ async function deleteBikouTemplate(templateId) {
             headers: {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
+/**
+ * 備考テンプレートの名前を変更
+ */
+async function renameBikouTemplate(oldId, newId) {
+    console.log(`📝 備考テンプレート名前変更: ${oldId} -> ${newId}`);
+    
+    try {
+        const token = localStorage.getItem('shift_auth_token');
+        if (!token) {
+            alert('認証トークンがありません。再ログインしてください。');
+            return;
+        }
+        
+        // 1. 古いテンプレートのデータを取得
+        const getResponse = await fetch(`${API_BASE_URL}/api/bikou-templates`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
             }
         });
         
-        const data = await response.json();
-        
-        if (data.success) {
-            console.log('✅ 備考テンプレート削除成功');
-            alert('備考テンプレートを削除しました');
-            // キャッシュをクリアして再読み込み
-            clearCache(CACHE_KEYS.BIKOU, CACHE_KEYS.BIKOU_TIMESTAMP);
-            await loadBikouTemplates(true); // 強制再読み込み
-        } else {
-            console.error('❌ 備考テンプレート削除失敗:', data.error);
-            alert('備考テンプレートの削除に失敗しました: ' + data.error);
+        const getData = await getResponse.json();
+        if (!getData.success) {
+            throw new Error('テンプレートデータの取得に失敗しました');
         }
+        
+        const oldTemplate = getData.templates.find(t => t.id === oldId);
+        if (!oldTemplate) {
+            throw new Error('変更対象のテンプレートが見つかりません');
+        }
+        
+        // 2. 新しいIDでテンプレートを作成
+        const addResponse = await fetch(`${API_BASE_URL}/api/bikou-templates`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ text: oldTemplate.text, id: newId })
+        });
+        
+        const addData = await addResponse.json();
+        if (!addData.success) {
+            throw new Error('新しい名前での作成に失敗しました: ' + addData.error);
+        }
+        
+        // 3. 古いテンプレートを削除
+        const deleteResponse = await fetch(`${API_BASE_URL}/api/bikou-templates/${oldId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        const deleteData = await deleteResponse.json();
+        if (!deleteData.success) {
+            console.warn('⚠️ 古いテンプレートの削除に失敗:', deleteData.error);
+        }
+        
+        console.log('✅ 備考テンプレート名前変更成功');
+        alert('備考テンプレートの名前を変更しました');
+        // キャッシュをクリアして再読み込み
+        clearCache(CACHE_KEYS.BIKOU, CACHE_KEYS.BIKOU_TIMESTAMP);
+        await loadBikouTemplates(true);
+        
     } catch (error) {
-        console.error('❌ 備考テンプレート削除エラー:', error);
-        alert('備考テンプレートの削除中にエラーが発生しました');
+        console.error('❌ 備考テンプレート名前変更エラー:', error);
+        alert('備考テンプレートの名前変更中にエラーが発生しました: ' + error.message);
     }
 }
 
@@ -669,6 +725,27 @@ async function updateBikouTemplate(templateId, newText) {
             headers: {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ text: newText })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            console.log('✅ 備考テンプレート更新成功');
+            alert('備考テンプレートを更新しました');
+            // キャッシュをクリアして再読み込み
+            clearCache(CACHE_KEYS.BIKOU, CACHE_KEYS.BIKOU_TIMESTAMP);
+            await loadBikouTemplates(true); // 強制再読み込み
+        } else {
+            console.error('❌ 備考テンプレート更新失敗:', data.error);
+            alert('備考テンプレートの更新に失敗しました: ' + data.error);
+        }
+    } catch (error) {
+        console.error('❌ 備考テンプレート更新エラー:', error);
+        alert('備考テンプレートの更新中にエラーが発生しました');
+    }
+}               'Content-Type': 'application/json'
             },
             body: JSON.stringify({ text: newText })
         });
