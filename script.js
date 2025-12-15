@@ -1151,7 +1151,6 @@ function renderDailySummary(daysCount) {
         console.warn('⚠️ daily-summary-body要素が見つかりません');
     }
 }
-}
 
 
 // --- イベントハンドラ -------------------------------------
@@ -2473,3 +2472,4 @@ window.loadSettings = loadSettings;
 window.showDayDetailModal = showDayDetailModal;
 window.approveSingleRequest = approveSingleRequest;
 window.renderMainCalendarView = renderMainCalendarView;
+window.populateHomeSelect = populateHomeSelect;
