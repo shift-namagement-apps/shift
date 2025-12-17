@@ -414,6 +414,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         homeSelect: document.getElementById('home-select'),
         shiftTableHead: document.getElementById('shift-table-header'),
         shiftTableBody: document.getElementById('shift-table-body'),
+        dailySummaryHeader: document.getElementById('daily-summary-header'),
         dailySummaryBody: document.getElementById('daily-summary-body'),
         shiftRequestList: document.getElementById('shift-request-list'),
         monthlySummary: document.getElementById('monthly-summary'),
@@ -1083,6 +1084,17 @@ function renderDailySummary(daysCount) {
     console.log('👥 スタッフ数:', appState.staff ? appState.staff.length : 0);
     console.log('📅 日数:', daysCount);
     
+    // ヘッダー行を生成（日付を表示）
+    let headerHtml = '<tr><th>集計項目</th>';
+    for (let day = 1; day <= daysCount; day++) {
+        headerHtml += `<th>${day}</th>`;
+    }
+    headerHtml += '<th>月合計</th></tr>';
+    
+    if (dom.dailySummaryHeader) {
+        dom.dailySummaryHeader.innerHTML = headerHtml;
+    }
+    
     // 各日のシフトコード別カウントを計算
     const dailyData = [];
     let monthTotal = 0;
@@ -1123,7 +1135,7 @@ function renderDailySummary(daysCount) {
     }
     
     // HTML生成
-    let dailyHtml = `<tr><th>${selectedHome}ホーム</th>`;
+    let dailyHtml = `<tr><td>${selectedHome}ホーム</td>`;
     
     // 各日のデータを表示
     for (let i = 0; i < daysCount; i++) {
