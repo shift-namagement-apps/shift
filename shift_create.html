@@ -162,11 +162,12 @@
             text-align: center;
             padding: 8px 4px;
             background: #e8e8e8;
-            border: 1px solid #ddd;
+            border: 1px solid #e0e0e0;
             font-weight: 600;
             font-size: 12px;
             position: sticky;
             top: 0;
+            box-sizing: border-box;
         }
         
         .summary-table thead th:first-child {
@@ -179,6 +180,8 @@
             left: 0;
             z-index: 10;
             background: #e8e8e8;
+            border-right: 2px solid #ddd;
+            box-sizing: border-box;
         }
         
         /* 日次集計のボディ（データ行） */
@@ -191,6 +194,7 @@
             border: 1px solid #e0e0e0;
             padding: 4px;
             background: #f9f9f9;
+            box-sizing: border-box;
         }
         
         .summary-table tbody td:first-child {
@@ -204,9 +208,11 @@
             left: 0;
             background: #f0f0f0;
             z-index: 5;
+            border-right: 2px solid #ddd;
+            box-sizing: border-box;
         }
         
-        /* 月合計列 */
+        /* 月合計列 - シフト表と同じ幅 */
         .summary-table thead th:last-child,
         .summary-table tbody td:last-child {
             min-width: 80px;
@@ -214,6 +220,7 @@
             width: 80px;
             font-weight: bold;
             background: #e0e0e0;
+            border-right: 1px solid #e0e0e0;
         }
         
         .summary-table tbody td:last-child {
@@ -250,6 +257,12 @@
         
         .summary-table-container::-webkit-scrollbar-thumb:hover {
             background: #555;
+        }
+        
+        /* シフト表のセルにもbox-sizingを適用 */
+        .shift-table thead th,
+        .shift-table tbody td {
+            box-sizing: border-box;
         }
     </style>
 </head>
