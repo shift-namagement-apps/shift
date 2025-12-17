@@ -51,6 +51,7 @@
             vertical-align: middle;
             border: 1px solid #e0e0e0;
             padding: 4px;
+            box-sizing: border-box;
         }
         
         .shift-table tbody td:first-child {
@@ -60,6 +61,7 @@
             text-align: left;
             padding-left: 12px;
             font-weight: 500;
+            box-sizing: border-box;
         }
         
         .shift-table thead th {
@@ -67,13 +69,14 @@
             max-width: 80px;
             width: 80px;
             text-align: center;
-            padding: 12px 4px;
+            padding: 8px 4px;
             background: #f8f9fa;
             border: 1px solid #e0e0e0;
             font-weight: 600;
             position: sticky;
             top: 0;
             z-index: 15;
+            box-sizing: border-box;
         }
         
         .shift-table thead th:first-child {
@@ -82,6 +85,16 @@
             width: 150px;
             text-align: left;
             padding-left: 12px;
+            box-sizing: border-box;
+        }
+        
+        /* 月合計列 - シフト表 */
+        .shift-table thead th:last-child,
+        .shift-table tbody td:last-child {
+            min-width: 80px;
+            max-width: 80px;
+            width: 80px;
+            box-sizing: border-box;
         }
         
         /* スクロールバーのスタイル */
@@ -219,8 +232,8 @@
             max-width: 80px;
             width: 80px;
             font-weight: bold;
-            background: #e0e0e0;
-            border-right: 1px solid #e0e0e0;
+            background: #e8e8e8;
+            box-sizing: border-box;
         }
         
         .summary-table tbody td:last-child {
@@ -257,12 +270,6 @@
         
         .summary-table-container::-webkit-scrollbar-thumb:hover {
             background: #555;
-        }
-        
-        /* シフト表のセルにもbox-sizingを適用 */
-        .shift-table thead th,
-        .shift-table tbody td {
-            box-sizing: border-box;
         }
     </style>
 </head>
