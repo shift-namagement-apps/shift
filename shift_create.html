@@ -103,6 +103,154 @@
         .shift-table-container::-webkit-scrollbar-thumb:hover {
             background: #555;
         }
+        
+        /* 日次集計のスタイル */
+        .daily-summary-header-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .daily-summary-title {
+            margin: 0;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+        
+        .daily-summary-home-selector {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .daily-summary-home-selector label {
+            font-size: 14px;
+            font-weight: 500;
+            margin: 0;
+        }
+        
+        .daily-summary-home-selector select {
+            padding: 5px 10px;
+            font-size: 14px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: white;
+        }
+        
+        .summary-table-container {
+            overflow-x: auto;
+            overflow-y: hidden;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: white;
+        }
+        
+        .summary-table {
+            width: auto;
+            min-width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+        
+        /* 日次集計のヘッダー（日付） */
+        .summary-table thead th {
+            min-width: 80px;
+            max-width: 80px;
+            width: 80px;
+            text-align: center;
+            padding: 8px 4px;
+            background: #e8e8e8;
+            border: 1px solid #ddd;
+            font-weight: 600;
+            font-size: 12px;
+            position: sticky;
+            top: 0;
+        }
+        
+        .summary-table thead th:first-child {
+            min-width: 150px;
+            max-width: 150px;
+            width: 150px;
+            text-align: left;
+            padding-left: 12px;
+            position: sticky;
+            left: 0;
+            z-index: 10;
+            background: #e8e8e8;
+        }
+        
+        /* 日次集計のボディ（データ行） */
+        .summary-table tbody td {
+            min-width: 80px;
+            max-width: 80px;
+            width: 80px;
+            text-align: center;
+            vertical-align: top;
+            border: 1px solid #e0e0e0;
+            padding: 4px;
+            background: #f9f9f9;
+        }
+        
+        .summary-table tbody td:first-child {
+            min-width: 150px;
+            max-width: 150px;
+            width: 150px;
+            text-align: left;
+            padding-left: 12px;
+            font-weight: 600;
+            position: sticky;
+            left: 0;
+            background: #f0f0f0;
+            z-index: 5;
+        }
+        
+        /* 月合計列 */
+        .summary-table thead th:last-child,
+        .summary-table tbody td:last-child {
+            min-width: 80px;
+            max-width: 80px;
+            width: 80px;
+            font-weight: bold;
+            background: #e0e0e0;
+        }
+        
+        .summary-table tbody td:last-child {
+            background: #f5f5f5;
+        }
+        
+        .summary-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            font-size: 11px;
+            line-height: 1.4;
+        }
+        
+        .summary-list li {
+            white-space: nowrap;
+        }
+        
+        /* スクロールバーのスタイル（日次集計） */
+        .summary-table-container::-webkit-scrollbar {
+            width: 12px;
+            height: 12px;
+        }
+        
+        .summary-table-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 6px;
+        }
+        
+        .summary-table-container::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 6px;
+        }
+        
+        .summary-table-container::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
     </style>
 </head>
 <body>
@@ -204,9 +352,9 @@
                     </table>
                 </div>
 
-                <h3 class="daily-summary-title">ホーム別日次集計</h3>
-                <div class="summary-table-container">
-                    <div class="daily-summary-header">
+                <div class="daily-summary-header-bar">
+                    <h3 class="daily-summary-title">ホーム別日次集計</h3>
+                    <div class="daily-summary-home-selector">
                         <label for="daily-summary-home-select">集計対象：</label>
                         <select id="daily-summary-home-select">
                             <!-- ホーム選択肢は動的に生成されます -->
@@ -217,7 +365,11 @@
                             <option value="E">Eホーム</option>
                         </select>
                     </div>
+                </div>
+                <div class="summary-table-container" id="summary-table-container">
                     <table class="summary-table" id="daily-summary-table">
+                        <thead id="daily-summary-header">
+                            </thead>
                         <tbody id="daily-summary-body">
                             </tbody>
                     </table>
@@ -277,6 +429,9 @@
             if (user) {
                 console.log('👤 ログインユーザー:', user.name, `(${user.role})`);
             }
+            
+            // シフト表と日次集計のスクロール同期を設定
+            setupScrollSync();
         });
         
         // 戻るボタンの動作を設定
@@ -284,6 +439,32 @@
             e.preventDefault();
             window.history.back();
         });
+        
+        // シフト表と日次集計のスクロール同期
+        function setupScrollSync() {
+            const shiftTableContainer = document.querySelector('.shift-table-container');
+            const summaryTableContainer = document.getElementById('summary-table-container');
+            
+            let isSyncing = false;
+            
+            if (shiftTableContainer && summaryTableContainer) {
+                shiftTableContainer.addEventListener('scroll', () => {
+                    if (isSyncing) return;
+                    isSyncing = true;
+                    summaryTableContainer.scrollLeft = shiftTableContainer.scrollLeft;
+                    requestAnimationFrame(() => { isSyncing = false; });
+                });
+                
+                summaryTableContainer.addEventListener('scroll', () => {
+                    if (isSyncing) return;
+                    isSyncing = true;
+                    shiftTableContainer.scrollLeft = summaryTableContainer.scrollLeft;
+                    requestAnimationFrame(() => { isSyncing = false; });
+                });
+                
+                console.log('✅ スクロール同期を設定しました');
+            }
+        }
     </script>
 </body>
 </html>
