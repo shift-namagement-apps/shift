@@ -59,6 +59,8 @@
         border-radius: 8px; 
         padding: 15px 20px 20px 20px;
         margin-top: 40px;
+        width: 100%;
+        box-sizing: border-box;
 
 
     }
@@ -87,6 +89,8 @@
         background-color: #413f3f;
         border-radius: 8px; 
         padding: 15px 20px 20px 20px;
+        width: 100%;
+        box-sizing: border-box;
     }
 
 
@@ -153,13 +157,20 @@ input[type="reset"] {
         border-radius: 8px; 
         padding: 15px 20px 20px 20px;
         margin-top: 40px;
+        width: 100%;
+        box-sizing: border-box;
     }
 
     .all-div {
         display: flex;
         flex-direction: column;
-        gap: 0;
+        gap: 20px;
         align-items: center;
+        width: 100%;
+        max-width: 720px;
+        margin: 0 auto;
+        padding: 0 16px;
+        box-sizing: border-box;
     }
     
       header {
@@ -346,19 +357,18 @@ input[type="reset"] {
 
     .all-div {
         display: flex;        
+        flex-direction: column;
         gap: 20px;            
-        justify-content: space-between; 
-        flex-wrap: wrap;
-        align-items: flex-start;
-        max-width: 1600px;
+        justify-content: flex-start; 
+        align-items: stretch;
+        max-width: 720px;
         margin: 0 auto;
-        padding: 0 20px;
+        padding: 0 16px;
+        box-sizing: border-box;
     }
 
     .home-div, .bikou-div, .code-div {
-        flex: 1 1 calc(33.333% - 14px);
-        min-width: 320px;
-        max-width: 500px;
+        width: 100%;
         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
 
