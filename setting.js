@@ -11,7 +11,9 @@ const CACHE_KEYS = {
     HOMES: 'shift_cache_homes',
     HOMES_TIMESTAMP: 'shift_cache_homes_timestamp',
     BIKOU: 'shift_cache_bikou_templates',
-    BIKOU_TIMESTAMP: 'shift_cache_bikou_timestamp'
+    BIKOU_TIMESTAMP: 'shift_cache_bikou_timestamp',
+    CODES: 'shift_cache_codes',
+    CODES_TIMESTAMP: 'shift_cache_codes_timestamp'
 };
 
 // 初期データ
@@ -22,6 +24,18 @@ const INITIAL_BIKOU_TEMPLATES = [
     { id: '備考3', text: '備考テンプレート3' },
     { id: '備考4', text: '備考テンプレート4' },
     { id: '備考5', text: '備考テンプレート5' }
+];
+
+// 初期シフトコード（必要に応じて編集可能）
+const INITIAL_SHIFT_CODES = [
+    { code: 'A', label: '日勤', hours: 8, order: 1 },
+    { code: 'B', label: '夜勤', hours: 8, order: 2 },
+    { code: 'C', label: '遅番', hours: 8, order: 3 },
+    { code: 'EL', label: '早朝', hours: 3, order: 4 },
+    { code: 'L', label: '有休', hours: 0, order: 5 },
+    { code: 'N', label: '公休', hours: 0, order: 6 },
+    { code: 'SP', label: '特休', hours: 0, order: 7 },
+    { code: 'NONE', label: '未定 (-)', hours: 0, order: 99 }
 ];
 
 /**
@@ -99,6 +113,31 @@ async function ensureInitialData() {
             }
         }
         
+        // シフトコードの初期データ確認
+        const codesResponse = await fetch(`${API_BASE_URL}/api/shift-codes`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        if (codesResponse.ok) {
+            const codesData = await codesResponse.json();
+            if (!(codesData.success && codesData.count > 0)) {
+                console.log('📦 シフトコード初期化開始');
+                for (const c of INITIAL_SHIFT_CODES) {
+                    await fetch(`${API_BASE_URL}/api/shift-codes`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(c)
+                    });
+                }
+            }
+        }
+
         console.log('✅ 初期データ確認完了');
     } catch (error) {
         console.error('❌ 初期データ確認エラー:', error);
@@ -124,6 +163,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // データ読み込み（キャッシュ優先）
     await loadHomes();
     await loadBikouTemplates();
+    await loadShiftCodes();
     
     // イベントリスナー設定
     setupEventListeners();
@@ -471,6 +511,234 @@ function setupEventListeners() {
             e.preventDefault();
             await showAddBikouTemplateDialog();
         });
+    }
+
+    // シフトコード追加ボタン
+    const codeAddBtn = document.querySelector('.code-tuika');
+    if (codeAddBtn) {
+        codeAddBtn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            await showAddCodeDialog();
+        });
+    }
+}
+
+/**
+ * シフトコード一覧を読み込んで表示（キャッシュ優先）
+ */
+async function loadShiftCodes(forceRefresh = false) {
+    console.log('🔤 シフトコード一覧読み込み中...');
+
+    if (!forceRefresh) {
+        const cached = getCachedData(CACHE_KEYS.CODES, CACHE_KEYS.CODES_TIMESTAMP);
+        if (cached) {
+            console.log('📦 キャッシュからコード取得:', cached.length + '件');
+            displayShiftCodes(cached);
+            return;
+        }
+    }
+
+    try {
+        const token = localStorage.getItem('shift_auth_token');
+        if (!token) {
+            console.error('❌ 認証トークンがありません');
+            return;
+        }
+
+        const resp = await fetch(`${API_BASE_URL}/api/shift-codes`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        if (!resp.ok) throw new Error(`HTTP error! status: ${resp.status}`);
+        const data = await resp.json();
+        if (data.success) {
+            setCachedData(CACHE_KEYS.CODES, data.codes, CACHE_KEYS.CODES_TIMESTAMP);
+            displayShiftCodes(data.codes);
+        } else {
+            alert('シフトコードの取得に失敗しました: ' + data.error);
+        }
+    } catch (e) {
+        console.error('❌ シフトコード取得エラー:', e);
+        alert('シフトコードの取得中にエラーが発生しました');
+    }
+}
+
+/**
+ * シフトコードをテーブルに表示
+ */
+function displayShiftCodes(codes) {
+    const codeTable = document.querySelector('.code-table');
+    if (!codeTable) return;
+
+    // 既存行を追加ボタン行以外クリア
+    const rows = codeTable.querySelectorAll('tr');
+    rows.forEach((row, idx) => { if (idx > 0) row.remove(); });
+
+    codes.forEach((c) => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <th>
+                <input type="text" class="code-id-input" value="${c.code}" data-id="${c.code}" style="width: 100px; text-align: center; font-size: 18px; padding: 5px; background-color: #757575; color: white; border: none; border-radius: 4px;" readonly>
+            </th>
+            <td class="td">
+                <span style="margin-right:8px; color:#fff">${c.label}（${c.hours}時間）</span>
+                <input class="code-edit" type="button" value="編集" data-id="${c.code}" data-label="${c.label}" data-hours="${c.hours}" data-order="${c.order}">
+                <input class="code-delete" type="button" value="削除" data-id="${c.code}">
+            </td>
+        `;
+        codeTable.appendChild(row);
+    });
+
+    attachCodeButtonListeners();
+}
+
+function attachCodeButtonListeners() {
+    // 編集
+    document.querySelectorAll('.code-edit').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            const id = e.target.dataset.id;
+            const currentLabel = e.target.dataset.label;
+            const currentHours = e.target.dataset.hours;
+            const currentOrder = e.target.dataset.order;
+
+            const label = prompt('表示名を入力してください（例: 日勤）', currentLabel);
+            if (label === null) return;
+            const hoursStr = prompt('所定時間（数値）を入力してください（例: 8）', currentHours);
+            if (hoursStr === null) return;
+            const orderStr = prompt('並び順（数値・任意）', currentOrder);
+            const hours = parseFloat(hoursStr);
+            const order = orderStr ? parseInt(orderStr, 10) : undefined;
+            if (Number.isNaN(hours)) {
+                alert('時間は数値で入力してください');
+                return;
+            }
+            await updateShiftCode(id, label.trim(), hours, order);
+        });
+    });
+
+    // 削除
+    document.querySelectorAll('.code-delete').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            const id = e.target.dataset.id;
+            if (confirm(`コード ${id} を削除しますか？`)) {
+                await deleteShiftCode(id);
+            }
+        });
+    });
+}
+
+async function showAddCodeDialog() {
+    const code = prompt('コードを入力してください（例: A, B, C, EL, N, L, SP, NONE）');
+    if (!code) return;
+    const label = prompt('表示名を入力してください（例: 日勤, 夜勤, 未定 (-) ）');
+    if (!label) return;
+    const hoursStr = prompt('所定時間（数値）を入力してください（例: 8）', '8');
+    if (!hoursStr) return;
+    const hours = parseFloat(hoursStr);
+    if (Number.isNaN(hours)) {
+        alert('時間は数値で入力してください');
+        return;
+    }
+    await addShiftCode(code.trim(), label.trim(), hours);
+}
+
+async function addShiftCode(code, label, hours) {
+    try {
+        const token = localStorage.getItem('shift_auth_token');
+        const resp = await fetch(`${API_BASE_URL}/api/shift-codes`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ code, label, hours })
+        });
+        const data = await resp.json();
+        if (data.success) {
+            clearCache(CACHE_KEYS.CODES, CACHE_KEYS.CODES_TIMESTAMP);
+            await loadShiftCodes(true);
+        } else {
+            alert('シフトコード追加に失敗しました: ' + data.error);
+        }
+    } catch (e) {
+        console.error('❌ シフトコード追加エラー:', e);
+        alert('シフトコードの追加中にエラーが発生しました');
+    }
+}
+
+async function updateShiftCode(code, label, hours, order) {
+    try {
+        const token = localStorage.getItem('shift_auth_token');
+        const body = { label, hours };
+        if (order !== undefined) body.order = order;
+        const resp = await fetch(`${API_BASE_URL}/api/shift-codes/${code}`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(body)
+        });
+        const data = await resp.json();
+        if (data.success) {
+            clearCache(CACHE_KEYS.CODES, CACHE_KEYS.CODES_TIMESTAMP);
+            await loadShiftCodes(true);
+        } else {
+            alert('シフトコード更新に失敗しました: ' + data.error);
+        }
+    } catch (e) {
+        console.error('❌ シフトコード更新エラー:', e);
+        alert('シフトコードの更新中にエラーが発生しました');
+    }
+}
+
+async function deleteShiftCode(code) {
+    try {
+        const token = localStorage.getItem('shift_auth_token');
+        const resp = await fetch(`${API_BASE_URL}/api/shift-codes/${code}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        const data = await resp.json();
+        if (data.success) {
+            clearCache(CACHE_KEYS.CODES, CACHE_KEYS.CODES_TIMESTAMP);
+            await loadShiftCodes(true);
+        } else {
+            alert('シフトコード削除に失敗しました: ' + data.error);
+        }
+    } catch (e) {
+        console.error('❌ シフトコード削除エラー:', e);
+        alert('シフトコードの削除中にエラーが発生しました');
+    }
+}
+
+/**
+ * 指定コードの所定時間を取得（計算用）
+ */
+async function getShiftCodeHours(code) {
+    try {
+        const token = localStorage.getItem('shift_auth_token');
+        const resp = await fetch(`${API_BASE_URL}/api/shift-codes/${code}/hours`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        const data = await resp.json();
+        if (data.success) return data.hours;
+        return 0;
+    } catch (e) {
+        console.error('❌ 時間取得エラー:', e);
+        return 0;
     }
 }
 
