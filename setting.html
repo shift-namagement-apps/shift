@@ -326,18 +326,20 @@ input[type="reset"] {
     }
 
     .all-div {
-        border-collapse: collapse;
         display: flex;        
-        gap: 40px;            
+        gap: 24px;            
         justify-content: center; 
         flex-wrap: wrap;
-        align-items: flex-start;
+        align-items: stretch;
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 0 20px;
     }
 
     .home-div, .bikou-div, .code-div {
-        flex: 1 1 320px;
-        max-width: 480px;
-        min-width: 320px;
+        flex: 1 1 0;
+        min-width: 350px;
+        max-width: 450px;
     }
 
   header {
