@@ -12,7 +12,7 @@ const API_CONFIG = {
   
   // 本番環境（Cloud Run + GitHub Pages）
   production: {
-    apiBaseUrl: 'https://shift-namagement-apps-gk6ymvnejq-an.a.run.app',
+    apiBaseUrl: 'https://shift-namagement-apps-27faqfacya-an.a.run.app',
     basePath: '/shift/'  // GitHub Pagesのリポジトリ名
   }
 };
@@ -173,4 +173,5 @@ const API = {
 window.API_BASE_URL = API_BASE_URL;
 window.BASE_PATH = BASE_PATH;
 window.API = API;
+
 
