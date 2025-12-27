@@ -56,8 +56,8 @@
 
     .bikou-div{
         background-color: #413f3f;
-        border-radius: 6px; 
-        padding: 10px 20px 20px 20px;
+        border-radius: 8px; 
+        padding: 15px 20px 20px 20px;
         margin-top: 40px;
 
 
@@ -66,19 +66,27 @@
     .home{
         color: white;
         padding: 10px;
-        border-radius: 6px;      
+        border-radius: 6px;
+        font-size: 18px;
+        text-align: center;
+        margin: 0 0 10px 0;
+        background: linear-gradient(135deg, #555 0%, #333 100%);
     }
 
         .bikou{
         color: white;
         padding: 10px;
-        border-radius: 6px;      
+        border-radius: 6px;
+        font-size: 18px;
+        text-align: center;
+        margin: 0 0 10px 0;
+        background: linear-gradient(135deg, #555 0%, #333 100%);
     }
 
     .home-div {
         background-color: #413f3f;
-        border-radius: 6px; 
-        padding: 10px 20px 20px 20px;
+        border-radius: 8px; 
+        padding: 15px 20px 20px 20px;
     }
 
 
@@ -142,8 +150,8 @@ input[type="reset"] {
 
     .code-div {
         background-color: #413f3f;
-        border-radius: 6px; 
-        padding: 10px 20px 20px 20px;
+        border-radius: 8px; 
+        padding: 15px 20px 20px 20px;
         margin-top: 40px;
     }
 
@@ -207,14 +215,19 @@ input[type="reset"] {
     .bikou{
         color: white;
         padding: 10px;
-        border-radius: 6px; 
+        border-radius: 6px;
+        font-size: 20px;
+        text-align: center;
+        margin: 0 0 15px 0;
+        background: linear-gradient(135deg, #666 0%, #444 100%);
     }
 
     .bikou-div{
         background-color: #413f3f;
-        border-radius: 6px; 
-        padding: 10px 20px 20px 20px;
+        border-radius: 8px; 
+        padding: 15px 20px 20px 20px;
         margin-top: 0px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.15);
 
     }
 
@@ -222,13 +235,18 @@ input[type="reset"] {
 
         color: white;
         padding: 10px;
-        border-radius: 6px;      
+        border-radius: 6px;
+        font-size: 20px;
+        text-align: center;
+        margin: 0 0 15px 0;
+        background: linear-gradient(135deg, #666 0%, #444 100%);
     }
 
     .home-div {
         background-color: #413f3f;
-        border-radius: 6px; 
-        padding: 10px 20px 20px 20px;
+        border-radius: 8px; 
+        padding: 15px 20px 20px 20px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.15);
     }
 
 
@@ -320,26 +338,28 @@ input[type="reset"] {
 
     .code-div {
         background-color: #413f3f;
-        border-radius: 6px; 
-        padding: 10px 20px 20px 20px;
+        border-radius: 8px; 
+        padding: 15px 20px 20px 20px;
         margin-top: 0px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.15);
     }
 
     .all-div {
         display: flex;        
-        gap: 24px;            
-        justify-content: center; 
+        gap: 20px;            
+        justify-content: space-between; 
         flex-wrap: wrap;
-        align-items: stretch;
-        max-width: 1400px;
+        align-items: flex-start;
+        max-width: 1600px;
         margin: 0 auto;
         padding: 0 20px;
     }
 
     .home-div, .bikou-div, .code-div {
-        flex: 1 1 0;
-        min-width: 350px;
-        max-width: 450px;
+        flex: 1 1 calc(33.333% - 14px);
+        min-width: 320px;
+        max-width: 500px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
 
   header {
