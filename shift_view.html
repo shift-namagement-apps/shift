@@ -378,6 +378,8 @@
         // ホーム選択肢を動的生成
         document.addEventListener('DOMContentLoaded', async () => {
             await populateHomeSelect(document.getElementById('daily-summary-home-select'), { defaultValue: 'A' });
+            // シフトコード定義をDBから取得（ラベル/時間を他画面でも使えるように）
+            await loadShiftCodesToWindow();
         });
         
         // script.jsのrenderShiftTableを完全に置き換える
@@ -521,6 +523,33 @@
                 // エラーでもshiftsを初期化
                 if (!window.appState) window.appState = {};
                 window.appState.shifts = {};
+            }
+        }
+
+        // DBからシフトコードを取得し、window.SHIFT_CODESに格納
+        async function loadShiftCodesToWindow() {
+            try {
+                const token = localStorage.getItem('shift_auth_token');
+                const resp = await fetch(`${API_BASE_URL}/api/shift-codes`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                const data = await resp.json();
+                if (data.success) {
+                    // { code: { label, hours, class } } の形に整形
+                    const map = {};
+                    (data.codes || []).forEach(c => {
+                        map[c.code] = { label: c.label, hours: c.hours, class: '' };
+                    });
+                    // 未定(NONE)がなければ追加
+                    if (!map['NONE']) map['NONE'] = { label: '未定 (-)', hours: 0, class: '' };
+                    window.SHIFT_CODES = map;
+                }
+            } catch (e) {
+                console.warn('⚠️ シフトコード取得に失敗しました', e);
             }
         }
         
