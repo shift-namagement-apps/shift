@@ -130,6 +130,15 @@ input[type="reset"] {
         padding-left: 0px;
         margin-top: 20px;
     }  
+
+    .code-table {
+        background-color: #757575;
+        padding-right: 30px;
+        border-radius: 10px; 
+        padding: 10px;
+        padding-left: 0px;
+        margin-top: 20px;
+    }
     
       header {
     display: flex;
@@ -287,10 +296,16 @@ input[type="reset"] {
     }
 
     .all-div {
-    border-collapse: collapse;
-    display: flex;        
-    gap: 40px;            
-    justify-content: center; 
+        border-collapse: collapse;
+        display: flex;        
+        gap: 40px;            
+        justify-content: center; 
+        flex-wrap: wrap;
+    }
+
+    .home-div, .bikou-div, .code-div {
+        flex: 1 1 320px;
+        max-width: 480px;
     }
 
   header {
@@ -328,6 +343,18 @@ input[type="reset"] {
                     </td>
                 </tr>
                 <!-- 以下のテンプレートはJavaScriptで動的に追加されます -->
+            </table>
+        </div>
+        <div class="code-div">
+            <h2 class="home">シフトコード管理</h2>
+            <table class="code-table">
+                <tr>
+                    <th>コードを追加</th>
+                    <td class="td">
+                        <input class="code-tuika" type="button" value="追加">
+                    </td>
+                </tr>
+                <!-- シフトコードはJavaScriptで動的に追加されます -->
             </table>
         </div>
         </div>
