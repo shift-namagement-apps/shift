@@ -130,6 +130,87 @@
             background: #fafafa;
             border: 1px solid #e0e0e0;
         }
+
+        /* モバイル向け最適化 */
+        @media (max-width: 768px) {
+            .app-container {
+                gap: 0.75rem;
+            }
+
+            /* 左右のサイドバーや要約は非表示 */
+            .sidebar-left {
+                display: none !important;
+            }
+
+            .sidebar-right,
+            .daily-summary-title,
+            .summary-table-container {
+                display: none !important;
+            }
+
+            /* シフト表をできるだけ広く */
+            .shift-table-container {
+                max-height: none;
+                height: calc(100vh - 160px);
+                border: none;
+                border-radius: 0;
+                -webkit-overflow-scrolling: touch; /* iOS 慣性スクロール */
+            }
+
+            .main-wrapper {
+                gap: 0.5rem;
+            }
+
+            .app-header {
+                padding: 0.5rem;
+            }
+
+            .date-selector select {
+                padding: 4px;
+                font-size: 14px;
+            }
+
+            /* セルをコンパクトに */
+            .shift-table thead th {
+                min-width: 56px;
+                max-width: 56px;
+                width: 56px;
+                padding: 8px 2px;
+                font-size: 12px;
+            }
+
+            .shift-table tbody td {
+                min-width: 56px;
+                max-width: 56px;
+                width: 56px;
+                padding: 2px;
+            }
+
+            .shift-table tbody tr {
+                height: 38px;
+            }
+
+            .shift-table thead th:first-child,
+            .shift-table tbody td:first-child {
+                min-width: 120px;
+                max-width: 120px;
+                width: 120px;
+            }
+
+            /* 月合計列は省略 */
+            .shift-table thead th:last-child,
+            .shift-table tbody td:last-child {
+                display: none !important;
+            }
+
+            /* シフトコード表示もコンパクトに */
+            .shift-code {
+                font-size: 12px;
+                line-height: 1;
+                padding: 2px 6px;
+                display: inline-block;
+            }
+        }
     </style>
 </head>
 <body>
