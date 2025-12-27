@@ -6,27 +6,6 @@
     <title>シフト表管理システム</title>
     <link rel="stylesheet" href="styles.css">
     <style>
-        /* 左サイドバーを非表示にするための追加スタイル */
-        .sidebar-left {
-            display: none;
-        }
-
-        /* メインコンテンツの幅を調整 */
-        .app-container {
-            display: flex;
-            gap: 1.5rem;
-            max-width: 1800px;
-            margin: 0 auto;
-        }
-
-        .main-wrapper {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-            min-width: 0;
-        }
-        
         /* シフト表のスクロール対応 */
         .shift-table-container {
             max-height: calc(10 * 50px + 60px); /* 10人分の高さ + ヘッダー */
@@ -72,6 +51,7 @@
             vertical-align: middle;
             border: 1px solid #e0e0e0;
             padding: 4px;
+            box-sizing: border-box;
         }
         
         .shift-table tbody td:first-child {
@@ -81,6 +61,7 @@
             text-align: left;
             padding-left: 12px;
             font-weight: 500;
+            box-sizing: border-box;
         }
         
         .shift-table thead th {
@@ -88,13 +69,14 @@
             max-width: 80px;
             width: 80px;
             text-align: center;
-            padding: 12px 4px;
+            padding: 8px 4px;
             background: #f8f9fa;
             border: 1px solid #e0e0e0;
             font-weight: 600;
             position: sticky;
             top: 0;
             z-index: 15;
+            box-sizing: border-box;
         }
         
         .shift-table thead th:first-child {
@@ -103,6 +85,16 @@
             width: 150px;
             text-align: left;
             padding-left: 12px;
+            box-sizing: border-box;
+        }
+        
+        /* 月合計列 - シフト表 */
+        .shift-table thead th:last-child,
+        .shift-table tbody td:last-child {
+            min-width: 80px;
+            max-width: 80px;
+            width: 80px;
+            box-sizing: border-box;
         }
         
         /* スクロールバーのスタイル */
@@ -125,91 +117,159 @@
             background: #555;
         }
         
-        /* 空行のスタイル */
-        .shift-table tbody tr.empty-row td {
-            background: #fafafa;
-            border: 1px solid #e0e0e0;
+        /* 日次集計のスタイル */
+        .daily-summary-header-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1.5rem;
+            margin-bottom: 0.5rem;
         }
-
-        /* モバイル向け最適化 */
-        @media (max-width: 768px) {
-            .app-container {
-                gap: 0.75rem;
-            }
-
-            /* 左右のサイドバーや要約は非表示 */
-            .sidebar-left {
-                display: none !important;
-            }
-
-            .sidebar-right,
-            .daily-summary-title,
-            .summary-table-container {
-                display: none !important;
-            }
-
-            /* シフト表をできるだけ広く */
-            .shift-table-container {
-                max-height: none;
-                height: calc(100vh - 160px);
-                border: none;
-                border-radius: 0;
-                -webkit-overflow-scrolling: touch; /* iOS 慣性スクロール */
-            }
-
-            .main-wrapper {
-                gap: 0.5rem;
-            }
-
-            .app-header {
-                padding: 0.5rem;
-            }
-
-            .date-selector select {
-                padding: 4px;
-                font-size: 14px;
-            }
-
-            /* セルをコンパクトに */
-            .shift-table thead th {
-                min-width: 56px;
-                max-width: 56px;
-                width: 56px;
-                padding: 8px 2px;
-                font-size: 12px;
-            }
-
-            .shift-table tbody td {
-                min-width: 56px;
-                max-width: 56px;
-                width: 56px;
-                padding: 2px;
-            }
-
-            .shift-table tbody tr {
-                height: 38px;
-            }
-
-            .shift-table thead th:first-child,
-            .shift-table tbody td:first-child {
-                min-width: 120px;
-                max-width: 120px;
-                width: 120px;
-            }
-
-            /* 月合計列は省略 */
-            .shift-table thead th:last-child,
-            .shift-table tbody td:last-child {
-                display: none !important;
-            }
-
-            /* シフトコード表示もコンパクトに */
-            .shift-code {
-                font-size: 12px;
-                line-height: 1;
-                padding: 2px 6px;
-                display: inline-block;
-            }
+        
+        .daily-summary-title {
+            margin: 0;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+        
+        .daily-summary-home-selector {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .daily-summary-home-selector label {
+            font-size: 14px;
+            font-weight: 500;
+            margin: 0;
+        }
+        
+        .daily-summary-home-selector select {
+            padding: 5px 10px;
+            font-size: 14px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: white;
+        }
+        
+        .summary-table-container {
+            overflow-x: auto;
+            overflow-y: hidden;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: white;
+        }
+        
+        .summary-table {
+            width: auto;
+            min-width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+        
+        /* 日次集計のヘッダー（日付） */
+        .summary-table thead th {
+            min-width: 80px;
+            max-width: 80px;
+            width: 80px;
+            text-align: center;
+            padding: 8px 4px;
+            background: #e8e8e8;
+            border: 1px solid #e0e0e0;
+            font-weight: 600;
+            font-size: 12px;
+            position: sticky;
+            top: 0;
+            box-sizing: border-box;
+        }
+        
+        .summary-table thead th:first-child {
+            min-width: 150px;
+            max-width: 150px;
+            width: 150px;
+            text-align: left;
+            padding-left: 12px;
+            position: sticky;
+            left: 0;
+            z-index: 10;
+            background: #e8e8e8;
+            border-right: 2px solid #ddd;
+            box-sizing: border-box;
+        }
+        
+        /* 日次集計のボディ（データ行） */
+        .summary-table tbody td {
+            min-width: 80px;
+            max-width: 80px;
+            width: 80px;
+            text-align: center;
+            vertical-align: top;
+            border: 1px solid #e0e0e0;
+            padding: 4px;
+            background: #f9f9f9;
+            box-sizing: border-box;
+        }
+        
+        .summary-table tbody td:first-child {
+            min-width: 150px;
+            max-width: 150px;
+            width: 150px;
+            text-align: left;
+            padding-left: 12px;
+            font-weight: 600;
+            position: sticky;
+            left: 0;
+            background: #f0f0f0;
+            z-index: 5;
+            border-right: 2px solid #ddd;
+            box-sizing: border-box;
+        }
+        
+        /* 月合計列 - シフト表と同じ幅 */
+        .summary-table thead th:last-child,
+        .summary-table tbody td:last-child {
+            min-width: 80px;
+            max-width: 80px;
+            width: 80px;
+            font-weight: bold;
+            background: #e8e8e8;
+            box-sizing: border-box;
+        }
+        
+        .summary-table tbody td:last-child {
+            background: #f5f5f5;
+        }
+        
+        .summary-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            font-size: 11px;
+            line-height: 1.4;
+        }
+        
+        .summary-list li {
+            white-space: nowrap;
+        }
+        
+        /* スクロールバーのスタイル（日次集計） */
+        .summary-table-container::-webkit-scrollbar {
+            width: 12px;
+            height: 12px;
+        }
+        
+        .summary-table-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 6px;
+        }
+        
+        .summary-table-container::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 6px;
+        }
+        
+        .summary-table-container::-webkit-scrollbar-thumb:hover {
+            background: #555;
         }
     </style>
 </head>
@@ -233,24 +293,13 @@
                 <div class="form-group">
                     <label>シフトコード</label>
                     <select id="modal-shift-code" class="form-control">
-                        <option value="NONE">未定</option>
-                        <option value="A">A（日勤：10時～19時）</option>
-                        <option value="B">B（夜勤：22時～7時）</option>
-                        <option value="C">C（遅番：13時～22時）</option>
-                        <option value="EL">EL（早朝：7時～10時）</option>
-                        <option value="N">N（公休）</option>
-                        <option value="L">L（有休）</option>
-                        <option value="SP">SP（特休）</option>
+                        <!-- シフトコードはDBから動的に生成されます -->
                     </select>
                 </div>
                 <div class="form-group">
                     <label>ホーム</label>
                     <select id="modal-home" class="form-control">
-                        <option value="A">Aホーム</option>
-                        <option value="B">Bホーム</option>
-                        <option value="C">Cホーム</option>
-                        <option value="D">Dホーム</option>
-                        <option value="E">Eホーム</option>
+                        <!-- ホーム選択肢は動的に生成されます -->
                     </select>
                 </div>
             </div>
@@ -263,25 +312,18 @@
 
     <div class="app-container">
 
-        <!-- 非表示だが必要な要素を保持 -->
         <nav class="sidebar-left">
             <div class="form-group">
                 <label for="home-select">表示ホーム</label>
                 <select id="home-select">
-                    <option value="all">全体表示</option>
-                    <option value="A">Aホーム</option>
-                    <option value="B">Bホーム</option>
-                    <option value="C">Cホーム</option>
-                    <option value="D">Dホーム</option>
-                    <option value="E">Eホーム</option>
+                    <!-- ホーム選択肢は動的に生成されます -->
                 </select>
             </div>
 
             <h3>シフト要望</h3>
             <ul class="shift-request-list" id="shift-request-list">
             </ul>
-
-            <button class="btn btn-reflect-all" id="reflect-all-btn">すべて一括反映</button>
+            <button class="btn btn-reflect-all" id="reflect-all-btn" onclick="bulkApproveShiftRequests()">すべて一括承認</button>
         </nav>
 
         <div class="main-wrapper">
@@ -323,15 +365,24 @@
                     </table>
                 </div>
 
-                <h3 class="daily-summary-title">ホーム別日次集計</h3>
-                <div class="summary-table-container">
-                    <div class="daily-summary-header">
+                <div class="daily-summary-header-bar">
+                    <h3 class="daily-summary-title">ホーム別日次集計</h3>
+                    <div class="daily-summary-home-selector">
                         <label for="daily-summary-home-select">集計対象：</label>
                         <select id="daily-summary-home-select">
                             <!-- ホーム選択肢は動的に生成されます -->
+                            <option value="A">Aホーム</option>
+                            <option value="B">Bホーム</option>
+                            <option value="C">Cホーム</option>
+                            <option value="D">Dホーム</option>
+                            <option value="E">Eホーム</option>
                         </select>
                     </div>
+                </div>
+                <div class="summary-table-container" id="summary-table-container">
                     <table class="summary-table" id="daily-summary-table">
+                        <thead id="daily-summary-header">
+                            </thead>
                         <tbody id="daily-summary-body">
                             </tbody>
                     </table>
@@ -371,419 +422,16 @@
     <script src="script.js"></script>
     
     <script>
-        // シフト表のカスタム描画関数（全スタッフ表示、30人分固定、30日分表示）
-        const DAYS_TO_DISPLAY = 30;
-        const MIN_STAFF_ROWS = 10;
-        
-        // ホーム選択肢を動的生成
-        document.addEventListener('DOMContentLoaded', async () => {
-            await populateHomeSelect(document.getElementById('daily-summary-home-select'), { defaultValue: 'A' });
-            // シフトコード定義をDBから取得（ラベル/時間を他画面でも使えるように）
-            await loadShiftCodesToWindow();
-        });
-        
-        // script.jsのrenderShiftTableを完全に置き換える
-        let isCustomRenderActive = false;
-        
-        // カスタムレンダリング関数
-        async function customRenderShiftView() {
-            if (isCustomRenderActive) {
-                console.log('⚠️ 既にレンダリング中です');
-                return;
-            }
-            
-            isCustomRenderActive = true;
-            
-            try {
-                console.log('📊 シフト表を描画中...');
-                
-                // 認証トークンを取得
-                const token = localStorage.getItem('shift_auth_token');
-                if (!token) {
-                    console.error('認証トークンがありません');
-                    isCustomRenderActive = false;
-                    return;
-                }
-                
-                // 全スタッフ情報を取得
-                console.log('👥 スタッフ情報取得開始');
-                const staffResponse = await fetch(`${API_BASE_URL}/api/staff`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
-                
-                console.log(`📡 スタッフAPI: status=${staffResponse.status}, ok=${staffResponse.ok}`);
-                
-                if (!staffResponse.ok) {
-                    const errorText = await staffResponse.text();
-                    console.error(`❌ スタッフ取得エラー: ${errorText}`);
-                    throw new Error('スタッフ情報の取得に失敗しました');
-                }
-                
-                const staffData = await staffResponse.json();
-                if (!staffData.success) {
-                    throw new Error(staffData.error || 'データ取得エラー');
-                }
-                
-                // 全スタッフを表示
-                const allStaff = staffData.staff || [];
-                console.log(`✅ 全スタッフ: ${allStaff.length}名`);
-                
-                // シフト要望データを取得
-                await loadShiftRequests();
-                
-                // ヘッダーを描画（30日分）
-                renderCustomHeader();
-                
-                // ボディを描画（全スタッフ）
-                renderCustomBody(allStaff);
-                
-                // 集計を更新
-                updateSummaries();
-                
-                // 日次集計を更新
-                updateDailySummary();
-                
-            } catch (error) {
-                console.error('❌ シフト表描画エラー:', error);
-                alert('シフト表の表示に失敗しました: ' + error.message);
-            } finally {
-                isCustomRenderActive = false;
-            }
-        }
-        
-        // シフト要望データを読み込み
-        async function loadShiftRequests() {
-            console.log('🔄 loadShiftRequests() 開始');
-            
-            try {
-                const token = localStorage.getItem('shift_auth_token');
-                const year = window.appState?.currentYear || new Date().getFullYear();
-                const month = window.appState?.currentMonth || (new Date().getMonth() + 1);
-                
-                console.log(`📅 ${year}年${month}月のシフトデータを取得中...`);
-                console.log(`🔍 URL: ${API_BASE_URL}/api/shift-requests/get?year=${year}&month=${month}`);
-                console.log(`🔑 トークン: ${token ? 'あり' : 'なし'}`);
-                
-                const response = await fetch(
-                    `${API_BASE_URL}/api/shift-requests/get?year=${year}&month=${month}`,
-                    {
-                        headers: {
-                            'Authorization': `Bearer ${token}`,
-                            'Content-Type': 'application/json'
-                        }
-                    }
-                );
-                
-                console.log(`📡 レスポンス: status=${response.status}, ok=${response.ok}`);
-                
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    console.error(`❌ エラーレスポンス: ${errorText}`);
-                    throw new Error('シフト要望の取得に失敗しました');
-                }
-                
-                const data = await response.json();
-                console.log('📦 取得データ:', data);
-                
-                // シフト要望を appState.shifts に格納
-                if (!window.appState) window.appState = {};
-                window.appState.shifts = {};
-                
-                if (data.success && data.shifts) {
-                    Object.entries(data.shifts).forEach(([dateStr, homes]) => {
-                        const [y, m, day] = dateStr.split('-').map(Number);
-                        
-                        Object.entries(homes).forEach(([home, shiftCodes]) => {
-                            Object.entries(shiftCodes).forEach(([shiftCode, users]) => {
-                                users.forEach(user => {
-                                    if (user.status === 1) { // 承認済みのみ
-                                        if (!window.appState.shifts[user.user_id]) {
-                                            window.appState.shifts[user.user_id] = {};
-                                        }
-                                        window.appState.shifts[user.user_id][day.toString()] = {
-                                            code: shiftCode,
-                                            home: home
-                                        };
-                                    }
-                                });
-                            });
-                        });
-                    });
-                    
-                    console.log('✅ シフトデータを読み込みました:', window.appState.shifts);
-                } else {
-                    console.log('📭 この月のシフトデータはありません');
-                }
-            } catch (error) {
-                console.error('❌❌❌ シフト要望取得エラー:', error);
-                console.error('スタックトレース:', error.stack);
-                // エラーでもshiftsを初期化
-                if (!window.appState) window.appState = {};
-                window.appState.shifts = {};
-            }
-        }
-
-        // DBからシフトコードを取得し、window.SHIFT_CODESに格納
-        async function loadShiftCodesToWindow() {
-            try {
-                const token = localStorage.getItem('shift_auth_token');
-                const resp = await fetch(`${API_BASE_URL}/api/shift-codes`, {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
-                const data = await resp.json();
-                if (data.success) {
-                    // { code: { label, hours, class } } の形に整形
-                    const map = {};
-                    (data.codes || []).forEach(c => {
-                        map[c.code] = { label: c.label, hours: c.hours, class: '' };
-                    });
-                    // 未定(NONE)がなければ追加
-                    if (!map['NONE']) map['NONE'] = { label: '未定 (-)', hours: 0, class: '' };
-                    window.SHIFT_CODES = map;
-                }
-            } catch (e) {
-                console.warn('⚠️ シフトコード取得に失敗しました', e);
-            }
-        }
-        
-        function renderCustomHeader() {
-            const thead = document.getElementById('shift-table-header');
-            let html = '<tr><th>スタッフ名</th>';
-            
-            // 現在の年月から30日分のヘッダーを作成
-            const year = window.appState?.currentYear || new Date().getFullYear();
-            const month = window.appState?.currentMonth || (new Date().getMonth() + 1);
-            const daysInMonth = new Date(year, month, 0).getDate();
-            
-            for (let day = 1; day <= DAYS_TO_DISPLAY && day <= daysInMonth; day++) {
-                const date = new Date(year, month - 1, day);
-                const dayOfWeek = ['日', '月', '火', '水', '木', '金', '土'][date.getDay()];
-                const isSunday = date.getDay() === 0;
-                const isSaturday = date.getDay() === 6;
-                
-                let headerClass = '';
-                if (isSunday) headerClass = 'text-danger';
-                else if (isSaturday) headerClass = 'text-primary';
-                
-                html += `<th class="${headerClass}">${day}日<br><small>(${dayOfWeek})</small></th>`;
-            }
-            
-            html += '<th>月合計</th></tr>';
-            thead.innerHTML = html;
-        }
-        
-        function renderCustomBody(staffList) {
-            const tbody = document.getElementById('shift-table-body');
-            let html = '';
-            
-            const year = window.appState?.currentYear || new Date().getFullYear();
-            const month = window.appState?.currentMonth || (new Date().getMonth() + 1);
-            const daysInMonth = new Date(year, month, 0).getDate();
-            
-            // 実際のスタッフ行を描画
-            staffList.forEach(staff => {
-                html += `<tr><td>${staff.name}</td>`;
-                
-                const staffShifts = window.appState?.shifts?.[staff.id] || {};
-                let workDays = 0;
-                
-                // 30日分のセルを作成（その月の日数まで）
-                for (let day = 1; day <= DAYS_TO_DISPLAY && day <= daysInMonth; day++) {
-                    const shift = staffShifts[day.toString()] || { code: 'NONE', home: '' };
-                    const shiftInfo = window.SHIFT_CODES?.[shift.code] || { class: '', label: '' };
-                    
-                    const homeClass = shift.home ? `home-${shift.home.toLowerCase()}` : '';
-                    
-                    // 編集不可にするためにdata属性を削除
-                    html += `<td class="${homeClass}" style="pointer-events: none;">`;
-                    
-                    if (shift.code !== 'NONE') {
-                        html += `<div class="shift-code ${shiftInfo.class}">${shift.code}</div>`;
-                        if (!['N', 'L', 'SP'].includes(shift.code)) {
-                            workDays++;
-                        }
-                    }
-                    html += '</td>';
-                }
-                
-                // 月合計（勤務日数）
-                html += `<td><strong>${workDays}日</strong></td>`;
-                html += '</tr>';
-            });
-            
-            // 10人に満たない場合は空行を追加
-            const currentRowCount = staffList.length;
-            const emptyRowsNeeded = Math.max(0, MIN_STAFF_ROWS - currentRowCount);
-            
-            for (let i = 0; i < emptyRowsNeeded; i++) {
-                html += '<tr class="empty-row"><td></td>';
-                for (let day = 1; day <= DAYS_TO_DISPLAY && day <= daysInMonth; day++) {
-                    html += '<td></td>';
-                }
-                html += '<td></td></tr>';
-            }
-            
-            tbody.innerHTML = html;
-        }
-        
-        // 集計を更新
-        function updateSummaries() {
-            const year = window.appState?.currentYear || new Date().getFullYear();
-            const month = window.appState?.currentMonth || (new Date().getMonth() + 1);
-            
-            console.log(`📊 ${year}年${month}月の集計を計算中...`);
-            
-            // シフトコード別の集計
-            const shiftCodeCounts = {
-                'A': 0,  // 日勤
-                'B': 0,  // 夜勤
-                'C': 0,  // 遅番
-                'EL': 0, // 早朝
-                'N': 0,  // 公休
-                'L': 0,  // 有休
-                'SP': 0  // 特休
-            };
-            
-            // ホーム別集計
-            const homeStats = { A: 0, B: 0, C: 0, D: 0, E: 0 };
-            
-            // window.appState.shifts の構造: { user_id: { day: { code, home } } }
-            if (window.appState?.shifts) {
-                console.log('🔍 集計対象データ:', window.appState.shifts);
-                
-                // 各ユーザーのシフトを集計
-                Object.entries(window.appState.shifts).forEach(([userId, staffShifts]) => {
-                    Object.entries(staffShifts).forEach(([day, shift]) => {
-                        // シフトコード別カウント
-                        if (shift.code && shiftCodeCounts[shift.code] !== undefined) {
-                            shiftCodeCounts[shift.code]++;
-                            console.log(`📊 ${userId} - ${day}日: ${shift.code}`);
-                        }
-                        
-                        // ホーム別カウント（公休系以外）
-                        if (shift.home && !['N', 'L', 'SP'].includes(shift.code)) {
-                            if (homeStats[shift.home] !== undefined) {
-                                homeStats[shift.home]++;
-                                console.log(`🏠 ${userId} - ${day}日: ${shift.home}ホーム`);
-                            }
-                        }
-                    });
-                });
-            } else {
-                console.warn('⚠️ window.appState.shifts が未定義です');
-            }
-            
-            // 月間集計を表示（シフトコード別）
-            const monthlySummary = document.getElementById('monthly-summary');
-            const shiftCodeLabels = {
-                'A': '日勤 (A)',
-                'B': '夜勤 (B)',
-                'C': '遅番 (C)',
-                'EL': '早朝 (EL)',
-                'L': '有休 (L)',
-                'N': '公休 (N)',
-                'SP': '特休 (SP)'
-            };
-            
-            let monthlyHtml = '';
-            for (const [code, label] of Object.entries(shiftCodeLabels)) {
-                const count = shiftCodeCounts[code] || 0;
-                monthlyHtml += `
-                    <li class="summary-list-item">
-                        <span class="label">${label}</span>
-                        <span class="value">${count}</span>
-                    </li>`;
-            }
-            monthlySummary.innerHTML = monthlyHtml;
-            
-            // ホーム別集計を表示
-            const homeSummary = document.getElementById('home-summary');
-            const homeLabels = { A: 'Aホーム', B: 'Bホーム', C: 'Cホーム', D: 'Dホーム', E: 'Eホーム' };
-            
-            let homeHtml = '';
-            for (const [homeKey, label] of Object.entries(homeLabels)) {
-                const count = homeStats[homeKey] || 0;
-                homeHtml += `
-                    <li class="summary-list-item home-summary-${homeKey.toLowerCase()}">
-                        <span class="label">${label}</span>
-                        <span class="value">${count}日</span>
-                    </li>`;
-            }
-            homeSummary.innerHTML = homeHtml;
-            
-            console.log('✅ 集計完了:', { shiftCodeCounts, homeStats });
-        }
-        
-        // ホーム別日次集計を更新
-        function updateDailySummary() {
-            const selectedHome = document.getElementById('daily-summary-home-select')?.value || 'A';
-            const dailySummaryBody = document.getElementById('daily-summary-body');
-            
-            if (!dailySummaryBody) return;
-            
-            const year = window.appState?.currentYear || new Date().getFullYear();
-            const month = window.appState?.currentMonth || (new Date().getMonth() + 1);
-            const daysInMonth = new Date(year, month, 0).getDate();
-            
-            let html = '<tr><th>日付</th><th>A</th><th>B</th><th>C</th><th>EL</th><th>N</th><th>L</th><th>SP</th></tr>';
-            
-            // 各日のシフトコード別集計
-            for (let day = 1; day <= daysInMonth; day++) {
-                const dayCounts = { A: 0, B: 0, C: 0, EL: 0, N: 0, L: 0, SP: 0 };
-                
-                // 該当日・該当ホームのシフトをカウント
-                if (window.appState?.shifts) {
-                    Object.entries(window.appState.shifts).forEach(([userId, staffShifts]) => {
-                        const shift = staffShifts[day.toString()];
-                        if (shift && shift.home === selectedHome && dayCounts[shift.code] !== undefined) {
-                            dayCounts[shift.code]++;
-                        }
-                    });
-                }
-                
-                html += `<tr>
-                    <td>${day}日</td>
-                    <td>${dayCounts.A}</td>
-                    <td>${dayCounts.B}</td>
-                    <td>${dayCounts.C}</td>
-                    <td>${dayCounts.EL}</td>
-                    <td>${dayCounts.N}</td>
-                    <td>${dayCounts.L}</td>
-                    <td>${dayCounts.SP}</td>
-                </tr>`;
-            }
-            
-            dailySummaryBody.innerHTML = html;
-        }
-        
-        // イベントリスナーのクリーンアップ関数
-        let yearChangeHandler = null;
-        let monthChangeHandler = null;
-        
-        // ページアンロード時のクリーンアップ
-        window.addEventListener('beforeunload', () => {
-            const yearSelect = document.getElementById('year-select');
-            const monthSelect = document.getElementById('month-select');
-            
-            if (yearSelect && yearChangeHandler) {
-                yearSelect.removeEventListener('change', yearChangeHandler);
-            }
-            if (monthSelect && monthChangeHandler) {
-                monthSelect.removeEventListener('change', monthChangeHandler);
-            }
-            
-            console.log('🧹 イベントリスナーをクリーンアップしました');
-        });
-        
         // ページ読み込み時の認証チェック
         document.addEventListener('DOMContentLoaded', async () => {
+            // ホーム選択肢を動的生成
+            await populateHomeSelect(document.getElementById('home-select'), { includeAll: true });
+            await populateHomeSelect(document.getElementById('modal-home'), { includeUndecided: true });
+            await populateHomeSelect(document.getElementById('daily-summary-home-select'), { defaultValue: 'A' });
+
+            // シフトコード選択肢をDBから生成
+            await populateShiftCodes(document.getElementById('modal-shift-code'));
+            
             // 認証チェック
             if (typeof PageRouter !== 'undefined') {
                 const hasAccess = await PageRouter.checkPageAccess();
@@ -798,61 +446,8 @@
                 console.log('👤 ログインユーザー:', user.name, `(${user.role})`);
             }
             
-            // 現在の月を初期表示に設定
-            const now = new Date();
-            const yearSelect = document.getElementById('year-select');
-            const monthSelect = document.getElementById('month-select');
-            
-            if (yearSelect && monthSelect) {
-                yearSelect.value = now.getFullYear().toString();
-                monthSelect.value = (now.getMonth() + 1).toString();
-                
-                // appStateを初期化
-                if (!window.appState) window.appState = {};
-                window.appState.currentYear = now.getFullYear();
-                window.appState.currentMonth = now.getMonth() + 1;
-                
-                // 年月変更イベントハンドラーを定義
-                yearChangeHandler = async () => {
-                    window.appState.currentYear = parseInt(yearSelect.value, 10);
-                    window.appState.currentMonth = parseInt(monthSelect.value, 10);
-                    console.log('📅 年変更:', window.appState.currentYear, window.appState.currentMonth);
-                    await customRenderShiftView();
-                };
-                
-                monthChangeHandler = async () => {
-                    window.appState.currentYear = parseInt(yearSelect.value, 10);
-                    window.appState.currentMonth = parseInt(monthSelect.value, 10);
-                    console.log('📅 月変更:', window.appState.currentYear, window.appState.currentMonth);
-                    await customRenderShiftView();
-                };
-                
-                // イベントリスナーを登録
-                yearSelect.addEventListener('change', yearChangeHandler);
-                monthSelect.addEventListener('change', monthChangeHandler);
-                
-                console.log('✅ shift_view.html: 独自イベントリスナー登録完了');
-            }
-            
-            // ホーム選択の変更イベント
-            const homeSelect = document.getElementById('daily-summary-home-select');
-            if (homeSelect) {
-                homeSelect.addEventListener('change', () => {
-                    updateDailySummary();
-                });
-            }
-            
-            // セル編集を無効化
-            document.addEventListener('click', (e) => {
-                const cell = e.target.closest('.shift-table tbody td');
-                if (cell && !cell.classList.contains('empty-row')) {
-                    e.stopPropagation();
-                    e.preventDefault();
-                }
-            }, true);
-            
-            // 初回レンダリング
-            await customRenderShiftView();
+            // シフト表と日次集計のスクロール同期を設定
+            setupScrollSync();
         });
         
         // 戻るボタンの動作を設定
@@ -860,6 +455,71 @@
             e.preventDefault();
             window.history.back();
         });
+        
+        // シフト表と日次集計のスクロール同期
+        function setupScrollSync() {
+            const shiftTableContainer = document.querySelector('.shift-table-container');
+            const summaryTableContainer = document.getElementById('summary-table-container');
+            
+            let isSyncing = false;
+            
+            if (shiftTableContainer && summaryTableContainer) {
+                shiftTableContainer.addEventListener('scroll', () => {
+                    if (isSyncing) return;
+                    isSyncing = true;
+                    summaryTableContainer.scrollLeft = shiftTableContainer.scrollLeft;
+                    requestAnimationFrame(() => { isSyncing = false; });
+                });
+                
+                summaryTableContainer.addEventListener('scroll', () => {
+                    if (isSyncing) return;
+                    isSyncing = true;
+                    shiftTableContainer.scrollLeft = summaryTableContainer.scrollLeft;
+                    requestAnimationFrame(() => { isSyncing = false; });
+                });
+                
+                console.log('✅ スクロール同期を設定しました');
+            }
+        }
+
+        // シフトコード選択肢をDBから生成
+        async function populateShiftCodes(selectEl) {
+            if (!selectEl) return;
+            try {
+                const token = localStorage.getItem('shift_auth_token');
+                const resp = await fetch(`${API_BASE_URL}/api/shift-codes`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                const data = await resp.json();
+                if (!(data.success && Array.isArray(data.codes))) return;
+
+                // 既存クリア
+                selectEl.innerHTML = '';
+                // コードを並び順で追加（表示は「A（日勤：8時間）」）
+                data.codes.forEach(c => {
+                    if (c.active !== false) {
+                        const opt = document.createElement('option');
+                        opt.value = c.code;
+                        const hoursText = `${c.hours}時間`;
+                        opt.textContent = `${c.code}（${c.label}：${hoursText}）`;
+                        selectEl.appendChild(opt);
+                    }
+                });
+                // 未定が存在しない場合は最後に追加
+                if (![...selectEl.options].some(o => o.value === 'NONE')) {
+                    const opt = document.createElement('option');
+                    opt.value = 'NONE';
+                    opt.textContent = 'NONE（未定：0時間）';
+                    selectEl.appendChild(opt);
+                }
+            } catch (e) {
+                console.error('❌ シフトコード選択肢生成エラー:', e);
+            }
+        }
     </script>
 </body>
 </html>
