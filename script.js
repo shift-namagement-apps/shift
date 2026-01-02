@@ -8,6 +8,7 @@ const appState = {
     shifts: {},
     shiftRequests: [],
     staff: [],
+    shiftCodeHours: {},
     editingCell: null // { staffId, staffName, date }
 };
 
@@ -21,6 +22,16 @@ const SHIFT_CODES = {
     SP: { name: '特休', time: '', class: 'shift-sp' },
     NONE: { name: '未定', time: '', class: 'shift-none' }
 };
+
+// シフトコードの勤務時間（時間数）を取得するヘルパー
+function getShiftHours(code) {
+    if (appState.shiftCodeHours && appState.shiftCodeHours[code] !== undefined) {
+        const h = Number(appState.shiftCodeHours[code]);
+        return Number.isFinite(h) ? h : 0;
+    }
+    const fallback = { A: 8, B: 8, C: 8, EL: 3, N: 0, L: 0, SP: 0, NONE: 0 };
+    return fallback[code] ?? 0;
+}
 
 console.log('シフト表アプリケーション初期化中 (高再現度モード)...');
 
@@ -476,6 +487,24 @@ async function loadDataFromFirebase() {
 
         console.log('📥 Firebaseからデータを読み込み中...');
 
+        // シフトコード（勤務時間付き）を取得
+        try {
+            const codeResp = await API.get('/api/shift-codes');
+            if (codeResp && codeResp.success && Array.isArray(codeResp.codes)) {
+                appState.shiftCodeHours = {};
+                codeResp.codes.forEach(c => {
+                    if (c.active !== false) {
+                        appState.shiftCodeHours[c.code] = Number(c.hours) || 0;
+                    }
+                });
+                console.log(`✅ シフトコードを読み込みました (${Object.keys(appState.shiftCodeHours).length}件)`);
+            } else {
+                console.warn('⚠️ シフトコードの取得に失敗。フォールバック時間を使用します');
+            }
+        } catch (e) {
+            console.warn('⚠️ シフトコード取得エラー。フォールバック時間を使用します', e);
+        }
+
         // スタッフデータを取得
         const staffResponse = await API.get('/api/staff');
         if (staffResponse && staffResponse.success && staffResponse.staff.length > 0) {
@@ -829,38 +858,39 @@ function renderShiftTable(staffList, daysCount) {
     let html = '';
 
     staffList.forEach(staff => {
-        html += `<tr><td>${staff.name}</td>`;
-        
         const staffShifts = appState.shifts[staff.id] || {};
-        
-        // 月合計を計算（公休系以外をカウント）
-        let monthTotal = 0;
+        let monthTotalDays = 0;
+        let monthTotalHours = 0;
 
+        // 先に各日分を組み立てる
+        let rowCells = '';
         for (let day = 1; day <= daysCount; day++) {
             const shift = staffShifts[day.toString()] || { code: 'NONE', home: '' };
             const shiftInfo = SHIFT_CODES[shift.code] || SHIFT_CODES['NONE'];
-            
-            // ホーム別の背景色クラスを追加
             const homeClass = shift.home ? `home-${shift.home.toLowerCase()}` : '';
-            
-            html += `<td 
+            const hours = getShiftHours(shift.code);
+
+            if (!['N', 'L', 'SP', 'NONE'].includes(shift.code)) {
+                monthTotalDays++;
+            }
+            monthTotalHours += hours;
+
+            rowCells += `<td 
                         class="${homeClass}"
                         data-staff-id="${staff.id}"
                         data-staff-name="${staff.name}"
                         data-date="${day}">`;
-                        
             if (shift.code !== 'NONE') {
-                html += `<div class="shift-code ${shiftInfo.class}">${shift.code}</div>`;
-                // 公休系以外をカウント
-                if (!['N', 'L', 'SP'].includes(shift.code)) {
-                    monthTotal++;
-                }
+                rowCells += `<div class="shift-code ${shiftInfo.class}">${shift.code}</div>`;
             }
-            html += '</td>';
+            rowCells += '</td>';
         }
-        
-        // 月合計を表示
-        html += `<td><strong>${monthTotal}日</strong></td>`;
+
+        // 名前セルに月の合計時間を表示
+        html += `<tr><td>${staff.name} - ${monthTotalHours}時間</td>`;
+        html += rowCells;
+        // 月合計（日数）は現行仕様を維持
+        html += `<td><strong>${monthTotalDays}日</strong></td>`;
         html += '</tr>';
     });
     
