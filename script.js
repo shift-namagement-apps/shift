@@ -2328,6 +2328,64 @@ async function approveShiftRequest(date, home, shiftCode, userId) {
 }
 
 /**
+ * シフトデータをスプレッドシートに書き込み
+ */
+async function exportShiftsToSheet() {
+    try {
+        const token = localStorage.getItem('shift_auth_token');
+        if (!token) {
+            alert('ログインが必要です');
+            return;
+        }
+
+        const exportBtn = document.getElementById('export-btn');
+        exportBtn.disabled = true;
+        exportBtn.textContent = '📊 書き込み中...';
+
+        // 現在の年月のシフトデータを取得
+        const year = appState.currentYear;
+        const month = appState.currentMonth;
+
+        // シフトデータを構築
+        const shiftData = {
+            year: year,
+            month: month,
+            staff: appState.staff || [],
+            shifts: appState.shifts || {}
+        };
+
+        console.log('📝 スプレッドシート書き込み開始:', { year, month });
+
+        // APIエンドポイントにPOST
+        const response = await fetch(`${API_BASE_URL}/api/shifts/export-to-sheet`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(shiftData)
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+            console.log('✅ スプレッドシート書き込み完了:', result.message);
+            alert(`✅ スプレッドシートに書き込みました\n\n${result.message || ''}`);
+        } else {
+            console.error('❌ 書き込みエラー:', result.error);
+            alert('❌ 書き込みに失敗しました:\n' + (result.error || 'エラーが発生しました'));
+        }
+    } catch (error) {
+        console.error('❌ 書き込み処理エラー:', error);
+        alert('❌ エラーが発生しました:\n' + error.message);
+    } finally {
+        const exportBtn = document.getElementById('export-btn');
+        exportBtn.disabled = false;
+        exportBtn.textContent = '📊 書き込み';
+    }
+}
+
+/**
  * すべてのシフト要望を一括承認
  */
 async function bulkApproveShiftRequests() {
@@ -2508,6 +2566,7 @@ window.approveShiftRequest = approveShiftRequest;
 window.bulkApproveShiftRequests = bulkApproveShiftRequests;
 window.checkUnconfirmedShifts = checkUnconfirmedShifts;
 window.checkShiftConflicts = checkShiftConflicts;
+window.exportShiftsToSheet = exportShiftsToSheet;
 window.refreshData = refreshData;
 window.saveSettings = saveSettings;
 window.loadSettings = loadSettings;
