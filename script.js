@@ -2366,17 +2366,22 @@ async function exportShiftsToSheet() {
             body: JSON.stringify(shiftData)
         });
 
+        console.log('📤 レスポンスステータス:', response.status);
         const result = await response.json();
+        console.log('📥 レスポンスデータ:', result);
 
         if (response.ok && result.success) {
             console.log('✅ スプレッドシート書き込み完了:', result.message);
             alert(`✅ スプレッドシートに書き込みました\n\n${result.message || ''}`);
         } else {
-            console.error('❌ 書き込みエラー:', result.error);
-            alert('❌ 書き込みに失敗しました:\n' + (result.error || 'エラーが発生しました'));
+            const errorMsg = result.error || `HTTPエラー: ${response.status}`;
+            console.error('❌ 書き込みエラー:', errorMsg);
+            console.error('レスポンス全体:', result);
+            alert('❌ 書き込みに失敗しました:\n' + errorMsg);
         }
     } catch (error) {
         console.error('❌ 書き込み処理エラー:', error);
+        console.error('エラー詳細:', error.stack);
         alert('❌ エラーが発生しました:\n' + error.message);
     } finally {
         const exportBtn = document.getElementById('export-btn');
