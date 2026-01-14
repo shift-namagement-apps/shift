@@ -288,16 +288,21 @@ async function loadHomesList() {
 }
 
 /**
- * ホームの色を動的に生成
+ * ホームの色を動的に生成（視認性重視）
  */
 function getHomeColor(homeName, index = 0) {
     const predefinedColors = {
-        'A': '#ffebee',
-        'B': '#e3f2fd',
-        'C': '#e8f5e9',
-        'D': '#fff9c4',
-        'E': '#f3e5f5',
-        '未定': '#f5f5f5'
+        'A': '#FFD5D5',  // 薄い赤/ピンク
+        'B': '#D5E8FF',  // 薄い青
+        'C': '#D5FFD5',  // 薄い緑
+        'D': '#FFEBD5',  // 薄いオレンジ
+        'E': '#EBD5FF',  // 薄い紫
+        'F': '#FFD5EB',  // 薄いマゼンタ
+        'G': '#D5FFFF',  // 薄いシアン
+        'H': '#FFFFD5',  // 薄い黄色
+        'I': '#FFE0CC',  // 薄いコーラル
+        'J': '#E0D5FF',  // 薄いラベンダー
+        '未定': '#F5F5F5'
     };
     
     // 既定義の色がある場合はそれを返す
@@ -305,9 +310,12 @@ function getHomeColor(homeName, index = 0) {
         return predefinedColors[homeName];
     }
     
-    // 動的に色を生成（パステルカラー）
-    const hue = (index * 137) % 360; // ゴールデンアングルで色相を分散
-    return `hsl(${hue}, 70%, 90%)`;
+    // 動的に色を生成（パステルカラー・視認性重視）
+    const baseColors = [
+        '#FFD5D5', '#D5E8FF', '#D5FFD5', '#FFEBD5', '#EBD5FF',
+        '#FFD5EB', '#D5FFFF', '#FFFFD5', '#FFE0CC', '#E0D5FF'
+    ];
+    return baseColors[index % baseColors.length];
 }
 
 /**
