@@ -404,7 +404,8 @@ async function injectHomeDynamicStyles() {
         // カレンダーの背景色（shift_submission.html用）
         css += `.calendar-day.home-${homeKey} { background-color: ${color}; }\n`;
         
-        // サマリーリストの色
+        // サマリーリストの色（背景にも適用して視認性を上げる）
+        css += `.home-summary-${homeKey} { background-color: ${color}; }\n`;
         css += `.home-summary-${homeKey}::before { background-color: ${color}; }\n`;
     });
     
