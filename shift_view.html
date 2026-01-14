@@ -377,6 +377,11 @@
         
         // ホーム選択肢を動的生成
         document.addEventListener('DOMContentLoaded', async () => {
+            // 動的ホーム色を確実に適用
+            if (typeof injectHomeDynamicStyles === 'function') {
+                await injectHomeDynamicStyles();
+            }
+
             await populateHomeSelect(document.getElementById('daily-summary-home-select'), { defaultValue: 'A' });
             // シフトコード定義をDBから取得（ラベル/時間を他画面でも使えるように）
             await loadShiftCodesToWindow();
@@ -441,10 +446,10 @@
                 renderCustomBody(allStaff);
                 
                 // 集計を更新
-                updateSummaries();
+                await updateSummaries();
                 
                 // 日次集計を更新
-                updateDailySummary();
+                await updateDailySummary();
                 
             } catch (error) {
                 console.error('❌ シフト表描画エラー:', error);
@@ -634,7 +639,7 @@
         }
         
         // 集計を更新
-        function updateSummaries() {
+        async function updateSummaries() {
             const year = window.appState?.currentYear || new Date().getFullYear();
             const month = window.appState?.currentMonth || (new Date().getMonth() + 1);
             
@@ -651,8 +656,10 @@
                 'SP': 0  // 特休
             };
             
-            // ホーム別集計
-            const homeStats = { A: 0, B: 0, C: 0, D: 0, E: 0 };
+            // ホーム別集計（ホーム一覧を動的取得）
+            const homes = (await loadHomesList()) || [];
+            const homeStats = {};
+            homes.forEach(h => { if (h && h !== '未定') homeStats[h] = 0; });
             
             // window.appState.shifts の構造: { user_id: { day: { code, home } } }
             if (window.appState?.shifts) {
@@ -705,7 +712,10 @@
             
             // ホーム別集計を表示
             const homeSummary = document.getElementById('home-summary');
-            const homeLabels = { A: 'Aホーム', B: 'Bホーム', C: 'Cホーム', D: 'Dホーム', E: 'Eホーム' };
+            const homeLabels = homes.reduce((acc, h) => {
+                if (h && h !== '未定') acc[h] = `${h}ホーム`;
+                return acc;
+            }, {});
             
             let homeHtml = '';
             for (const [homeKey, label] of Object.entries(homeLabels)) {
@@ -722,7 +732,7 @@
         }
         
         // ホーム別日次集計を更新
-        function updateDailySummary() {
+        async function updateDailySummary() {
             const selectedHome = document.getElementById('daily-summary-home-select')?.value || 'A';
             const dailySummaryBody = document.getElementById('daily-summary-body');
             
