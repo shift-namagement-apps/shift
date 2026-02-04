@@ -51,7 +51,7 @@ async function ensureInitialData() {
             return;
         }
         
-        // ホームの初期データ確認
+        // ホームの初期データ確認（ホームが0件の場合のみ初期化）
         const homesResponse = await fetch(`${API_BASE_URL}/api/homes`, {
             method: 'GET',
             headers: {
@@ -63,11 +63,10 @@ async function ensureInitialData() {
         if (homesResponse.ok) {
             const homesData = await homesResponse.json();
             if (homesData.success) {
-                const existingHomeNames = homesData.homes.map(h => h.name);
-                
-                // 不足しているホームを追加
-                for (const homeName of INITIAL_HOMES) {
-                    if (!existingHomeNames.includes(homeName)) {
+                // ホームが1件もない場合のみ初期データを作成
+                if (homesData.homes.length === 0) {
+                    console.log('📦 ホームが存在しないため、初期データを作成します');
+                    for (const homeName of INITIAL_HOMES) {
                         console.log(`➕ ホーム「${homeName}」を作成中...`);
                         await fetch(`${API_BASE_URL}/api/homes`, {
                             method: 'POST',
@@ -82,7 +81,7 @@ async function ensureInitialData() {
             }
         }
         
-        // 備考テンプレートの初期データ確認
+        // 備考テンプレートの初期データ確認（0件の場合のみ初期化）
         const bikouResponse = await fetch(`${API_BASE_URL}/api/bikou-templates`, {
             method: 'GET',
             headers: {
@@ -94,11 +93,10 @@ async function ensureInitialData() {
         if (bikouResponse.ok) {
             const bikouData = await bikouResponse.json();
             if (bikouData.success) {
-                const existingTemplateIds = bikouData.templates.map(t => t.id);
-                
-                // 不足している備考テンプレートを追加
-                for (const template of INITIAL_BIKOU_TEMPLATES) {
-                    if (!existingTemplateIds.includes(template.id)) {
+                // 備考テンプレートが1件もない場合のみ初期データを作成
+                if (bikouData.templates.length === 0) {
+                    console.log('📦 備考テンプレートが存在しないため、初期データを作成します');
+                    for (const template of INITIAL_BIKOU_TEMPLATES) {
                         console.log(`➕ 備考テンプレート「${template.id}」を作成中...`);
                         await fetch(`${API_BASE_URL}/api/bikou-templates`, {
                             method: 'POST',
