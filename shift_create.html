@@ -125,14 +125,8 @@
                 <div class="form-group">
                     <label>シフトコード</label>
                     <select id="modal-shift-code" class="form-control">
+                        <!-- シフトコードは動的に読み込まれます -->
                         <option value="NONE">未定</option>
-                        <option value="A">A（日勤：10時～19時）</option>
-                        <option value="B">B（夜勤：22時～7時）</option>
-                        <option value="C">C（遅番：13時～22時）</option>
-                        <option value="EL">EL（早朝：7時～10時）</option>
-                        <option value="N">N（公休）</option>
-                        <option value="L">L（有休）</option>
-                        <option value="SP">SP（特休）</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -191,7 +185,17 @@
                     </select>
                     <span>月</span>
                 </div>
-                <div style="width: 60px;"></div>
+                <button id="export-sheet-btn" onclick="exportToSpreadsheet()" style="
+                    background: #1a73e8;
+                    color: white;
+                    border: none;
+                    border-radius: 6px;
+                    padding: 8px 16px;
+                    font-size: 14px;
+                    font-weight: bold;
+                    cursor: pointer;
+                    white-space: nowrap;
+                ">📊 スプレッドシートへ出力</button>
             </header>
 
             <main class="main-content">
@@ -264,6 +268,9 @@
             await populateHomeSelect(document.getElementById('modal-home'), { includeUndecided: true });
             await populateHomeSelect(document.getElementById('daily-summary-home-select'), { defaultValue: 'A' });
             
+            // シフトコード選択肢を動的生成
+            await populateShiftCodeSelect(document.getElementById('modal-shift-code'));
+
             // 認証チェック
             if (typeof PageRouter !== 'undefined') {
                 const hasAccess = await PageRouter.checkPageAccess();
@@ -284,6 +291,124 @@
             e.preventDefault();
             window.history.back();
         });
+
+        /**
+         * シフトコード選択肢を動的生成（APIから取得）
+         */
+        async function populateShiftCodeSelect(selectElement) {
+            if (!selectElement) return;
+            try {
+                const token = localStorage.getItem('shift_auth_token');
+                if (!token) return;
+
+                const response = await fetch(`${API_BASE_URL}/api/shift-codes`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!response.ok) throw new Error('シフトコード取得失敗');
+                const data = await response.json();
+
+                if (data.success && data.codes && data.codes.length > 0) {
+                    selectElement.innerHTML = '<option value="NONE">未定</option>';
+                    data.codes.forEach(code => {
+                        if (!code.active) return;
+                        const option = document.createElement('option');
+                        option.value = code.code;
+                        // ラベルと時間帯を表示（例: A（日勤：10時～19時））
+                        const hoursText = code.hours > 0 ? `  ${code.hours}h` : '';
+                        option.textContent = `${code.code}（${code.label}${hoursText}）`;
+                        selectElement.appendChild(option);
+                    });
+                    console.log('✅ シフトコード選択肢を動的生成:', data.codes.length + '件');
+                } else {
+                    // APIからデータがない場合はフォールバック（デフォルト値）
+                    selectElement.innerHTML = `
+                        <option value="NONE">未定</option>
+                        <option value="A">A（日勤）</option>
+                        <option value="B">B（夜勤）</option>
+                        <option value="C">C（遅番）</option>
+                        <option value="EL">EL（早朝）</option>
+                        <option value="N">N（公休）</option>
+                        <option value="L">L（有休）</option>
+                        <option value="SP">SP（特休）</option>
+                    `;
+                }
+            } catch (error) {
+                console.warn('⚠️ シフトコード取得エラー（デフォルトを使用）:', error);
+                selectElement.innerHTML = `
+                    <option value="NONE">未定</option>
+                    <option value="A">A（日勤）</option>
+                    <option value="B">B（夜勤）</option>
+                    <option value="C">C（遅番）</option>
+                    <option value="EL">EL（早朝）</option>
+                    <option value="N">N（公休）</option>
+                    <option value="L">L（有休）</option>
+                    <option value="SP">SP（特休）</option>
+                `;
+            }
+        }
+
+        /**
+         * スプレッドシートへ出力（シート2：全員一覧）
+         */
+        async function exportToSpreadsheet() {
+            const btn = document.getElementById('export-sheet-btn');
+            const originalText = btn.textContent;
+            btn.textContent = '⏳ 出力中...';
+            btn.disabled = true;
+
+            try {
+                const token = localStorage.getItem('shift_auth_token');
+                if (!token) {
+                    alert('ログインが必要です');
+                    return;
+                }
+
+                const year = appState.currentYear;
+                const month = appState.currentMonth;
+
+                if (!appState.staff || appState.staff.length === 0) {
+                    alert('スタッフデータが読み込まれていません。\nページを再読み込みしてください。');
+                    return;
+                }
+
+                if (!confirm(`${year}年${month}月のシフト表をスプレッドシートのシート2に出力しますか？`)) {
+                    return;
+                }
+
+                console.log(`📊 スプレッドシート出力開始: ${year}年${month}月`);
+
+                const response = await fetch(`${API_BASE_URL}/api/shifts/export-to-sheet2`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        year: year,
+                        month: month,
+                        staff: appState.staff,
+                        shifts: appState.shifts
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    alert(`✅ 出力完了！\n${year}年${month}月のシフト表をシート2に書き込みました。\n（スタッフ数: ${data.staff_count}名）`);
+                    console.log('✅ スプレッドシート出力成功:', data);
+                } else {
+                    alert(`❌ 出力に失敗しました。\n${data.error}`);
+                    console.error('❌ 出力失敗:', data);
+                }
+            } catch (error) {
+                console.error('❌ 出力エラー:', error);
+                alert('出力中にエラーが発生しました: ' + error.message);
+            } finally {
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }
+        }
     </script>
 </body>
 </html>
