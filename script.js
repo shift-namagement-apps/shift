@@ -277,26 +277,31 @@ async function loadHomesList() {
 }
 
 /**
- * ホームの色を動的に生成
+ * ホームの色を取得（ホーム名から直接引く）
+ * ホーム名はFirestoreのsettings/homeに登録された実際の名前（例：有瀬、今寺 等）
  */
 function getHomeColor(homeName, index = 0) {
-    const predefinedColors = {
-        'A': '#ffebee',
-        'B': '#e3f2fd',
-        'C': '#e8f5e9',
-        'D': '#fff9c4',
-        'E': '#f3e5f5',
-        '未定': '#f5f5f5'
+    // ホーム名→背景色マッピング（指定された正確な色コード）
+    const namedColors = {
+        '有瀬':   '#FEF2CD',
+        '今寺':   '#D1F1DA',
+        '潤和':   '#FBDAD7',
+        '南別府': '#D9E7FD',
+        '池上':   '#D9D9D9',
+        '今寺2':  '#F6C3FF',
+        '未定':   '#f5f5f5'
     };
-    
-    // 既定義の色がある場合はそれを返す
-    if (predefinedColors[homeName]) {
-        return predefinedColors[homeName];
+
+    if (namedColors[homeName] !== undefined) {
+        return namedColors[homeName];
     }
-    
-    // 動的に色を生成（パステルカラー）
-    const hue = (index * 137) % 360; // ゴールデンアングルで色相を分散
-    return `hsl(${hue}, 70%, 90%)`;
+
+    // 設定画面で追加したその他のホームはパステルカラーを自動生成
+    const paletteColors = [
+        '#ffebee', '#e3f2fd', '#e8f5e9', '#fff9c4', '#f3e5f5',
+        '#fce4ec', '#e0f7fa', '#f9fbe7', '#ede7f6', '#fbe9e7'
+    ];
+    return paletteColors[index % paletteColors.length];
 }
 
 /**
