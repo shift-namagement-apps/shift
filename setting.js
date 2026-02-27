@@ -14,96 +14,7 @@ const CACHE_KEYS = {
     BIKOU_TIMESTAMP: 'shift_cache_bikou_timestamp'
 };
 
-// 初期データ
-const INITIAL_HOMES = ['A', 'B', 'C', 'D', 'E'];
-const INITIAL_BIKOU_TEMPLATES = [
-    { id: '備考1', text: '備考テンプレート1' },
-    { id: '備考2', text: '備考テンプレート2' },
-    { id: '備考3', text: '備考テンプレート3' },
-    { id: '備考4', text: '備考テンプレート4' },
-    { id: '備考5', text: '備考テンプレート5' }
-];
-
-/**
- * 初期データを確認・作成
- */
-async function ensureInitialData() {
-    console.log('📋 初期データ確認中...');
-    
-    try {
-        const token = localStorage.getItem('shift_auth_token');
-        if (!token) {
-            console.warn('⚠️ 認証トークンがありません');
-            return;
-        }
-        
-        // ホームの初期データ確認
-        const homesResponse = await fetch(`${API_BASE_URL}/api/homes`, {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            }
-        });
-        
-        if (homesResponse.ok) {
-            const homesData = await homesResponse.json();
-            if (homesData.success) {
-                const existingHomeNames = homesData.homes.map(h => h.name);
-                
-                // 不足しているホームを追加
-                for (const homeName of INITIAL_HOMES) {
-                    if (!existingHomeNames.includes(homeName)) {
-                        console.log(`➕ ホーム「${homeName}」を作成中...`);
-                        await fetch(`${API_BASE_URL}/api/homes`, {
-                            method: 'POST',
-                            headers: {
-                                'Authorization': `Bearer ${token}`,
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({ name: homeName })
-                        });
-                    }
-                }
-            }
-        }
-        
-        // 備考テンプレートの初期データ確認
-        const bikouResponse = await fetch(`${API_BASE_URL}/api/bikou-templates`, {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            }
-        });
-        
-        if (bikouResponse.ok) {
-            const bikouData = await bikouResponse.json();
-            if (bikouData.success) {
-                const existingTemplateIds = bikouData.templates.map(t => t.id);
-                
-                // 不足している備考テンプレートを追加
-                for (const template of INITIAL_BIKOU_TEMPLATES) {
-                    if (!existingTemplateIds.includes(template.id)) {
-                        console.log(`➕ 備考テンプレート「${template.id}」を作成中...`);
-                        await fetch(`${API_BASE_URL}/api/bikou-templates`, {
-                            method: 'POST',
-                            headers: {
-                                'Authorization': `Bearer ${token}`,
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({ text: template.text, id: template.id })
-                        });
-                    }
-                }
-            }
-        }
-        
-        console.log('✅ 初期データ確認完了');
-    } catch (error) {
-        console.error('❌ 初期データ確認エラー:', error);
-    }
-}
+// 注: 初期データの自動追加は無効化しました（設定画面から手動で追加してください）
 
 // ページ読み込み時に実行
 document.addEventListener('DOMContentLoaded', async () => {
@@ -117,9 +28,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
     }
-    
-    // 初期データを作成（存在しない場合のみ）
-    await ensureInitialData();
     
     // データ読み込み（キャッシュ優先）
     await loadHomes();
