@@ -214,11 +214,6 @@
                         <label for="daily-summary-home-select">集計対象：</label>
                         <select id="daily-summary-home-select">
                             <!-- ホーム選択肢は動的に生成されます -->
-                            <option value="A">Aホーム</option>
-                            <option value="B">Bホーム</option>
-                            <option value="C">Cホーム</option>
-                            <option value="D">Dホーム</option>
-                            <option value="E">Eホーム</option>
                         </select>
                     </div>
                     <table class="summary-table" id="daily-summary-table">
@@ -372,7 +367,7 @@
                     return;
                 }
 
-                if (!confirm(`${year}年${month}月のシフト表をスプレッドシートのシート2に出力しますか？`)) {
+                if (!confirm(`${year}年${month}月のシフト表をスプレッドシート（出勤簿）に出力しますか？\nシート名: ${year}-${String(month).padStart(2, '0')}`)) {
                     return;
                 }
 
@@ -395,7 +390,7 @@
                 const data = await response.json();
 
                 if (data.success) {
-                    alert(`✅ 出力完了！\n${year}年${month}月のシフト表をシート2に書き込みました。\n（スタッフ数: ${data.staff_count}名）`);
+                    alert(`✅ 出力完了！\n${year}年${month}月のシフト表を「${data.sheet_name}」に書き込みました。\n（スタッフ数: ${data.staff_count}名）`);
                     console.log('✅ スプレッドシート出力成功:', data);
                 } else {
                     alert(`❌ 出力に失敗しました。\n${data.error}`);
